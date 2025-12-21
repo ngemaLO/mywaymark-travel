@@ -1,15 +1,15 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { getCountryByIso } from '@/data/countries';
-import { 
-  getCountryBadgeState, 
-  getCitiesByCountry, 
-  getTripsByCountry,
-  getCountryNote,
-  mockVisitedCountries
-} from '@/data/mockData';
+import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
+import { useCountryNote, useSaveCountryNote } from '@/hooks/useCountryNotes';
+import { useCountryImages, useAddCountryImage, useDeleteCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
+import { useTripsByCountry } from '@/hooks/useTripsByCountry';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowLeft, 
   Check, 
@@ -18,27 +18,62 @@ import {
   Calendar,
   ImagePlus,
   Save,
-  X
+  X,
+  Trash2,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function CountryDetail() {
   const { iso } = useParams<{ iso: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isEditingNote, setIsEditingNote] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
   
   const country = iso ? getCountryByIso(iso) : null;
-  const badgeState = iso ? getCountryBadgeState(iso) : 'locked';
-  const cities = iso ? getCitiesByCountry(iso) : [];
-  const trips = iso ? getTripsByCountry(iso) : [];
-  const existingNote = iso ? getCountryNote(iso) : null;
-  const visitData = iso ? mockVisitedCountries[iso] : null;
+  const { getCountryBadgeState, isLoading: visitsLoading } = useVisitedCountries();
+  const { visitCount } = useVisitsByCountry(iso || '');
+  const { data: note, isLoading: noteLoading } = useCountryNote(iso || '');
+  const { data: images = [], isLoading: imagesLoading } = useCountryImages(iso || '');
+  const { data: trips = [], isLoading: tripsLoading } = useTripsByCountry(iso || '');
+  const saveNoteMutation = useSaveCountryNote();
+  const addImageMutation = useAddCountryImage();
+  const deleteImageMutation = useDeleteCountryImage();
   
-  const [noteText, setNoteText] = useState(existingNote?.note || '');
+  const badgeState = iso ? getCountryBadgeState(iso) : 'locked';
+  const [noteText, setNoteText] = useState('');
+  
+  // Sync note text when data loads
+  const currentNoteText = isEditingNote ? noteText : (note?.note || '');
 
-  if (!country || badgeState === 'locked') {
+  const maxImages = getMaxImagesPerCountry();
+  const canAddImage = images.length < maxImages;
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-16 text-center">
+          <h1 className="text-2xl font-display font-bold text-foreground mb-4">
+            Sign In Required
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            Please sign in to view country details.
+          </p>
+          <Button onClick={() => navigate('/auth')}>
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!country) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -47,7 +82,7 @@ export default function CountryDetail() {
             Country Not Found
           </h1>
           <p className="text-muted-foreground mb-8">
-            This country hasn't been added to your travel log yet.
+            This country doesn't exist in our database.
           </p>
           <Button onClick={() => navigate('/')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -57,6 +92,66 @@ export default function CountryDetail() {
       </div>
     );
   }
+
+  if (visitsLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8 space-y-8">
+          <Skeleton className="h-10 w-24" />
+          <div className="flex gap-6">
+            <Skeleton className="w-32 h-32 rounded-2xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-48" />
+              <Skeleton className="h-6 w-32" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (badgeState === 'locked') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-16 text-center">
+          <h1 className="text-2xl font-display font-bold text-foreground mb-4">
+            Country Not Visited
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            You haven't added any visits to {country.name} yet.
+          </p>
+          <Button onClick={() => navigate('/')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSaveNote = async () => {
+    if (!iso) return;
+    await saveNoteMutation.mutateAsync({ countryIso2: iso, note: noteText });
+    setIsEditingNote(false);
+  };
+
+  const handleStartEditNote = () => {
+    setNoteText(note?.note || '');
+    setIsEditingNote(true);
+  };
+
+  const handleAddImage = async () => {
+    if (!iso || !imageUrl.trim()) return;
+    await addImageMutation.mutateAsync({ countryIso2: iso, imageUrl: imageUrl.trim() });
+    setImageUrl('');
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    if (!iso) return;
+    await deleteImageMutation.mutateAsync({ imageId, countryIso2: iso });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -101,7 +196,7 @@ export default function CountryDetail() {
               </span>
             </div>
             <p className="text-muted-foreground">
-              {country.continent} • {visitData?.visitCount || 0} visits
+              {country.continent} • {visitCount} visits
             </p>
           </div>
         </section>
@@ -119,7 +214,7 @@ export default function CountryDetail() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setIsEditingNote(true)}
+                    onClick={handleStartEditNote}
                     className="gap-2 text-muted-foreground hover:text-foreground"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -128,7 +223,9 @@ export default function CountryDetail() {
                 )}
               </div>
               
-              {isEditingNote ? (
+              {noteLoading ? (
+                <Skeleton className="h-24 w-full" />
+              ) : isEditingNote ? (
                 <div className="space-y-3">
                   <Textarea
                     value={noteText}
@@ -145,16 +242,22 @@ export default function CountryDetail() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          setNoteText(existingNote?.note || '');
-                          setIsEditingNote(false);
-                        }}
+                        onClick={() => setIsEditingNote(false)}
+                        disabled={saveNoteMutation.isPending}
                       >
                         <X className="w-4 h-4 mr-1" />
                         Cancel
                       </Button>
-                      <Button size="sm" onClick={() => setIsEditingNote(false)}>
-                        <Save className="w-4 h-4 mr-1" />
+                      <Button 
+                        size="sm" 
+                        onClick={handleSaveNote}
+                        disabled={saveNoteMutation.isPending}
+                      >
+                        {saveNoteMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="w-4 h-4 mr-1" />
+                        )}
                         Save
                       </Button>
                     </div>
@@ -162,7 +265,7 @@ export default function CountryDetail() {
                 </div>
               ) : (
                 <p className="text-foreground leading-relaxed">
-                  {noteText || (
+                  {currentNoteText || (
                     <span className="text-muted-foreground italic">
                       No notes yet. Click edit to add your thoughts about this country.
                     </span>
@@ -177,26 +280,92 @@ export default function CountryDetail() {
                 <h2 className="text-lg font-display font-semibold text-foreground">
                   Photos
                 </h2>
-                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
-                  <ImagePlus className="w-4 h-4" />
-                  Add Photo
-                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {images.length}/{maxImages}
+                </span>
               </div>
+
+              {/* Image limit warning */}
+              {!canAddImage && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    You've reached the maximum of {maxImages} photos for this country. Delete an existing photo to add a new one.
+                  </AlertDescription>
+                </Alert>
+              )}
               
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {/* Empty state */}
-                <div className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary/70 transition-colors cursor-pointer">
-                  <ImagePlus className="w-8 h-8 mb-2" />
-                  <span className="text-sm">Add photo</span>
+              {imagesLoading ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} className="aspect-square rounded-xl" />
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {images.map(image => (
+                      <div key={image.id} className="relative group aspect-square">
+                        <img
+                          src={image.image_url}
+                          alt={`Photo from ${country.name}`}
+                          className="w-full h-full object-cover rounded-xl"
+                        />
+                        <button
+                          onClick={() => handleDeleteImage(image.id)}
+                          disabled={deleteImageMutation.isPending}
+                          className="absolute top-2 right-2 p-1.5 rounded-full bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* Add photo placeholder */}
+                    {canAddImage && (
+                      <div className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary/70 transition-colors">
+                        <ImagePlus className="w-8 h-8 mb-2" />
+                        <span className="text-sm">Add photo</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add image form */}
+                  {canAddImage && (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Paste image URL..."
+                        value={imageUrl}
+                        onChange={(e) => setImageUrl(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={handleAddImage}
+                        disabled={!imageUrl.trim() || addImageMutation.isPending}
+                      >
+                        {addImageMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'Add'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+              
               <p className="text-xs text-muted-foreground">
-                Upload up to 5 photos from your travels to {country.name}
+                Upload up to {maxImages} photos from your travels to {country.name}
               </p>
             </section>
 
             {/* Trips Section */}
-            {trips.length > 0 && (
+            {tripsLoading ? (
+              <section className="card-elevated p-6 space-y-4">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-20 w-full" />
+              </section>
+            ) : trips.length > 0 && (
               <section className="card-elevated p-6 space-y-4">
                 <h2 className="text-lg font-display font-semibold text-foreground">
                   Related Trips
@@ -213,7 +382,8 @@ export default function CountryDetail() {
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                         <Calendar className="w-3.5 h-3.5" />
                         <span>
-                          {format(new Date(trip.startDate), 'MMM d')} - {format(new Date(trip.endDate), 'MMM d, yyyy')}
+                          {format(new Date(trip.start_date), 'MMM d')}
+                          {trip.end_date && ` - ${format(new Date(trip.end_date), 'MMM d, yyyy')}`}
                         </span>
                       </div>
                     </div>
@@ -225,33 +395,6 @@ export default function CountryDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Cities Visited */}
-            <section className="card-elevated p-6 space-y-4">
-              <h2 className="text-lg font-display font-semibold text-foreground">
-                Cities Visited
-              </h2>
-              {cities.length > 0 ? (
-                <ul className="space-y-2">
-                  {cities.map(city => (
-                    <li 
-                      key={city.id}
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <MapPin className="w-4 h-4 text-primary" />
-                      <span className="text-foreground">{city.name}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  No cities logged yet.
-                </p>
-              )}
-              <Button variant="outline" size="sm" className="w-full">
-                Add City
-              </Button>
-            </section>
-
             {/* Quick Stats */}
             <section className="card-elevated p-6 space-y-4">
               <h2 className="text-lg font-display font-semibold text-foreground">
@@ -260,15 +403,15 @@ export default function CountryDetail() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <p className="text-2xl font-display font-bold text-foreground">
-                    {visitData?.visitCount || 0}
+                    {visitCount}
                   </p>
                   <p className="text-xs text-muted-foreground">Visits</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-display font-bold text-foreground">
-                    {cities.length}
+                    {trips.length}
                   </p>
-                  <p className="text-xs text-muted-foreground">Cities</p>
+                  <p className="text-xs text-muted-foreground">Trips</p>
                 </div>
               </div>
             </section>
