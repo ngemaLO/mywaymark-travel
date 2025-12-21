@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShareModal } from '@/components/ShareModal';
+import { FlightsImportModal } from '@/components/FlightsImportModal';
 import {
   Sheet,
   SheetContent,
@@ -20,6 +21,7 @@ const navItems = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -71,6 +73,7 @@ export function Header() {
                   variant="outline"
                   size="sm"
                   className="hidden sm:flex gap-2"
+                  onClick={() => setImportModalOpen(true)}
                 >
                   <Upload className="w-4 h-4" />
                   Import
@@ -144,9 +147,16 @@ export function Header() {
                   
                   {user ? (
                     <>
-                      <Button variant="outline" className="justify-start gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="justify-start gap-3"
+                        onClick={() => {
+                          setImportModalOpen(true);
+                          setMobileMenuOpen(false);
+                        }}
+                      >
                         <Upload className="w-4 h-4" />
-                        Import Data
+                        Import Flights
                       </Button>
                       
                       <Button 
@@ -204,6 +214,7 @@ export function Header() {
       </header>
 
       <ShareModal open={shareModalOpen} onOpenChange={setShareModalOpen} />
+      <FlightsImportModal open={importModalOpen} onOpenChange={setImportModalOpen} />
     </>
   );
 }
