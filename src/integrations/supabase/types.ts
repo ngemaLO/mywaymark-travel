@@ -14,7 +14,376 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      countries: {
+        Row: {
+          continent: string
+          flag_primary_color: string | null
+          iso2: string
+          name: string
+          silhouette_asset_url: string | null
+        }
+        Insert: {
+          continent: string
+          flag_primary_color?: string | null
+          iso2: string
+          name: string
+          silhouette_asset_url?: string | null
+        }
+        Update: {
+          continent?: string
+          flag_primary_color?: string | null
+          iso2?: string
+          name?: string
+          silhouette_asset_url?: string | null
+        }
+        Relationships: []
+      }
+      country_images: {
+        Row: {
+          country_iso2: string
+          created_at: string | null
+          id: string
+          image_url: string
+          thumb_url: string | null
+          user_id: string
+        }
+        Insert: {
+          country_iso2: string
+          created_at?: string | null
+          id?: string
+          image_url: string
+          thumb_url?: string | null
+          user_id: string
+        }
+        Update: {
+          country_iso2?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          thumb_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_images_country_iso2_fkey"
+            columns: ["country_iso2"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
+      }
+      country_notes: {
+        Row: {
+          country_iso2: string
+          id: string
+          note: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          country_iso2: string
+          id?: string
+          note?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          country_iso2?: string
+          id?: string
+          note?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "country_notes_country_iso2_fkey"
+            columns: ["country_iso2"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
+      }
+      flights: {
+        Row: {
+          airline: string | null
+          created_at: string | null
+          flight_date: string
+          flight_number: string | null
+          from_airport: string
+          from_country_iso2: string | null
+          id: string
+          source: string
+          to_airport: string
+          to_country_iso2: string | null
+          user_id: string
+        }
+        Insert: {
+          airline?: string | null
+          created_at?: string | null
+          flight_date: string
+          flight_number?: string | null
+          from_airport: string
+          from_country_iso2?: string | null
+          id?: string
+          source: string
+          to_airport: string
+          to_country_iso2?: string | null
+          user_id: string
+        }
+        Update: {
+          airline?: string | null
+          created_at?: string | null
+          flight_date?: string
+          flight_number?: string | null
+          from_airport?: string
+          from_country_iso2?: string | null
+          id?: string
+          source?: string
+          to_airport?: string
+          to_country_iso2?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flights_from_country_iso2_fkey"
+            columns: ["from_country_iso2"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["iso2"]
+          },
+          {
+            foreignKeyName: "flights_to_country_iso2_fkey"
+            columns: ["to_country_iso2"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
+      }
+      places: {
+        Row: {
+          country_iso2: string
+          created_at: string | null
+          external_place_id: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          type: string
+        }
+        Insert: {
+          country_iso2: string
+          created_at?: string | null
+          external_place_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          type: string
+        }
+        Update: {
+          country_iso2?: string
+          created_at?: string | null
+          external_place_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "places_country_iso2_fkey"
+            columns: ["country_iso2"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          privacy_no_background_tracking: boolean | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          privacy_no_background_tracking?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          privacy_no_background_tracking?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      share_links: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          detail_level: string | null
+          expires_at: string | null
+          id: string
+          scope_badges: boolean | null
+          scope_images: boolean | null
+          scope_map: boolean | null
+          scope_notes: boolean | null
+          scope_stats: boolean | null
+          scope_timeline: boolean | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          detail_level?: string | null
+          expires_at?: string | null
+          id?: string
+          scope_badges?: boolean | null
+          scope_images?: boolean | null
+          scope_map?: boolean | null
+          scope_notes?: boolean | null
+          scope_stats?: boolean | null
+          scope_timeline?: boolean | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          detail_level?: string | null
+          expires_at?: string | null
+          id?: string
+          scope_badges?: boolean | null
+          scope_images?: boolean | null
+          scope_map?: boolean | null
+          scope_notes?: boolean | null
+          scope_stats?: boolean | null
+          scope_timeline?: boolean | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trips: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          id: string
+          inferred: boolean | null
+          source: string
+          start_date: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          inferred?: boolean | null
+          source: string
+          start_date: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          inferred?: boolean | null
+          source?: string
+          start_date?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      visits: {
+        Row: {
+          arrival_date: string
+          country_iso2: string
+          created_at: string | null
+          departure_date: string | null
+          id: string
+          place_id: string | null
+          source: string
+          source_confidence: string | null
+          trip_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          arrival_date: string
+          country_iso2: string
+          created_at?: string | null
+          departure_date?: string | null
+          id?: string
+          place_id?: string | null
+          source: string
+          source_confidence?: string | null
+          trip_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          arrival_date?: string
+          country_iso2?: string
+          created_at?: string | null
+          departure_date?: string | null
+          id?: string
+          place_id?: string | null
+          source?: string
+          source_confidence?: string | null
+          trip_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visits_country_iso2_fkey"
+            columns: ["country_iso2"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["iso2"]
+          },
+          {
+            foreignKeyName: "visits_place_id_fkey"
+            columns: ["place_id"]
+            isOneToOne: false
+            referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "visits_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
