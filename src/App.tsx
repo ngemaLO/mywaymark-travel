@@ -9,6 +9,8 @@ import CountryDetail from "./pages/CountryDetail";
 import Timeline from "./pages/Timeline";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
+import SharedView from "./pages/SharedView";
+import ShareLinksManagement from "./pages/ShareLinksManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/country/:iso" element={<CountryDetail />} />
             <Route path="/timeline" element={<Timeline />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/share/:token" element={<SharedView />} />
+            <Route path="/share-links" element={<ShareLinksManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
