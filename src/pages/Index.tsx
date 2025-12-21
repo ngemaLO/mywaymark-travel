@@ -1,12 +1,63 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Header } from '@/components/Header';
+import { WorldMap } from '@/components/WorldMap';
+import { StatsRow } from '@/components/StatsRow';
+import { BadgeGrid } from '@/components/BadgeGrid';
+import { TimelinePreview } from '@/components/TimelinePreview';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container py-8 space-y-10">
+        {/* Hero Section */}
+        <section className="space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
+              Your Travel Story
+            </h1>
+            <p className="text-muted-foreground max-w-lg">
+              Track every country, every city, every moment. Your private travel ledger with beautifully shareable views.
+            </p>
+          </div>
+        </section>
+
+        {/* World Map */}
+        <section className="opacity-0 animate-fade-in" style={{ animationDelay: '100ms' }}>
+          <WorldMap onCountryClick={(iso) => navigate(`/country/${iso}`)} />
+        </section>
+
+        {/* Stats Row */}
+        <section>
+          <StatsRow />
+        </section>
+
+        {/* Two Column Layout */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Badges Section */}
+          <section className="lg:col-span-2 space-y-4">
+            <h2 className="text-xl font-display font-semibold text-foreground">
+              Country Collection
+            </h2>
+            <BadgeGrid />
+          </section>
+
+          {/* Timeline Preview */}
+          <section className="lg:col-span-1">
+            <TimelinePreview />
+          </section>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/50 py-8 mt-16">
+        <div className="container text-center text-sm text-muted-foreground">
+          <p>Waymark — Your private travel ledger</p>
+        </div>
+      </footer>
     </div>
   );
 };
