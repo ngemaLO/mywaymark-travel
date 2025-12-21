@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { CountryBadge } from './CountryBadge';
 import { countries, continents } from '@/data/countries';
-import { getCountryBadgeState, getVisitedCountryIsos } from '@/data/mockData';
+import { useVisitedCountries } from '@/hooks/useVisits';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function BadgeGrid() {
   const [showAll, setShowAll] = useState(false);
   const [selectedContinent, setSelectedContinent] = useState<string | null>(null);
   const navigate = useNavigate();
-  const visitedIsos = getVisitedCountryIsos();
+  const { visitedIsos, getCountryBadgeState, isLoading } = useVisitedCountries();
+  const { user } = useAuth();
 
   // Get visited countries first, then others
   const sortedCountries = [...countries].sort((a, b) => {
@@ -26,6 +29,31 @@ export function BadgeGrid() {
     : sortedCountries;
 
   const displayCountries = showAll ? filteredCountries : filteredCountries.slice(0, 12);
+
+  if (!user) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Sign in to see your country collection
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-8 w-20 rounded-full" />
+          ))}
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+            <Skeleton key={i} className="w-16 h-20" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

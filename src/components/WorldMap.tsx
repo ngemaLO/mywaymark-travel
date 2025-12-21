@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
-import { getVisitedCountryIsos, getCountryBadgeState } from '@/data/mockData';
+import { useVisitedCountries } from '@/hooks/useVisits';
 import { getCountryByIso } from '@/data/countries';
+import { useAuth } from '@/contexts/AuthContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface WorldMapProps {
   onCountryClick?: (iso2: string) => void;
@@ -49,10 +51,11 @@ const countryPaths: Record<string, string> = {
 
 export function WorldMap({ onCountryClick }: WorldMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
-  const visitedCountries = getVisitedCountryIsos();
+  const { visitedIsos, getCountryBadgeState, isLoading } = useVisitedCountries();
+  const { user } = useAuth();
 
   const getCountryFill = useCallback((iso2: string) => {
-    const isVisited = visitedCountries.includes(iso2);
+    const isVisited = visitedIsos.includes(iso2);
     const isHovered = hoveredCountry === iso2;
 
     if (!isVisited) {
@@ -72,13 +75,32 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       default:
         return 'hsl(var(--map-land))';
     }
-  }, [hoveredCountry, visitedCountries]);
+  }, [hoveredCountry, visitedIsos, getCountryBadgeState]);
 
   const handleCountryClick = (iso2: string) => {
-    if (visitedCountries.includes(iso2) && onCountryClick) {
+    if (visitedIsos.includes(iso2) && onCountryClick) {
       onCountryClick(iso2);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="map-container group">
+        <div className="absolute inset-0 bg-gradient-to-b from-muted/50 to-muted" />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <p className="text-muted-foreground">Sign in to see your travel map</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="map-container">
+        <Skeleton className="w-full h-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="map-container group">
@@ -108,7 +130,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         {/* Country paths */}
         {Object.entries(countryPaths).map(([iso2, path]) => {
           const country = getCountryByIso(iso2);
-          const isVisited = visitedCountries.includes(iso2);
+          const isVisited = visitedIsos.includes(iso2);
           
           return (
             <g key={iso2}>
@@ -159,7 +181,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       {/* Visited count badge */}
       <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-border/50 shadow-md">
         <span className="text-sm font-medium text-foreground">
-          {visitedCountries.length} countries
+          {visitedIsos.length} countries
         </span>
       </div>
     </div>

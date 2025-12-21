@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, Share2, Menu, X, MapPin, Clock, Settings, User } from 'lucide-react';
+import { Upload, Share2, Menu, MapPin, Clock, Settings, User, LogOut } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Sheet,
   SheetContent,
@@ -19,6 +20,12 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -55,30 +62,45 @@ export function Header() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden sm:flex gap-2"
-          >
-            <Upload className="w-4 h-4" />
-            Import
-          </Button>
-          
-          <Button
-            size="sm"
-            className="hidden sm:flex gap-2"
-          >
-            <Share2 className="w-4 h-4" />
-            Share
-          </Button>
+          {user ? (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden sm:flex gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Import
+              </Button>
+              
+              <Button
+                size="sm"
+                className="hidden sm:flex gap-2"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hidden sm:flex"
-          >
-            <User className="w-4 h-4" />
-          </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="hidden sm:flex"
+                onClick={handleSignOut}
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => navigate('/auth')}
+              className="gap-2"
+            >
+              <User className="w-4 h-4" />
+              Sign In
+            </Button>
+          )}
 
           {/* Mobile menu */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -106,15 +128,42 @@ export function Header() {
                 
                 <hr className="my-4 border-border" />
                 
-                <Button variant="outline" className="justify-start gap-3">
-                  <Upload className="w-4 h-4" />
-                  Import Data
-                </Button>
-                
-                <Button className="justify-start gap-3">
-                  <Share2 className="w-4 h-4" />
-                  Share Profile
-                </Button>
+                {user ? (
+                  <>
+                    <Button variant="outline" className="justify-start gap-3">
+                      <Upload className="w-4 h-4" />
+                      Import Data
+                    </Button>
+                    
+                    <Button className="justify-start gap-3">
+                      <Share2 className="w-4 h-4" />
+                      Share Profile
+                    </Button>
+
+                    <Button 
+                      variant="ghost" 
+                      className="justify-start gap-3 text-destructive"
+                      onClick={() => {
+                        handleSignOut();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    className="justify-start gap-3"
+                    onClick={() => {
+                      navigate('/auth');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <User className="w-4 h-4" />
+                    Sign In
+                  </Button>
+                )}
               </nav>
             </SheetContent>
           </Sheet>

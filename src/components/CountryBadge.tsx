@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { BadgeState } from '@/data/mockData';
+import { BadgeState } from '@/hooks/useVisits';
 import { Country } from '@/data/countries';
 import { Check, Lock } from 'lucide-react';
 
