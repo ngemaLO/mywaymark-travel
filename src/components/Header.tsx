@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Upload, Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon } from 'lucide-react';
+import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plane, Map } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShareModal } from '@/components/ShareModal';
 import { FlightsImportModal } from '@/components/FlightsImportModal';
+import { GoogleTimelineImportModal } from '@/components/GoogleTimelineImportModal';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: MapPin },
@@ -21,7 +28,8 @@ const navItems = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [flightsImportOpen, setFlightsImportOpen] = useState(false);
+  const [googleImportOpen, setGoogleImportOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -69,15 +77,27 @@ export function Header() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hidden sm:flex gap-2"
-                  onClick={() => setImportModalOpen(true)}
-                >
-                  <Upload className="w-4 h-4" />
-                  Import
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="hidden sm:flex gap-2"
+                    >
+                      Import
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setGoogleImportOpen(true)}>
+                      <Map className="w-4 h-4 mr-2" />
+                      Google Timeline
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setFlightsImportOpen(true)}>
+                      <Plane className="w-4 h-4 mr-2" />
+                      Flights CSV
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 
                 <Button
                   size="sm"
@@ -147,17 +167,31 @@ export function Header() {
                   
                   {user ? (
                     <>
+                      <p className="text-xs text-muted-foreground px-3 mb-1">Import Data</p>
                       <Button 
-                        variant="outline" 
+                        variant="ghost" 
                         className="justify-start gap-3"
                         onClick={() => {
-                          setImportModalOpen(true);
+                          setGoogleImportOpen(true);
                           setMobileMenuOpen(false);
                         }}
                       >
-                        <Upload className="w-4 h-4" />
-                        Import Flights
+                        <Map className="w-4 h-4" />
+                        Google Timeline
                       </Button>
+                      <Button 
+                        variant="ghost" 
+                        className="justify-start gap-3"
+                        onClick={() => {
+                          setFlightsImportOpen(true);
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        <Plane className="w-4 h-4" />
+                        Flights CSV
+                      </Button>
+                      
+                      <hr className="my-4 border-border" />
                       
                       <Button 
                         className="justify-start gap-3"
@@ -214,7 +248,8 @@ export function Header() {
       </header>
 
       <ShareModal open={shareModalOpen} onOpenChange={setShareModalOpen} />
-      <FlightsImportModal open={importModalOpen} onOpenChange={setImportModalOpen} />
+      <FlightsImportModal open={flightsImportOpen} onOpenChange={setFlightsImportOpen} />
+      <GoogleTimelineImportModal open={googleImportOpen} onOpenChange={setGoogleImportOpen} />
     </>
   );
 }
