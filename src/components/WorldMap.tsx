@@ -23,8 +23,16 @@ interface CountryFeature {
 // TopoJSON URL from Natural Earth via jsdelivr
 const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
 
+interface TooltipState {
+  x: number;
+  y: number;
+  title: string;
+  subtitle?: string;
+}
+
 export function WorldMap({ onCountryClick }: WorldMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [geoData, setGeoData] = useState<CountryFeature[] | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   const { visitedIsos, isLoading } = useVisitedCountries();
@@ -226,36 +234,50 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
           const iso2 = getIso2FromFeature(feature);
           const isVisited = iso2 ? visitedIsos.includes(iso2) : false;
           const path = pathGenerator(feature.geometry);
-          const tooltipInfo = getTooltipInfo(feature);
           
           if (!path) return null;
           
-          // Build tooltip text
-          const tooltipText = tooltipInfo 
-            ? tooltipInfo.subtitle 
-              ? `${tooltipInfo.title}\n${tooltipInfo.subtitle}`
-              : tooltipInfo.title
-            : null;
-          
           return (
-            <g key={feature.id || index}>
-              <path
-                d={path}
-                fill={getCountryFill(iso2)}
-                stroke="hsl(var(--border))"
-                strokeWidth="0.5"
-                className={`transition-all duration-300 ${
-                  isVisited ? 'cursor-pointer hover:brightness-110' : 'cursor-default'
-                }`}
-                onMouseEnter={() => iso2 && setHoveredCountry(iso2)}
-                onMouseLeave={() => setHoveredCountry(null)}
-                onClick={() => handleCountryClick(iso2)}
-              />
-              {/* Country tooltip on hover */}
-              {hoveredCountry === iso2 && tooltipText && (
-                <title>{tooltipText}</title>
-              )}
-            </g>
+            <path
+              key={feature.id || index}
+              d={path}
+              fill={getCountryFill(iso2)}
+              stroke="hsl(var(--border))"
+              strokeWidth="0.5"
+              className={`transition-all duration-300 ${
+                isVisited ? 'cursor-pointer hover:brightness-110' : 'cursor-default'
+              }`}
+              onMouseEnter={(e) => {
+                iso2 && setHoveredCountry(iso2);
+                const info = getTooltipInfo(feature);
+                if (info) {
+                  const rect = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                  setTooltip({
+                    x: e.clientX - (rect?.left || 0),
+                    y: e.clientY - (rect?.top || 0),
+                    title: info.subtitle ? `${info.title} • SUBTITLE ACTIVE` : info.title,
+                    subtitle: info.subtitle
+                  });
+                }
+              }}
+              onMouseMove={(e) => {
+                const info = getTooltipInfo(feature);
+                if (info) {
+                  const rect = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                  setTooltip({
+                    x: e.clientX - (rect?.left || 0),
+                    y: e.clientY - (rect?.top || 0),
+                    title: info.subtitle ? `${info.title} • SUBTITLE ACTIVE` : info.title,
+                    subtitle: info.subtitle
+                  });
+                }
+              }}
+              onMouseLeave={() => {
+                setHoveredCountry(null);
+                setTooltip(null);
+              }}
+              onClick={() => handleCountryClick(iso2)}
+            />
           );
         })}
       </svg>
@@ -278,6 +300,23 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
           {visitedIsos.length} countries
         </span>
       </div>
+
+      {/* Custom tooltip */}
+      {tooltip && (
+        <div 
+          className="absolute pointer-events-none z-50 rounded-md bg-slate-900/90 text-white px-3 py-2 shadow-lg"
+          style={{ 
+            left: tooltip.x + 12, 
+            top: tooltip.y - 10,
+            transform: 'translateY(-100%)'
+          }}
+        >
+          <div className="text-sm font-medium">{tooltip.title}</div>
+          {tooltip.subtitle && (
+            <div className="text-xs text-white/70 mt-0.5">{tooltip.subtitle}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
