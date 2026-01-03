@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { TripModeCard } from '@/components/TripModeCard';
 import { 
   User, 
   Shield, 
@@ -10,13 +11,13 @@ import {
   Trash2, 
   LogOut,
   Upload,
-  Link as LinkIcon
+  Link as LinkIcon,
+  MapPin
 } from 'lucide-react';
 import { useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 
 export default function Settings() {
-  const [privacyNoTracking, setPrivacyNoTracking] = useState(true);
   const [displayName, setDisplayName] = useState('Explorer');
 
   return (
@@ -72,6 +73,32 @@ export default function Settings() {
           </div>
         </section>
 
+        {/* Location & Check-in Section */}
+        <section className="card-elevated p-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <MapPin className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-display font-semibold text-foreground">
+              Location & Check-in
+            </h2>
+          </div>
+          
+          <div className="space-y-4">
+            <TripModeCard />
+            
+            <div className="p-4 rounded-lg bg-muted/30 space-y-2">
+              <p className="text-sm font-medium text-foreground">Privacy First</p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Location is OFF by default</li>
+                <li>• Check-in only collects location when you tap the button</li>
+                <li>• Trip Mode only works while the app is open</li>
+                <li>• No background tracking, ever</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         {/* Privacy Section */}
         <section className="card-elevated p-6 space-y-6">
           <div className="flex items-center gap-3">
@@ -84,21 +111,6 @@ export default function Settings() {
           </div>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>No Background Tracking</Label>
-                <p className="text-sm text-muted-foreground">
-                  Disable all background location tracking and data collection
-                </p>
-              </div>
-              <Switch
-                checked={privacyNoTracking}
-                onCheckedChange={setPrivacyNoTracking}
-              />
-            </div>
-            
-            <Separator />
-            
             <div className="space-y-3">
               <Label>Share Links</Label>
               <p className="text-sm text-muted-foreground">
