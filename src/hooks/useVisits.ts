@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+// Simplified badge state - just visited or not visited
+export type BadgeState = 'locked' | 'visited';
 
 export interface Visit {
   id: string;
@@ -16,7 +15,9 @@ export interface Visit {
   source_confidence: string | null;
 }
 
-export type BadgeState = 'locked' | 'declared' | 'verified';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useVisits() {
   const { user } = useAuth();
@@ -42,42 +43,30 @@ export function useVisits() {
 export function useVisitedCountries() {
   const { data: visits = [], ...rest } = useVisits();
 
-  // Group visits by country and calculate stats
+  // Group visits by country
   const countryVisitMap = visits.reduce((acc, visit) => {
     const iso = visit.country_iso2;
     if (!acc[iso]) {
-      acc[iso] = { visitCount: 0, sources: new Set<string>() };
+      acc[iso] = { visitCount: 0 };
     }
     acc[iso].visitCount++;
-    acc[iso].sources.add(visit.source);
     return acc;
-  }, {} as Record<string, { visitCount: number; sources: Set<string> }>);
+  }, {} as Record<string, { visitCount: number }>);
 
-  // Determine badge state: verified if from google/flight, declared if manual only
-  const visitedCountries = Object.entries(countryVisitMap).reduce((acc, [iso, data]) => {
-    const hasVerifiedSource = data.sources.has('google') || data.sources.has('flight');
-    acc[iso] = {
-      state: hasVerifiedSource ? 'verified' : 'declared' as BadgeState,
-      visitCount: data.visitCount,
-    };
-    return acc;
-  }, {} as Record<string, { state: BadgeState; visitCount: number }>);
+  const visitedIsos = Object.keys(countryVisitMap);
 
-  const visitedIsos = Object.keys(visitedCountries);
-
-  const getCountryBadgeState = (iso: string): BadgeState => {
-    return visitedCountries[iso]?.state || 'locked';
+  const isVisited = (iso: string): boolean => {
+    return visitedIsos.includes(iso);
   };
 
   const getVisitCount = (iso: string): number => {
-    return visitedCountries[iso]?.visitCount || 0;
+    return countryVisitMap[iso]?.visitCount || 0;
   };
 
   return {
     visits,
-    visitedCountries,
     visitedIsos,
-    getCountryBadgeState,
+    isVisited,
     getVisitCount,
     ...rest,
   };

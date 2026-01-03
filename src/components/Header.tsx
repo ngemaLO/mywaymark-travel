@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plane, Map } from 'lucide-react';
+import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plane, Plus } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShareModal } from '@/components/ShareModal';
 import { FlightsImportModal } from '@/components/FlightsImportModal';
-import { GoogleTimelineImportModal } from '@/components/GoogleTimelineImportModal';
+import { AddTripModal } from '@/components/AddTripModal';
 import {
   Sheet,
   SheetContent,
@@ -29,7 +29,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [flightsImportOpen, setFlightsImportOpen] = useState(false);
-  const [googleImportOpen, setGoogleImportOpen] = useState(false);
+  const [addTripOpen, setAddTripOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -77,6 +77,15 @@ export function Header() {
           <div className="flex items-center gap-2">
             {user ? (
               <>
+                <Button
+                  size="sm"
+                  className="hidden sm:flex gap-2"
+                  onClick={() => setAddTripOpen(true)}
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Trip
+                </Button>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -88,10 +97,6 @@ export function Header() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setGoogleImportOpen(true)}>
-                      <Map className="w-4 h-4 mr-2" />
-                      Google Timeline
-                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setFlightsImportOpen(true)}>
                       <Plane className="w-4 h-4 mr-2" />
                       Flights CSV
@@ -100,6 +105,7 @@ export function Header() {
                 </DropdownMenu>
                 
                 <Button
+                  variant="outline"
                   size="sm"
                   className="hidden sm:flex gap-2"
                   onClick={() => setShareModalOpen(true)}
@@ -167,18 +173,18 @@ export function Header() {
                   
                   {user ? (
                     <>
-                      <p className="text-xs text-muted-foreground px-3 mb-1">Import Data</p>
                       <Button 
-                        variant="ghost" 
                         className="justify-start gap-3"
                         onClick={() => {
-                          setGoogleImportOpen(true);
+                          setAddTripOpen(true);
                           setMobileMenuOpen(false);
                         }}
                       >
-                        <Map className="w-4 h-4" />
-                        Google Timeline
+                        <Plus className="w-4 h-4" />
+                        Add Trip
                       </Button>
+
+                      <p className="text-xs text-muted-foreground px-3 mb-1 mt-4">Import Data</p>
                       <Button 
                         variant="ghost" 
                         className="justify-start gap-3"
@@ -194,6 +200,7 @@ export function Header() {
                       <hr className="my-4 border-border" />
                       
                       <Button 
+                        variant="outline"
                         className="justify-start gap-3"
                         onClick={() => {
                           setShareModalOpen(true);
@@ -249,7 +256,7 @@ export function Header() {
 
       <ShareModal open={shareModalOpen} onOpenChange={setShareModalOpen} />
       <FlightsImportModal open={flightsImportOpen} onOpenChange={setFlightsImportOpen} />
-      <GoogleTimelineImportModal open={googleImportOpen} onOpenChange={setGoogleImportOpen} />
+      <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />
     </>
   );
 }

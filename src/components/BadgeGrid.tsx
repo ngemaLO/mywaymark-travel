@@ -4,15 +4,17 @@ import { countries, continents } from '@/data/countries';
 import { useVisitedCountries } from '@/hooks/useVisits';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AddTripModal } from './AddTripModal';
 
 export function BadgeGrid() {
   const [showAll, setShowAll] = useState(false);
   const [selectedContinent, setSelectedContinent] = useState<string | null>(null);
+  const [addTripOpen, setAddTripOpen] = useState(false);
   const navigate = useNavigate();
-  const { visitedIsos, getCountryBadgeState, isLoading } = useVisitedCountries();
+  const { visitedIsos, isLoading } = useVisitedCountries();
   const { user } = useAuth();
 
   // Get visited countries first, then others
@@ -55,77 +57,106 @@ export function BadgeGrid() {
     );
   }
 
+  // Empty state
+  if (visitedIsos.length === 0) {
+    return (
+      <>
+        <div className="text-center py-12 space-y-6">
+          <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center">
+            <MapPin className="w-10 h-10 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-display font-semibold text-foreground">
+              No trips yet
+            </h3>
+            <p className="text-muted-foreground max-w-sm mx-auto">
+              Start building your travel story by adding your first trip. Nothing is tracked automatically — you're in control.
+            </p>
+          </div>
+          <Button onClick={() => setAddTripOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Add Your First Trip
+          </Button>
+        </div>
+        <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />
+      </>
+    );
+  }
+
   return (
-    <div className="space-y-4">
-      {/* Continent filter pills */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setSelectedContinent(null)}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-            selectedContinent === null
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          All
-        </button>
-        {continents.map(continent => (
+    <>
+      <div className="space-y-4">
+        {/* Continent filter pills */}
+        <div className="flex flex-wrap gap-2">
           <button
-            key={continent}
-            onClick={() => setSelectedContinent(continent)}
+            onClick={() => setSelectedContinent(null)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-              selectedContinent === continent
+              selectedContinent === null
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
             }`}
           >
-            {continent}
+            All
           </button>
-        ))}
-      </div>
-
-      {/* Badge grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-        {displayCountries.map((country, index) => (
-          <div
-            key={country.iso2}
-            className="opacity-0 animate-fade-in"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <CountryBadge
-              country={country}
-              state={getCountryBadgeState(country.iso2)}
-              onClick={() => {
-                if (visitedIsos.includes(country.iso2)) {
-                  navigate(`/country/${country.iso2}`);
-                }
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Show more/less button */}
-      {filteredCountries.length > 12 && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAll(!showAll)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            {showAll ? (
-              <>
-                Show Less <ChevronUp className="ml-1 w-4 h-4" />
-              </>
-            ) : (
-              <>
-                Show All ({filteredCountries.length}) <ChevronDown className="ml-1 w-4 h-4" />
-              </>
-            )}
-          </Button>
+          {continents.map(continent => (
+            <button
+              key={continent}
+              onClick={() => setSelectedContinent(continent)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                selectedContinent === continent
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {continent}
+            </button>
+          ))}
         </div>
-      )}
-    </div>
+
+        {/* Badge grid */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+          {displayCountries.map((country, index) => (
+            <div
+              key={country.iso2}
+              className="opacity-0 animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <CountryBadge
+                country={country}
+                visited={visitedIsos.includes(country.iso2)}
+                onClick={() => {
+                  if (visitedIsos.includes(country.iso2)) {
+                    navigate(`/country/${country.iso2}`);
+                  }
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Show more/less button */}
+        {filteredCountries.length > 12 && (
+          <div className="flex justify-center pt-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAll(!showAll)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {showAll ? (
+                <>
+                  Show Less <ChevronUp className="ml-1 w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  Show All ({filteredCountries.length}) <ChevronDown className="ml-1 w-4 h-4" />
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+      </div>
+      <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />
+    </>
   );
 }

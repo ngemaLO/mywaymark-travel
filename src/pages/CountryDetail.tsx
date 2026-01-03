@@ -36,7 +36,7 @@ export default function CountryDetail() {
   const [imageUrl, setImageUrl] = useState('');
   
   const country = iso ? getCountryByIso(iso) : null;
-  const { getCountryBadgeState, isLoading: visitsLoading } = useVisitedCountries();
+  const { isVisited, isLoading: visitsLoading } = useVisitedCountries();
   const { visitCount } = useVisitsByCountry(iso || '');
   const { data: note, isLoading: noteLoading } = useCountryNote(iso || '');
   const { data: images = [], isLoading: imagesLoading } = useCountryImages(iso || '');
@@ -45,7 +45,7 @@ export default function CountryDetail() {
   const addImageMutation = useAddCountryImage();
   const deleteImageMutation = useDeleteCountryImage();
   
-  const badgeState = iso ? getCountryBadgeState(iso) : 'locked';
+  const visited = iso ? isVisited(iso) : false;
   const [noteText, setNoteText] = useState('');
   
   // Sync note text when data loads
@@ -111,7 +111,7 @@ export default function CountryDetail() {
     );
   }
 
-  if (badgeState === 'locked') {
+  if (!visited) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -174,8 +174,7 @@ export default function CountryDetail() {
           <div
             className={cn(
               "w-24 h-24 md:w-32 md:h-32 rounded-2xl flex items-center justify-center text-2xl md:text-3xl font-bold shadow-lg",
-              badgeState === 'declared' && "bg-gradient-to-br from-amber to-amber-dark text-amber-foreground",
-              badgeState === 'verified' && "bg-primary text-primary-foreground"
+              "bg-primary text-primary-foreground"
             )}
           >
             {country.iso2}
@@ -186,17 +185,13 @@ export default function CountryDetail() {
               <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
                 {country.name}
               </h1>
-              <span className={cn(
-                "px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1",
-                badgeState === 'declared' && "bg-amber/20 text-amber-dark",
-                badgeState === 'verified' && "bg-primary/10 text-primary"
-              )}>
+              <span className="px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 bg-primary/10 text-primary">
                 <Check className="w-3 h-3" />
-                {badgeState === 'verified' ? 'Verified' : 'Declared'}
+                Visited
               </span>
             </div>
             <p className="text-muted-foreground">
-              {country.continent} • {visitCount} visits
+              {country.continent} • {visitCount} visit{visitCount !== 1 ? 's' : ''}
             </p>
           </div>
         </section>
