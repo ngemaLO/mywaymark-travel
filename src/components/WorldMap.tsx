@@ -3,7 +3,7 @@ import { useVisitedCountries } from '@/hooks/useVisits';
 import { getCountryByIso } from '@/data/countries';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo';
+import { geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 
@@ -139,8 +139,8 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return numericToIso2[numericId] || null;
   }, [numericToIso2]);
 
-  // Get tooltip info for a feature (handles overseas territories via geometry detection)
-  const getTooltipInfo = useCallback((feature: CountryFeature): { title: string; subtitle?: string } | null => {
+  // Get tooltip info for a feature (handles overseas territories via hover point detection)
+  const getTooltipInfo = useCallback((feature: CountryFeature, hoverLngLat?: [number, number]): { title: string; subtitle?: string } | null => {
     const featureName = feature.properties?.name;
     const iso2 = getIso2FromFeature(feature);
     
@@ -153,22 +153,56 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       };
     }
     
-    // Geometry-based detection for France (French Guiana in South America)
-    if (iso2 === 'FR' || featureName === 'France') {
-      try {
-        const centroid = geoCentroid(feature as unknown as GeoJSON.Feature);
-        const [lng, lat] = centroid;
-        
-        // French Guiana: roughly lng -53, lat 4 (northern South America)
-        // Check if centroid is in South America region (lng < -20, lat between -10 and +15)
-        if (lng < -20 && lat > -10 && lat < 15) {
-          return {
-            title: 'France • GF OVERRIDE',
-            subtitle: 'French Guiana (overseas region)'
-          };
-        }
-      } catch {
-        // If centroid calculation fails, continue with normal flow
+    // Hover-point-based detection for France overseas territories
+    if ((iso2 === 'FR' || featureName === 'France') && hoverLngLat) {
+      const [lng, lat] = hoverLngLat;
+      
+      // French Guiana: roughly lng -54, lat 4 (northern South America)
+      if (lng < -20 && lng > -60 && lat > -10 && lat < 15) {
+        return {
+          title: 'France',
+          subtitle: 'French Guiana (overseas region)'
+        };
+      }
+      
+      // Réunion: roughly lng 55, lat -21 (Indian Ocean, east of Madagascar)
+      if (lng > 50 && lng < 60 && lat > -25 && lat < -15) {
+        return {
+          title: 'France',
+          subtitle: 'Réunion (overseas region)'
+        };
+      }
+      
+      // Mayotte: roughly lng 45, lat -13 (Indian Ocean)
+      if (lng > 40 && lng < 50 && lat > -15 && lat < -10) {
+        return {
+          title: 'France',
+          subtitle: 'Mayotte (overseas department)'
+        };
+      }
+      
+      // New Caledonia: roughly lng 165, lat -21 (Pacific)
+      if (lng > 160 && lng < 170 && lat > -25 && lat < -18) {
+        return {
+          title: 'France',
+          subtitle: 'New Caledonia (special collectivity)'
+        };
+      }
+      
+      // French Polynesia: roughly lng -140 to -150, lat -15 to -20 (Pacific)
+      if (lng < -130 && lng > -160 && lat > -25 && lat < -5) {
+        return {
+          title: 'France',
+          subtitle: 'French Polynesia (overseas collectivity)'
+        };
+      }
+      
+      // Guadeloupe/Martinique: Caribbean, roughly lng -61, lat 14-16
+      if (lng < -55 && lng > -65 && lat > 12 && lat < 20) {
+        return {
+          title: 'France',
+          subtitle: 'French Caribbean (overseas region)'
+        };
       }
     }
     
@@ -268,27 +302,42 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
               }`}
               onMouseEnter={(e) => {
                 iso2 && setHoveredCountry(iso2);
-                const info = getTooltipInfo(feature);
-                if (info) {
-                  const rect = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
-                  setTooltip({
-                    x: e.clientX - (rect?.left || 0),
-                    y: e.clientY - (rect?.top || 0),
-                    title: info.title,
-                    subtitle: info.subtitle
-                  });
+                const svg = e.currentTarget.ownerSVGElement;
+                const rect = svg?.getBoundingClientRect();
+                if (rect && svg) {
+                  // Convert screen coords to SVG viewBox coords, then invert to lng/lat
+                  const svgX = ((e.clientX - rect.left) / rect.width) * 800;
+                  const svgY = ((e.clientY - rect.top) / rect.height) * 450;
+                  const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
+                  
+                  const info = getTooltipInfo(feature, lngLat);
+                  if (info) {
+                    setTooltip({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top,
+                      title: info.title,
+                      subtitle: info.subtitle
+                    });
+                  }
                 }
               }}
               onMouseMove={(e) => {
-                const info = getTooltipInfo(feature);
-                if (info) {
-                  const rect = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
-                  setTooltip({
-                    x: e.clientX - (rect?.left || 0),
-                    y: e.clientY - (rect?.top || 0),
-                    title: info.title,
-                    subtitle: info.subtitle
-                  });
+                const svg = e.currentTarget.ownerSVGElement;
+                const rect = svg?.getBoundingClientRect();
+                if (rect && svg) {
+                  const svgX = ((e.clientX - rect.left) / rect.width) * 800;
+                  const svgY = ((e.clientY - rect.top) / rect.height) * 450;
+                  const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
+                  
+                  const info = getTooltipInfo(feature, lngLat);
+                  if (info) {
+                    setTooltip({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top,
+                      title: info.title,
+                      subtitle: info.subtitle
+                    });
+                  }
                 }
               }}
               onMouseLeave={() => {
