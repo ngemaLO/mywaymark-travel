@@ -5,6 +5,7 @@ import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
 import { useCountryNote, useSaveCountryNote } from '@/hooks/useCountryNotes';
 import { useCountryImages, useAddCountryImage, useDeleteCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
 import { useTripsByCountry } from '@/hooks/useTripsByCountry';
+import { useCitiesByCountry, useAddCity, useRemoveCity } from '@/hooks/useCities';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,7 +22,9 @@ import {
   X,
   Trash2,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  Plus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
@@ -34,6 +37,8 @@ export default function CountryDetail() {
   const { user } = useAuth();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const [cityName, setCityName] = useState('');
+  const [isAddingCity, setIsAddingCity] = useState(false);
   
   const country = iso ? getCountryByIso(iso) : null;
   const { isVisited, isLoading: visitsLoading } = useVisitedCountries();
@@ -41,9 +46,12 @@ export default function CountryDetail() {
   const { data: note, isLoading: noteLoading } = useCountryNote(iso || '');
   const { data: images = [], isLoading: imagesLoading } = useCountryImages(iso || '');
   const { data: trips = [], isLoading: tripsLoading } = useTripsByCountry(iso || '');
+  const { data: cities = [], isLoading: citiesLoading } = useCitiesByCountry(iso || '');
   const saveNoteMutation = useSaveCountryNote();
   const addImageMutation = useAddCountryImage();
   const deleteImageMutation = useDeleteCountryImage();
+  const addCityMutation = useAddCity();
+  const removeCityMutation = useRemoveCity();
   
   const visited = iso ? isVisited(iso) : false;
   const [noteText, setNoteText] = useState('');
@@ -151,6 +159,18 @@ export default function CountryDetail() {
   const handleDeleteImage = async (imageId: string) => {
     if (!iso) return;
     await deleteImageMutation.mutateAsync({ imageId, countryIso2: iso });
+  };
+
+  const handleAddCity = async () => {
+    if (!iso || !cityName.trim()) return;
+    await addCityMutation.mutateAsync({ countryIso2: iso, cityName: cityName.trim() });
+    setCityName('');
+    setIsAddingCity(false);
+  };
+
+  const handleRemoveCity = async (placeId: string) => {
+    if (!iso) return;
+    await removeCityMutation.mutateAsync({ placeId, countryIso2: iso });
   };
 
   return (
@@ -266,6 +286,108 @@ export default function CountryDetail() {
                     </span>
                   )}
                 </p>
+              )}
+            </section>
+
+            {/* Cities Section */}
+            <section className="card-elevated p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  Cities Visited
+                </h2>
+                {!isAddingCity && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddingCity(true)}
+                    className="gap-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add City
+                  </Button>
+                )}
+              </div>
+
+              {citiesLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                <>
+                  {/* Add city form */}
+                  {isAddingCity && (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter city name..."
+                        value={cityName}
+                        onChange={(e) => setCityName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && cityName.trim()) {
+                            handleAddCity();
+                          }
+                        }}
+                        className="flex-1"
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          setIsAddingCity(false);
+                          setCityName('');
+                        }}
+                        disabled={addCityMutation.isPending}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        onClick={handleAddCity}
+                        disabled={!cityName.trim() || addCityMutation.isPending}
+                      >
+                        {addCityMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          'Add'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Cities list */}
+                  {cities.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {cities.map(city => (
+                        <div 
+                          key={city.id}
+                          className="group flex items-center gap-2 px-3 py-2 rounded-full bg-muted/50 hover:bg-muted transition-colors"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-sm font-medium text-foreground">
+                            {city.name}
+                          </span>
+                          {city.visitCount > 1 && (
+                            <span className="text-xs text-muted-foreground">
+                              ×{city.visitCount}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleRemoveCity(city.id)}
+                            disabled={removeCityMutation.isPending}
+                            className="opacity-0 group-hover:opacity-100 p-0.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : !isAddingCity && (
+                    <p className="text-sm text-muted-foreground italic">
+                      No cities added yet. Click "Add City" to track which cities you've visited in {country.name}.
+                    </p>
+                  )}
+                </>
               )}
             </section>
 
