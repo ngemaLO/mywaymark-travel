@@ -75,6 +75,48 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     '887': 'YE', '894': 'ZM', '-99': 'XK'
   }), []);
 
+  // Overseas territories mapping: maps parent ISO2 to territory info by GeoJSON feature name
+  const overseasTerritories: Record<string, { parentIso2: string; parentName: string; territoryName: string; type: string }> = useMemo(() => ({
+    // French overseas territories
+    'French Guiana': { parentIso2: 'FR', parentName: 'France', territoryName: 'French Guiana', type: 'overseas region' },
+    'Guadeloupe': { parentIso2: 'FR', parentName: 'France', territoryName: 'Guadeloupe', type: 'overseas region' },
+    'Martinique': { parentIso2: 'FR', parentName: 'France', territoryName: 'Martinique', type: 'overseas region' },
+    'Réunion': { parentIso2: 'FR', parentName: 'France', territoryName: 'Réunion', type: 'overseas region' },
+    'Mayotte': { parentIso2: 'FR', parentName: 'France', territoryName: 'Mayotte', type: 'overseas department' },
+    'French Polynesia': { parentIso2: 'FR', parentName: 'France', territoryName: 'French Polynesia', type: 'overseas collectivity' },
+    'New Caledonia': { parentIso2: 'FR', parentName: 'France', territoryName: 'New Caledonia', type: 'special collectivity' },
+    'Saint Pierre and Miquelon': { parentIso2: 'FR', parentName: 'France', territoryName: 'Saint Pierre and Miquelon', type: 'overseas collectivity' },
+    'Wallis and Futuna': { parentIso2: 'FR', parentName: 'France', territoryName: 'Wallis and Futuna', type: 'overseas collectivity' },
+    // UK overseas territories
+    'Falkland Islands': { parentIso2: 'GB', parentName: 'United Kingdom', territoryName: 'Falkland Islands', type: 'overseas territory' },
+    'Bermuda': { parentIso2: 'GB', parentName: 'United Kingdom', territoryName: 'Bermuda', type: 'overseas territory' },
+    'Cayman Islands': { parentIso2: 'GB', parentName: 'United Kingdom', territoryName: 'Cayman Islands', type: 'overseas territory' },
+    'British Virgin Islands': { parentIso2: 'GB', parentName: 'United Kingdom', territoryName: 'British Virgin Islands', type: 'overseas territory' },
+    'Turks and Caicos Islands': { parentIso2: 'GB', parentName: 'United Kingdom', territoryName: 'Turks and Caicos Islands', type: 'overseas territory' },
+    'Gibraltar': { parentIso2: 'GB', parentName: 'United Kingdom', territoryName: 'Gibraltar', type: 'overseas territory' },
+    // US territories
+    'Puerto Rico': { parentIso2: 'US', parentName: 'United States', territoryName: 'Puerto Rico', type: 'unincorporated territory' },
+    'Guam': { parentIso2: 'US', parentName: 'United States', territoryName: 'Guam', type: 'unincorporated territory' },
+    'U.S. Virgin Islands': { parentIso2: 'US', parentName: 'United States', territoryName: 'U.S. Virgin Islands', type: 'unincorporated territory' },
+    'American Samoa': { parentIso2: 'US', parentName: 'United States', territoryName: 'American Samoa', type: 'unincorporated territory' },
+    'Northern Mariana Islands': { parentIso2: 'US', parentName: 'United States', territoryName: 'Northern Mariana Islands', type: 'commonwealth' },
+    // Dutch territories
+    'Aruba': { parentIso2: 'NL', parentName: 'Netherlands', territoryName: 'Aruba', type: 'constituent country' },
+    'Curaçao': { parentIso2: 'NL', parentName: 'Netherlands', territoryName: 'Curaçao', type: 'constituent country' },
+    'Sint Maarten': { parentIso2: 'NL', parentName: 'Netherlands', territoryName: 'Sint Maarten', type: 'constituent country' },
+    // Danish territories
+    'Greenland': { parentIso2: 'DK', parentName: 'Denmark', territoryName: 'Greenland', type: 'autonomous territory' },
+    'Faroe Islands': { parentIso2: 'DK', parentName: 'Denmark', territoryName: 'Faroe Islands', type: 'autonomous territory' },
+    // Australian territories
+    'Norfolk Island': { parentIso2: 'AU', parentName: 'Australia', territoryName: 'Norfolk Island', type: 'external territory' },
+    'Christmas Island': { parentIso2: 'AU', parentName: 'Australia', territoryName: 'Christmas Island', type: 'external territory' },
+    'Cocos (Keeling) Islands': { parentIso2: 'AU', parentName: 'Australia', territoryName: 'Cocos Islands', type: 'external territory' },
+    // New Zealand territories
+    'Cook Islands': { parentIso2: 'NZ', parentName: 'New Zealand', territoryName: 'Cook Islands', type: 'associated state' },
+    'Niue': { parentIso2: 'NZ', parentName: 'New Zealand', territoryName: 'Niue', type: 'associated state' },
+    'Tokelau': { parentIso2: 'NZ', parentName: 'New Zealand', territoryName: 'Tokelau', type: 'dependent territory' },
+  }), []);
+
   // Projection and path generator
   const projection = useMemo(() => 
     geoNaturalEarth1()
@@ -88,6 +130,35 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     const numericId = feature.id?.toString().padStart(3, '0');
     return numericToIso2[numericId] || null;
   }, [numericToIso2]);
+
+  // Get tooltip info for a feature (handles overseas territories)
+  const getTooltipInfo = useCallback((feature: CountryFeature): { title: string; subtitle?: string } | null => {
+    const featureName = feature.properties?.name;
+    
+    // Check if it's an overseas territory
+    if (featureName && overseasTerritories[featureName]) {
+      const territory = overseasTerritories[featureName];
+      return {
+        title: territory.parentName,
+        subtitle: `${territory.territoryName} (${territory.type})`
+      };
+    }
+    
+    // Regular country
+    const iso2 = getIso2FromFeature(feature);
+    const country = iso2 ? getCountryByIso(iso2) : null;
+    
+    if (country) {
+      return { title: country.name };
+    }
+    
+    // Fallback to feature name
+    if (featureName) {
+      return { title: featureName };
+    }
+    
+    return null;
+  }, [overseasTerritories, getIso2FromFeature]);
 
   const getCountryFill = useCallback((iso2: string | null) => {
     if (!iso2) return 'hsl(var(--map-land))';
@@ -153,11 +224,18 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         {/* Country paths */}
         {geoData?.map((feature, index) => {
           const iso2 = getIso2FromFeature(feature);
-          const country = iso2 ? getCountryByIso(iso2) : null;
           const isVisited = iso2 ? visitedIsos.includes(iso2) : false;
           const path = pathGenerator(feature.geometry);
+          const tooltipInfo = getTooltipInfo(feature);
           
           if (!path) return null;
+          
+          // Build tooltip text
+          const tooltipText = tooltipInfo 
+            ? tooltipInfo.subtitle 
+              ? `${tooltipInfo.title}\n${tooltipInfo.subtitle}`
+              : tooltipInfo.title
+            : null;
           
           return (
             <g key={feature.id || index}>
@@ -174,8 +252,8 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                 onClick={() => handleCountryClick(iso2)}
               />
               {/* Country tooltip on hover */}
-              {hoveredCountry === iso2 && country && (
-                <title>{country.name}</title>
+              {hoveredCountry === iso2 && tooltipText && (
+                <title>{tooltipText}</title>
               )}
             </g>
           );
