@@ -3,10 +3,13 @@ import { WorldMap } from '@/components/WorldMap';
 import { StatsRow } from '@/components/StatsRow';
 import { BadgeGrid } from '@/components/BadgeGrid';
 import { TimelinePreview } from '@/components/TimelinePreview';
+import { CheckInButton } from '@/components/CheckInButton';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -15,13 +18,16 @@ const Index = () => {
       <main className="container py-8 space-y-10">
         {/* Hero Section */}
         <section className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-              Your Travel Story
-            </h1>
-            <p className="text-muted-foreground max-w-lg">
-              Track every country, every city, every moment. Your private travel ledger with beautifully shareable views.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
+                Your Travel Story
+              </h1>
+              <p className="text-muted-foreground max-w-lg">
+                Track every country, every city, every moment. Your private travel ledger with beautifully shareable views.
+              </p>
+            </div>
+            {user && <CheckInButton />}
           </div>
         </section>
 
