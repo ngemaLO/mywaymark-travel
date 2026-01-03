@@ -1,9 +1,7 @@
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { TripModeCard } from '@/components/TripModeCard';
 import { 
   User, 
   Shield, 
@@ -11,14 +9,14 @@ import {
   Trash2, 
   LogOut,
   Upload,
-  Link as LinkIcon,
-  MapPin
+  Link as LinkIcon
 } from 'lucide-react';
 import { useState } from 'react';
-import { Separator } from '@/components/ui/separator';
+import { useNavigate } from 'react-router-dom';
 
 export default function Settings() {
   const [displayName, setDisplayName] = useState('Explorer');
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,32 +71,6 @@ export default function Settings() {
           </div>
         </section>
 
-        {/* Location & Check-in Section */}
-        <section className="card-elevated p-6 space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-primary" />
-            </div>
-            <h2 className="text-lg font-display font-semibold text-foreground">
-              Location & Check-in
-            </h2>
-          </div>
-          
-          <div className="space-y-4">
-            <TripModeCard />
-            
-            <div className="p-4 rounded-lg bg-muted/30 space-y-2">
-              <p className="text-sm font-medium text-foreground">Privacy First</p>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• Location is OFF by default</li>
-                <li>• Check-in only collects location when you tap the button</li>
-                <li>• Trip Mode only works while the app is open</li>
-                <li>• No background tracking, ever</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
         {/* Privacy Section */}
         <section className="card-elevated p-6 space-y-6">
           <div className="flex items-center gap-3">
@@ -111,12 +83,27 @@ export default function Settings() {
           </div>
           
           <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-muted/30 space-y-2">
+              <p className="text-sm font-medium text-foreground">Your Data, Your Control</p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Nothing is tracked automatically</li>
+                <li>• You manually add all trips and visits</li>
+                <li>• No background location tracking</li>
+                <li>• Your data stays private unless you share it</li>
+              </ul>
+            </div>
+            
             <div className="space-y-3">
               <Label>Share Links</Label>
               <p className="text-sm text-muted-foreground">
                 Manage your active share links and their permissions.
               </p>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2"
+                onClick={() => navigate('/share-links')}
+              >
                 <LinkIcon className="w-4 h-4" />
                 Manage Share Links
               </Button>
@@ -140,7 +127,7 @@ export default function Settings() {
               <div className="space-y-0.5">
                 <p className="font-medium text-foreground">Import Data</p>
                 <p className="text-sm text-muted-foreground">
-                  Import from Google Timeline or Flights CSV
+                  Import flights from a CSV file
                 </p>
               </div>
               <Button variant="outline" size="sm" className="gap-2">

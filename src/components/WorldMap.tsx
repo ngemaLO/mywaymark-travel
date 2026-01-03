@@ -51,7 +51,7 @@ const countryPaths: Record<string, string> = {
 
 export function WorldMap({ onCountryClick }: WorldMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
-  const { visitedIsos, getCountryBadgeState, isLoading } = useVisitedCountries();
+  const { visitedIsos, isLoading } = useVisitedCountries();
   const { user } = useAuth();
 
   const getCountryFill = useCallback((iso2: string) => {
@@ -62,20 +62,13 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       return isHovered ? 'hsl(var(--map-land))' : 'hsl(210 20% 88%)';
     }
 
-    const state = getCountryBadgeState(iso2);
+    // All visited countries use primary color
     if (isHovered) {
       return 'hsl(var(--map-hover))';
     }
     
-    switch (state) {
-      case 'verified':
-        return 'hsl(var(--primary))';
-      case 'declared':
-        return 'hsl(var(--amber))';
-      default:
-        return 'hsl(var(--map-land))';
-    }
-  }, [hoveredCountry, visitedIsos, getCountryBadgeState]);
+    return 'hsl(var(--primary))';
+  }, [hoveredCountry, visitedIsos]);
 
   const handleCountryClick = (iso2: string) => {
     if (visitedIsos.includes(iso2) && onCountryClick) {
@@ -166,11 +159,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       <div className="absolute bottom-4 left-4 flex items-center gap-4 text-xs">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-primary" />
-          <span className="text-muted-foreground">Verified</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-amber" />
-          <span className="text-muted-foreground">Declared</span>
+          <span className="text-muted-foreground">Visited</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-muted" />
