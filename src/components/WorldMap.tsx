@@ -3,7 +3,7 @@ import { useVisitedCountries } from '@/hooks/useVisits';
 import { getCountryByIso } from '@/data/countries';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 
@@ -18,6 +18,15 @@ interface CountryFeature {
     name: string;
   };
   geometry: GeoJSON.Geometry;
+}
+
+// Expanded polygon with centroid info for overseas detection
+interface ExpandedPolygon {
+  originalFeature: CountryFeature;
+  geometry: GeoJSON.Polygon;
+  centroid: [number, number];
+  isOverseas: boolean;
+  overseasInfo?: { parentName: string; territoryName: string; type: string };
 }
 
 // TopoJSON URL from Natural Earth via jsdelivr
@@ -139,6 +148,107 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return numericToIso2[numericId] || null;
   }, [numericToIso2]);
 
+  // Detect if a coordinate is in an overseas territory region
+  const getOverseasInfo = useCallback((iso2: string | null, lng: number, lat: number): { parentName: string; territoryName: string; type: string } | null => {
+    // French overseas territories
+    if (iso2 === 'FR') {
+      // French Guiana: roughly lng -54, lat 4 (northern South America)
+      if (lng < -20 && lng > -60 && lat > -10 && lat < 15) {
+        return { parentName: 'France', territoryName: 'French Guiana', type: 'overseas region' };
+      }
+      // Réunion: roughly lng 55, lat -21 (Indian Ocean)
+      if (lng > 50 && lng < 60 && lat > -25 && lat < -15) {
+        return { parentName: 'France', territoryName: 'Réunion', type: 'overseas region' };
+      }
+      // Mayotte: roughly lng 45, lat -13 (Indian Ocean)
+      if (lng > 40 && lng < 50 && lat > -15 && lat < -10) {
+        return { parentName: 'France', territoryName: 'Mayotte', type: 'overseas department' };
+      }
+      // New Caledonia: roughly lng 165, lat -21 (Pacific)
+      if (lng > 160 && lng < 170 && lat > -25 && lat < -18) {
+        return { parentName: 'France', territoryName: 'New Caledonia', type: 'special collectivity' };
+      }
+      // French Polynesia: roughly lng -140 to -150, lat -15 to -20 (Pacific)
+      if (lng < -130 && lng > -160 && lat > -25 && lat < -5) {
+        return { parentName: 'France', territoryName: 'French Polynesia', type: 'overseas collectivity' };
+      }
+      // Guadeloupe/Martinique: Caribbean
+      if (lng < -55 && lng > -65 && lat > 12 && lat < 20) {
+        return { parentName: 'France', territoryName: 'French Caribbean', type: 'overseas region' };
+      }
+    }
+    
+    // UK overseas territories
+    if (iso2 === 'GB') {
+      // Falkland Islands: roughly lng -59, lat -52
+      if (lng < -55 && lng > -65 && lat < -45 && lat > -55) {
+        return { parentName: 'United Kingdom', territoryName: 'Falkland Islands', type: 'overseas territory' };
+      }
+    }
+    
+    // US territories
+    if (iso2 === 'US') {
+      // Puerto Rico: roughly lng -66, lat 18
+      if (lng < -60 && lng > -70 && lat > 15 && lat < 20) {
+        return { parentName: 'United States', territoryName: 'Puerto Rico', type: 'unincorporated territory' };
+      }
+      // Guam: roughly lng 145, lat 13
+      if (lng > 140 && lng < 150 && lat > 10 && lat < 16) {
+        return { parentName: 'United States', territoryName: 'Guam', type: 'unincorporated territory' };
+      }
+    }
+    
+    // Denmark territories
+    if (iso2 === 'DK') {
+      // Greenland: roughly lng -42, lat 72
+      if (lng < -10 && lng > -75 && lat > 55) {
+        return { parentName: 'Denmark', territoryName: 'Greenland', type: 'autonomous territory' };
+      }
+    }
+    
+    return null;
+  }, []);
+
+  // Expand features to separate MultiPolygon parts for proper overseas coloring
+  const expandedPolygons = useMemo(() => {
+    if (!geoData) return [];
+    
+    const result: ExpandedPolygon[] = [];
+    
+    for (const feature of geoData) {
+      const iso2 = getIso2FromFeature(feature);
+      const geometry = feature.geometry;
+      
+      if (geometry.type === 'Polygon') {
+        const centroid = geoCentroid({ type: 'Feature', geometry, properties: {} } as GeoJSON.Feature);
+        const overseasInfo = iso2 ? getOverseasInfo(iso2, centroid[0], centroid[1]) : null;
+        result.push({
+          originalFeature: feature,
+          geometry: geometry as GeoJSON.Polygon,
+          centroid,
+          isOverseas: !!overseasInfo,
+          overseasInfo: overseasInfo || undefined
+        });
+      } else if (geometry.type === 'MultiPolygon') {
+        // Split into individual polygons
+        for (const coords of geometry.coordinates) {
+          const polygon: GeoJSON.Polygon = { type: 'Polygon', coordinates: coords };
+          const centroid = geoCentroid({ type: 'Feature', geometry: polygon, properties: {} } as GeoJSON.Feature);
+          const overseasInfo = iso2 ? getOverseasInfo(iso2, centroid[0], centroid[1]) : null;
+          result.push({
+            originalFeature: feature,
+            geometry: polygon,
+            centroid,
+            isOverseas: !!overseasInfo,
+            overseasInfo: overseasInfo || undefined
+          });
+        }
+      }
+    }
+    
+    return result;
+  }, [geoData, getIso2FromFeature, getOverseasInfo]);
+
   // Get tooltip info for a feature (handles overseas territories via hover point detection)
   const getTooltipInfo = useCallback((feature: CountryFeature, hoverLngLat?: [number, number]): { title: string; subtitle?: string } | null => {
     const featureName = feature.properties?.name;
@@ -221,8 +331,14 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return null;
   }, [overseasTerritories, getIso2FromFeature]);
 
-  const getCountryFill = useCallback((iso2: string | null) => {
+  // Get fill color - overseas territories are NOT colored as visited even if parent is
+  const getPolygonFill = useCallback((iso2: string | null, isOverseas: boolean) => {
     if (!iso2) return 'hsl(var(--map-land))';
+    
+    // Overseas territories never show as visited (they're counted under parent for stats)
+    if (isOverseas) {
+      return 'hsl(var(--map-land))';
+    }
     
     const isVisited = visitedIsos.includes(iso2);
     const isHovered = hoveredCountry === iso2;
@@ -282,19 +398,19 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         className="w-full h-full relative z-10"
         preserveAspectRatio="xMidYMid meet"
       >
-        {/* Country paths */}
-        {geoData?.map((feature, index) => {
-          const iso2 = getIso2FromFeature(feature);
-          const isVisited = iso2 ? visitedIsos.includes(iso2) : false;
-          const path = pathGenerator(feature.geometry);
+        {/* Country paths - using expanded polygons for proper overseas detection */}
+        {expandedPolygons.map((polygon, index) => {
+          const iso2 = getIso2FromFeature(polygon.originalFeature);
+          const isVisited = iso2 ? visitedIsos.includes(iso2) && !polygon.isOverseas : false;
+          const path = pathGenerator(polygon.geometry);
           
           if (!path) return null;
           
           return (
             <path
-              key={feature.id || index}
+              key={`${polygon.originalFeature.id || index}-${index}`}
               d={path}
-              fill={getCountryFill(iso2)}
+              fill={getPolygonFill(iso2, polygon.isOverseas)}
               stroke="hsl(var(--border))"
               strokeWidth="0.5"
               className={`transition-all duration-300 ${
@@ -305,12 +421,11 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                 const svg = e.currentTarget.ownerSVGElement;
                 const rect = svg?.getBoundingClientRect();
                 if (rect && svg) {
-                  // Convert screen coords to SVG viewBox coords, then invert to lng/lat
                   const svgX = ((e.clientX - rect.left) / rect.width) * 800;
                   const svgY = ((e.clientY - rect.top) / rect.height) * 450;
                   const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
                   
-                  const info = getTooltipInfo(feature, lngLat);
+                  const info = getTooltipInfo(polygon.originalFeature, lngLat);
                   if (info) {
                     setTooltip({
                       x: e.clientX - rect.left,
@@ -329,7 +444,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                   const svgY = ((e.clientY - rect.top) / rect.height) * 450;
                   const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
                   
-                  const info = getTooltipInfo(feature, lngLat);
+                  const info = getTooltipInfo(polygon.originalFeature, lngLat);
                   if (info) {
                     setTooltip({
                       x: e.clientX - rect.left,
