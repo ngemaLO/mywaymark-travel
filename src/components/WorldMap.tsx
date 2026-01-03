@@ -3,7 +3,7 @@ import { useVisitedCountries } from '@/hooks/useVisits';
 import { getCountryByIso } from '@/data/countries';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
-import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 
@@ -139,11 +139,12 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return numericToIso2[numericId] || null;
   }, [numericToIso2]);
 
-  // Get tooltip info for a feature (handles overseas territories)
+  // Get tooltip info for a feature (handles overseas territories via geometry detection)
   const getTooltipInfo = useCallback((feature: CountryFeature): { title: string; subtitle?: string } | null => {
     const featureName = feature.properties?.name;
+    const iso2 = getIso2FromFeature(feature);
     
-    // Check if it's an overseas territory
+    // Check if it's an overseas territory by name first
     if (featureName && overseasTerritories[featureName]) {
       const territory = overseasTerritories[featureName];
       return {
@@ -152,8 +153,26 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       };
     }
     
+    // Geometry-based detection for France (French Guiana in South America)
+    if (iso2 === 'FR' || featureName === 'France') {
+      try {
+        const centroid = geoCentroid(feature as unknown as GeoJSON.Feature);
+        const [lng, lat] = centroid;
+        
+        // French Guiana: roughly lng -53, lat 4 (northern South America)
+        // Check if centroid is in South America region (lng < -20, lat between -10 and +15)
+        if (lng < -20 && lat > -10 && lat < 15) {
+          return {
+            title: 'France • GF OVERRIDE',
+            subtitle: 'French Guiana (overseas region)'
+          };
+        }
+      } catch {
+        // If centroid calculation fails, continue with normal flow
+      }
+    }
+    
     // Regular country
-    const iso2 = getIso2FromFeature(feature);
     const country = iso2 ? getCountryByIso(iso2) : null;
     
     if (country) {
@@ -255,7 +274,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                   setTooltip({
                     x: e.clientX - (rect?.left || 0),
                     y: e.clientY - (rect?.top || 0),
-                    title: info.subtitle ? `${info.title} • SUBTITLE ACTIVE` : info.title,
+                    title: info.title,
                     subtitle: info.subtitle
                   });
                 }
@@ -267,7 +286,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                   setTooltip({
                     x: e.clientX - (rect?.left || 0),
                     y: e.clientY - (rect?.top || 0),
-                    title: info.subtitle ? `${info.title} • SUBTITLE ACTIVE` : info.title,
+                    title: info.title,
                     subtitle: info.subtitle
                   });
                 }
