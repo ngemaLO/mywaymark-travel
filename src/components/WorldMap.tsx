@@ -331,7 +331,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return null;
   }, [overseasTerritories, getIso2FromFeature]);
 
-  // Get fill color - overseas territories are NOT colored as visited even if parent is
+  // Get fill color - use flag colors for visited countries
   const getPolygonFill = useCallback((iso2: string | null, isOverseas: boolean) => {
     if (!iso2) return 'hsl(var(--map-land))';
     
@@ -347,6 +347,16 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       return isHovered ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
     }
 
+    // Use the country's flag color for visited countries
+    const country = getCountryByIso(iso2);
+    const flagColor = country?.flagPrimaryColor;
+    
+    if (flagColor) {
+      // Add slight brightness adjustment on hover
+      return isHovered ? flagColor : flagColor;
+    }
+
+    // Fallback to default visited color if no flag color
     if (isHovered) {
       return 'hsl(var(--map-visited-hover))';
     }
@@ -468,8 +478,8 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       {/* Legend */}
       <div className="absolute bottom-4 left-4 flex items-center gap-4 text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-visited))' }} />
-          <span className="text-muted-foreground">Visited</span>
+          <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#0055A4] via-[#009C3B] to-[#BC002D]" />
+          <span className="text-muted-foreground">Visited (flag colors)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-land))' }} />
