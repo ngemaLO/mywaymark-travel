@@ -64,7 +64,7 @@ export function CheckInModal({ open, onOpenChange }: CheckInModalProps) {
         user_id: user.id,
         country_iso2: location.countryCode,
         arrival_date: new Date().toISOString().split('T')[0],
-        source: 'checkin',
+        source: 'manual',
         source_confidence: 'high',
       });
 
