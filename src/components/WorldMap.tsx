@@ -90,20 +90,20 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
   }, [numericToIso2]);
 
   const getCountryFill = useCallback((iso2: string | null) => {
-    if (!iso2) return 'hsl(var(--muted))';
+    if (!iso2) return 'hsl(var(--map-land))';
     
     const isVisited = visitedIsos.includes(iso2);
     const isHovered = hoveredCountry === iso2;
 
     if (!isVisited) {
-      return isHovered ? 'hsl(var(--muted-foreground) / 0.3)' : 'hsl(var(--muted))';
+      return isHovered ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
     }
 
     if (isHovered) {
-      return 'hsl(var(--primary) / 0.8)';
+      return 'hsl(var(--map-visited-hover))';
     }
     
-    return 'hsl(var(--primary))';
+    return 'hsl(var(--map-visited))';
   }, [hoveredCountry, visitedIsos]);
 
   const handleCountryClick = (iso2: string | null) => {
@@ -133,18 +133,15 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
 
   return (
     <div className="map-container group">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-muted/50 to-muted" />
-      
-      {/* Grid pattern overlay */}
+      {/* Subtle grid pattern - atmospheric, tertiary */}
       <div 
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.015]"
         style={{
           backgroundImage: `
-            linear-gradient(hsl(var(--foreground)) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)
+            linear-gradient(hsl(var(--map-grid)) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(var(--map-grid)) 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px'
+          backgroundSize: '50px 50px'
         }}
       />
 
@@ -188,11 +185,11 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       {/* Legend */}
       <div className="absolute bottom-4 left-4 flex items-center gap-4 text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-primary" />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-visited))' }} />
           <span className="text-muted-foreground">Visited</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-muted" />
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-land))' }} />
           <span className="text-muted-foreground">Not visited</span>
         </div>
       </div>
