@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plane, Plus } from 'lucide-react';
+import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plane, Plus, Navigation } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShareModal } from '@/components/ShareModal';
 import { FlightsImportModal } from '@/components/FlightsImportModal';
 import { AddTripModal } from '@/components/AddTripModal';
+import { CheckInModal } from '@/components/CheckInModal';
 import {
   Sheet,
   SheetContent,
@@ -30,6 +31,7 @@ export function Header() {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [flightsImportOpen, setFlightsImportOpen] = useState(false);
   const [addTripOpen, setAddTripOpen] = useState(false);
+  const [checkInOpen, setCheckInOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -79,6 +81,17 @@ export function Header() {
               <>
                 <Button
                   size="sm"
+                  variant="default"
+                  className="hidden sm:flex gap-2"
+                  onClick={() => setCheckInOpen(true)}
+                >
+                  <Navigation className="w-4 h-4" />
+                  Check In
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
                   className="hidden sm:flex gap-2"
                   onClick={() => setAddTripOpen(true)}
                 >
@@ -176,6 +189,18 @@ export function Header() {
                       <Button 
                         className="justify-start gap-3"
                         onClick={() => {
+                          setCheckInOpen(true);
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        <Navigation className="w-4 h-4" />
+                        Check In
+                      </Button>
+
+                      <Button 
+                        variant="outline"
+                        className="justify-start gap-3"
+                        onClick={() => {
                           setAddTripOpen(true);
                           setMobileMenuOpen(false);
                         }}
@@ -257,6 +282,7 @@ export function Header() {
       <ShareModal open={shareModalOpen} onOpenChange={setShareModalOpen} />
       <FlightsImportModal open={flightsImportOpen} onOpenChange={setFlightsImportOpen} />
       <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />
+      <CheckInModal open={checkInOpen} onOpenChange={setCheckInOpen} />
     </>
   );
 }

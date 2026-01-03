@@ -2,6 +2,7 @@ import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { 
   User, 
   Shield, 
@@ -9,13 +10,16 @@ import {
   Trash2, 
   LogOut,
   Upload,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Navigation,
+  MapPin
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Settings() {
   const [displayName, setDisplayName] = useState('Explorer');
+  const [tripModeEnabled, setTripModeEnabled] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -71,6 +75,55 @@ export default function Settings() {
           </div>
         </section>
 
+        {/* Location & Check-in Section */}
+        <section className="card-elevated p-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Navigation className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-display font-semibold text-foreground">
+              Location & Check-in
+            </h2>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-muted/30 space-y-2">
+              <p className="text-sm font-medium text-foreground">Privacy-First Location</p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>• Location is only accessed when you tap "Check In"</li>
+                <li>• No background tracking ever</li>
+                <li>• No continuous location monitoring</li>
+                <li>• Works only while the app is open</li>
+              </ul>
+            </div>
+
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <p className="font-medium text-foreground">Trip Mode</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  When enabled, Waymark can suggest countries to check in when the app is open
+                </p>
+              </div>
+              <Switch
+                checked={tripModeEnabled}
+                onCheckedChange={setTripModeEnabled}
+              />
+            </div>
+
+            {tripModeEnabled && (
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <p className="text-xs text-primary">
+                  Trip Mode is active. Open Waymark while traveling to get check-in suggestions. 
+                  Location is only used in the foreground — never in the background.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Privacy Section */}
         <section className="card-elevated p-6 space-y-6">
           <div className="flex items-center gap-3">
@@ -83,16 +136,6 @@ export default function Settings() {
           </div>
           
           <div className="space-y-4">
-            <div className="p-4 rounded-lg bg-muted/30 space-y-2">
-              <p className="text-sm font-medium text-foreground">Your Data, Your Control</p>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• Nothing is tracked automatically</li>
-                <li>• You manually add all trips and visits</li>
-                <li>• No background location tracking</li>
-                <li>• Your data stays private unless you share it</li>
-              </ul>
-            </div>
-            
             <div className="space-y-3">
               <Label>Share Links</Label>
               <p className="text-sm text-muted-foreground">
