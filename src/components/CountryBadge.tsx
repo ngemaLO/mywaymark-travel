@@ -48,17 +48,20 @@ export const CountryBadge = forwardRef<HTMLButtonElement, CountryBadgeProps>(({
           sizeClasses[size],
           "relative flex items-center justify-center rounded-xl font-semibold shadow-sm transition-all duration-300",
           !visited && "bg-muted text-muted-foreground",
-          visited && "bg-primary text-primary-foreground",
           visited && "group-hover:shadow-lg"
         )}
+        style={visited && country.flagPrimaryColor ? { backgroundColor: country.flagPrimaryColor, color: 'white' } : undefined}
       >
         {/* Country ISO code as main display */}
         <span className="font-bold tracking-tight">{country.iso2}</span>
         
         {/* Visited indicator */}
         {visited && (
-          <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-background bg-primary">
-            <Check className={cn(iconSize[size], "text-primary-foreground")} />
+          <div 
+            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-background"
+            style={country.flagPrimaryColor ? { backgroundColor: country.flagPrimaryColor } : { backgroundColor: 'hsl(var(--primary))' }}
+          >
+            <Check className={cn(iconSize[size], "text-white")} />
           </div>
         )}
       </div>
