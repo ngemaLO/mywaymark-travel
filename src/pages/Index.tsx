@@ -1,6 +1,7 @@
 import { Header } from '@/components/Header';
 import { WorldMap } from '@/components/WorldMap';
 import { StatsRow } from '@/components/StatsRow';
+import { TravelContext } from '@/components/TravelContext';
 import { BadgeGrid } from '@/components/BadgeGrid';
 import { TimelinePreview } from '@/components/TimelinePreview';
 import { useNavigate } from 'react-router-dom';
@@ -74,6 +75,9 @@ const Index = () => {
             <section>
               <StatsRow />
             </section>
+
+            {/* Travel Context */}
+            <TravelContext />
 
             {/* Two Column Layout */}
             <div className="grid lg:grid-cols-3 gap-8">
