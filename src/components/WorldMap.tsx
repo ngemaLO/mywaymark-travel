@@ -3,6 +3,7 @@ import { useVisitedCountries } from '@/hooks/useVisits';
 import { getCountryByIso } from '@/data/countries';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MapHoverCard } from '@/components/MapHoverCard';
 import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
@@ -42,6 +43,12 @@ interface TooltipState {
 export function WorldMap({ onCountryClick }: WorldMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [mapHoverCard, setMapHoverCard] = useState<{
+    x: number;
+    y: number;
+    iso2: string;
+    name: string;
+  } | null>(null);
   const [geoData, setGeoData] = useState<CountryFeature[] | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   const { visitedIsos, isLoading } = useVisitedCountries();
@@ -416,6 +423,8 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
           
           if (!path) return null;
           
+          const country = iso2 ? getCountryByIso(iso2) : null;
+
           return (
             <path
               key={`${polygon.originalFeature.id || index}-${index}`}
@@ -428,46 +437,53 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
               }`}
               onMouseEnter={(e) => {
                 iso2 && setHoveredCountry(iso2);
+
                 const svg = e.currentTarget.ownerSVGElement;
                 const rect = svg?.getBoundingClientRect();
-                if (rect && svg) {
-                  const svgX = ((e.clientX - rect.left) / rect.width) * 800;
-                  const svgY = ((e.clientY - rect.top) / rect.height) * 450;
-                  const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
-                  
-                  const info = getTooltipInfo(polygon.originalFeature, lngLat);
-                  if (info) {
-                    setTooltip({
-                      x: e.clientX - rect.left,
-                      y: e.clientY - rect.top,
-                      title: info.title,
-                      subtitle: info.subtitle
-                    });
-                  }
+                if (!rect || !svg) return;
+
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (isVisited && iso2) {
+                  setMapHoverCard({ x, y, iso2, name: country?.name ?? iso2 });
+                  setTooltip(null);
+                  return;
+                }
+
+                const svgX = (x / rect.width) * 800;
+                const svgY = (y / rect.height) * 450;
+                const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
+                const info = getTooltipInfo(polygon.originalFeature, lngLat);
+                if (info) {
+                  setTooltip({ x, y, title: info.title, subtitle: info.subtitle });
                 }
               }}
               onMouseMove={(e) => {
                 const svg = e.currentTarget.ownerSVGElement;
                 const rect = svg?.getBoundingClientRect();
-                if (rect && svg) {
-                  const svgX = ((e.clientX - rect.left) / rect.width) * 800;
-                  const svgY = ((e.clientY - rect.top) / rect.height) * 450;
-                  const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
-                  
-                  const info = getTooltipInfo(polygon.originalFeature, lngLat);
-                  if (info) {
-                    setTooltip({
-                      x: e.clientX - rect.left,
-                      y: e.clientY - rect.top,
-                      title: info.title,
-                      subtitle: info.subtitle
-                    });
-                  }
+                if (!rect || !svg) return;
+
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (isVisited && iso2) {
+                  setMapHoverCard({ x, y, iso2, name: country?.name ?? iso2 });
+                  return;
+                }
+
+                const svgX = (x / rect.width) * 800;
+                const svgY = (y / rect.height) * 450;
+                const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
+                const info = getTooltipInfo(polygon.originalFeature, lngLat);
+                if (info) {
+                  setTooltip({ x, y, title: info.title, subtitle: info.subtitle });
                 }
               }}
               onMouseLeave={() => {
                 setHoveredCountry(null);
                 setTooltip(null);
+                setMapHoverCard(null);
               }}
               onClick={() => handleCountryClick(iso2)}
             />
@@ -494,8 +510,8 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         </span>
       </div>
 
-      {/* Custom tooltip */}
-      {tooltip && (
+      {/* Custom tooltip (non-visited countries) */}
+      {tooltip && !mapHoverCard && (
         <div 
           className="absolute pointer-events-none z-50 rounded-md bg-slate-900/90 text-white px-3 py-2 shadow-lg"
           style={{ 
@@ -509,6 +525,16 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
             <div className="text-xs text-white/70 mt-0.5">{tooltip.subtitle}</div>
           )}
         </div>
+      )}
+
+      {/* Rich hover card for visited countries */}
+      {mapHoverCard && (
+        <MapHoverCard
+          countryIso2={mapHoverCard.iso2}
+          countryName={mapHoverCard.name}
+          x={mapHoverCard.x}
+          y={mapHoverCard.y}
+        />
       )}
     </div>
   );

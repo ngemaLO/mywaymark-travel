@@ -115,6 +115,8 @@ export function CountryHoverCard({
                         <img
                           src={image.image_url}
                           alt={`Photo from ${countryName}`}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                         />
                       </div>
