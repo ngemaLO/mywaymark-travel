@@ -3,7 +3,7 @@ import { Header } from '@/components/Header';
 import { getCountryByIso } from '@/data/countries';
 import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
 import { useCountryNote, useSaveCountryNote } from '@/hooks/useCountryNotes';
-import { useCountryImages, useAddCountryImage, useDeleteCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
+import { useCountryImages, useAddCountryImage, useDeleteCountryImage, useUploadCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
 import { useTripsByCountry } from '@/hooks/useTripsByCountry';
 import { useCitiesByCountry, useAddCity, useRemoveCity } from '@/hooks/useCities';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,7 +28,7 @@ import {
   Plus
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -50,7 +50,9 @@ export default function CountryDetail() {
   const { data: cities = [], isLoading: citiesLoading } = useCitiesByCountry(iso || '');
   const saveNoteMutation = useSaveCountryNote();
   const addImageMutation = useAddCountryImage();
+  const uploadImageMutation = useUploadCountryImage();
   const deleteImageMutation = useDeleteCountryImage();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const addCityMutation = useAddCity();
   const removeCityMutation = useRemoveCity();
   
@@ -155,6 +157,16 @@ export default function CountryDetail() {
     if (!iso || !imageUrl.trim()) return;
     await addImageMutation.mutateAsync({ countryIso2: iso, imageUrl: imageUrl.trim() });
     setImageUrl('');
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !iso) return;
+    await uploadImageMutation.mutateAsync({ countryIso2: iso, file });
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleDeleteImage = async (imageId: string) => {
@@ -437,16 +449,32 @@ export default function CountryDetail() {
                       </div>
                     ))}
                     
-                    {/* Add photo placeholder */}
+                    {/* Add photo placeholder - now clickable */}
                     {canAddImage && (
-                      <div className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary/70 transition-colors">
-                        <ImagePlus className="w-8 h-8 mb-2" />
-                        <span className="text-sm">Add photo</span>
-                      </div>
+                      <label 
+                        className="aspect-square rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary/70 transition-colors cursor-pointer"
+                      >
+                        {uploadImageMutation.isPending ? (
+                          <Loader2 className="w-8 h-8 mb-2 animate-spin" />
+                        ) : (
+                          <ImagePlus className="w-8 h-8 mb-2" />
+                        )}
+                        <span className="text-sm">
+                          {uploadImageMutation.isPending ? 'Uploading...' : 'Add photo'}
+                        </span>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFileSelect}
+                          disabled={uploadImageMutation.isPending}
+                        />
+                      </label>
                     )}
                   </div>
 
-                  {/* Add image form */}
+                  {/* Add image via URL form */}
                   {canAddImage && (
                     <div className="flex gap-2">
                       <Input

@@ -84,6 +84,72 @@ export function useAddCountryImage() {
   });
 }
 
+export function useUploadCountryImage() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ countryIso2, file }: { countryIso2: string; file: File }) => {
+      if (!user) throw new Error('Not authenticated');
+
+      // Check current image count
+      const { data: existingImages, error: countError } = await supabase
+        .from('country_images')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('country_iso2', countryIso2);
+
+      if (countError) throw countError;
+
+      if (existingImages && existingImages.length >= MAX_IMAGES_PER_COUNTRY) {
+        throw new Error(`Maximum of ${MAX_IMAGES_PER_COUNTRY} images per country reached`);
+      }
+
+      // Upload to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${countryIso2}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('country-images')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('country-images')
+        .getPublicUrl(fileName);
+
+      const imageUrl = publicUrlData.publicUrl;
+
+      // Insert into DB
+      const { data, error } = await supabase
+        .from('country_images')
+        .insert({
+          user_id: user.id,
+          country_iso2: countryIso2,
+          image_url: imageUrl,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['country-images', variables.countryIso2] });
+      toast({ title: 'Image uploaded', description: 'Your photo has been added successfully.' });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error uploading image',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
 export function useDeleteCountryImage() {
   const queryClient = useQueryClient();
 
