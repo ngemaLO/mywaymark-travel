@@ -24,10 +24,34 @@ export function MapHoverCard({ countryIso2, countryName, x, y }: MapHoverCardPro
   const hasImages = images.length > 0;
   const hasContent = hasCities || hasNote || hasImages;
 
+  // Calculate position to keep card within viewport
+  // Position card to the right of cursor, or flip to left if near edge
+  const cardWidth = 320;
+  const cardHeight = 280; // approximate max height
+
+  let adjustedX = x + 12;
+  let adjustedY = y;
+  let transformStyle = "translateY(-100%)";
+
+  // If card would go off the right edge, position to the left of cursor
+  // We use a rough estimate since we don't have container width
+  if (x > 500) {
+    adjustedX = x - cardWidth - 12;
+  }
+
+  // If card would go off the top, position below cursor instead
+  if (y < cardHeight) {
+    transformStyle = "translateY(10px)";
+  }
+
   return (
     <div
-      className="absolute z-50 w-80 rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md"
-      style={{ left: x + 12, top: y - 10, transform: "translateY(-100%)" }}
+      className="absolute z-[100] w-80 rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-lg pointer-events-none"
+      style={{
+        left: adjustedX,
+        top: adjustedY,
+        transform: transformStyle,
+      }}
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
