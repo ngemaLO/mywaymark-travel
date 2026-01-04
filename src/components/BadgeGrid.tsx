@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CountryBadge } from './CountryBadge';
+import { CountryHoverCard } from './CountryHoverCard';
 import { countries, continents } from '@/data/countries';
 import { useVisitedCountries } from '@/hooks/useVisits';
 import { useNavigate } from 'react-router-dom';
@@ -113,25 +114,35 @@ export function BadgeGrid() {
           ))}
         </div>
 
-        {/* Badge grid */}
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-          {displayCountries.map((country, index) => (
-            <div
-              key={country.iso2}
-              className="opacity-0 animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <CountryBadge
-                country={country}
-                visited={visitedIsos.includes(country.iso2)}
-                onClick={() => {
-                  if (visitedIsos.includes(country.iso2)) {
-                    navigate(`/country/${country.iso2}`);
-                  }
-                }}
-              />
-            </div>
-          ))}
+          {displayCountries.map((country, index) => {
+            const isVisited = visitedIsos.includes(country.iso2);
+            return (
+              <div
+                key={country.iso2}
+                className="opacity-0 animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <CountryHoverCard
+                  countryIso2={country.iso2}
+                  countryName={country.name}
+                  enabled={isVisited}
+                >
+                  <div>
+                    <CountryBadge
+                      country={country}
+                      visited={isVisited}
+                      onClick={() => {
+                        if (isVisited) {
+                          navigate(`/country/${country.iso2}`);
+                        }
+                      }}
+                    />
+                  </div>
+                </CountryHoverCard>
+              </div>
+            );
+          })}
         </div>
 
         {/* Show more/less button */}

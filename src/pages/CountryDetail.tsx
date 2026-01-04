@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CityCombobox } from '@/components/CityCombobox';
 import { 
   ArrowLeft, 
   Check, 
@@ -318,19 +319,17 @@ export default function CountryDetail() {
                 <>
                   {/* Add city form */}
                   {isAddingCity && (
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter city name..."
-                        value={cityName}
-                        onChange={(e) => setCityName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && cityName.trim()) {
-                            handleAddCity();
-                          }
-                        }}
-                        className="flex-1"
-                        autoFocus
-                      />
+                    <div className="flex gap-2 items-start">
+                      <div className="flex-1">
+                        <CityCombobox
+                          countryIso2={iso || ''}
+                          value={cityName}
+                          onSelect={(city) => {
+                            setCityName(city);
+                          }}
+                          disabled={addCityMutation.isPending}
+                        />
+                      </div>
                       <Button
                         variant="ghost"
                         size="icon"
