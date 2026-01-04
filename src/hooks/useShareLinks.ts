@@ -31,12 +31,9 @@ export interface CreateShareLinkData {
 }
 
 function generateToken(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 16; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  const array = new Uint8Array(24);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export function useShareLinks() {
@@ -162,101 +159,50 @@ export function useDeleteShareLink() {
   });
 }
 
-// Hook for public access - fetches share link data without auth
+// Hook for public access - fetches share link and user data securely via edge function
 export function usePublicShareLink(token: string | undefined) {
   return useQuery({
     queryKey: ['public-share-link', token],
     queryFn: async () => {
       if (!token) return null;
       
-      const { data, error } = await supabase
-        .from('share_links')
-        .select('*')
-        .eq('token', token)
-        .eq('active', true)
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke('get-shared-data', {
+        body: { token },
+      });
 
       if (error) throw error;
-      if (!data) return null;
+      if (!data || data.error) return null;
 
-      // Check expiry
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        return null;
-      }
-
-      return data as ShareLink;
+      return data.shareLink as ShareLink;
     },
     enabled: !!token,
   });
 }
 
-// Hook to fetch shared user data (visits, notes, images) for public view
-export function useSharedUserData(userId: string | undefined, shareLink: ShareLink | null) {
+// Hook to fetch shared user data (visits, notes, images) securely via edge function
+export function useSharedUserData(token: string | undefined, shareLink: ShareLink | null) {
   return useQuery({
-    queryKey: ['shared-user-data', userId, shareLink?.id],
+    queryKey: ['shared-user-data', token, shareLink?.id],
     queryFn: async () => {
-      if (!userId || !shareLink) return null;
+      if (!token || !shareLink) return null;
 
-      const result: {
-        visits: any[];
-        notes: any[];
-        images: any[];
-        trips: any[];
-        flights: number;
-      } = {
-        visits: [],
-        notes: [],
-        images: [],
-        trips: [],
-        flights: 0,
+      // Data is already fetched by the edge function in usePublicShareLink
+      // Re-fetch to get full data (this could be optimized with caching)
+      const { data, error } = await supabase.functions.invoke('get-shared-data', {
+        body: { token },
+      });
+
+      if (error) throw error;
+      if (!data || data.error) return null;
+
+      return {
+        visits: data.visits || [],
+        notes: data.notes || [],
+        images: data.images || [],
+        trips: data.trips || [],
+        flights: data.flights || 0,
       };
-
-      // Always fetch visits (needed for map, stats, badges)
-      const { data: visits } = await supabase
-        .from('visits')
-        .select('*')
-        .eq('user_id', userId);
-      result.visits = visits || [];
-
-      // Fetch notes if scope allows
-      if (shareLink.scope_notes) {
-        const { data: notes } = await supabase
-          .from('country_notes')
-          .select('*')
-          .eq('user_id', userId);
-        result.notes = notes || [];
-      }
-
-      // Fetch images if scope allows
-      if (shareLink.scope_images) {
-        const { data: images } = await supabase
-          .from('country_images')
-          .select('*')
-          .eq('user_id', userId);
-        result.images = images || [];
-      }
-
-      // Fetch trips if timeline scope
-      if (shareLink.scope_timeline) {
-        const { data: trips } = await supabase
-          .from('trips')
-          .select('*')
-          .eq('user_id', userId)
-          .order('start_date', { ascending: false });
-        result.trips = trips || [];
-      }
-
-      // Fetch flight count for stats
-      if (shareLink.scope_stats) {
-        const { count } = await supabase
-          .from('flights')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId);
-        result.flights = count || 0;
-      }
-
-      return result;
     },
-    enabled: !!userId && !!shareLink,
+    enabled: !!token && !!shareLink,
   });
 }
