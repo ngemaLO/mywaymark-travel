@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, MapPin, Building2, Calendar, FileText, Image, X, Loader2, Check } from 'lucide-react';
+import { Plus, MapPin, Building2, Calendar, FileText, Image, X, Loader2, Check, Trash2 } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +29,15 @@ import { cn } from '@/lib/utils';
 interface AddTripModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+interface DateEntry {
+  id: string;
+  dateType: 'month' | 'range';
+  month: string;
+  year: string;
+  startDate: string;
+  endDate: string;
 }
 
 // Generate months for selector
@@ -41,6 +50,15 @@ const months = [
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 51 }, (_, i) => currentYear - i);
 
+const createEmptyDateEntry = (): DateEntry => ({
+  id: crypto.randomUUID(),
+  dateType: 'month',
+  month: '',
+  year: currentYear.toString(),
+  startDate: '',
+  endDate: '',
+});
+
 export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -49,11 +67,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [includeCity, setIncludeCity] = useState(false);
   const [cityName, setCityName] = useState('');
-  const [dateType, setDateType] = useState<'month' | 'range'>('month');
-  const [month, setMonth] = useState<string>('');
-  const [year, setYear] = useState<string>(currentYear.toString());
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [dateEntries, setDateEntries] = useState<DateEntry[]>([createEmptyDateEntry()]);
   const [note, setNote] = useState('');
   const [images, setImages] = useState<File[]>([]);
   
@@ -76,15 +90,34 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
       setSelectedCountry('');
       setIncludeCity(false);
       setCityName('');
-      setDateType('month');
-      setMonth('');
-      setYear(currentYear.toString());
-      setStartDate('');
-      setEndDate('');
+      setDateEntries([createEmptyDateEntry()]);
       setNote('');
       setImages([]);
     }
   }, [open]);
+
+  const updateDateEntry = (id: string, updates: Partial<DateEntry>) => {
+    setDateEntries(prev => prev.map(entry => 
+      entry.id === id ? { ...entry, ...updates } : entry
+    ));
+  };
+
+  const addDateEntry = () => {
+    setDateEntries(prev => [...prev, createEmptyDateEntry()]);
+  };
+
+  const removeDateEntry = (id: string) => {
+    if (dateEntries.length > 1) {
+      setDateEntries(prev => prev.filter(entry => entry.id !== id));
+    }
+  };
+
+  const isDateEntryValid = (entry: DateEntry): boolean => {
+    if (entry.dateType === 'month') {
+      return !!(entry.month && entry.year);
+    }
+    return !!entry.startDate;
+  };
 
   // Create trip mutation
   const createTripMutation = useMutation({
@@ -92,41 +125,43 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
       if (!user) throw new Error('Must be logged in');
       if (!selectedCountry) throw new Error('Please select a country');
 
-      // Calculate arrival date
-      let arrivalDate: string;
-      let departureDate: string | null = null;
+      const validEntries = dateEntries.filter(isDateEntryValid);
+      if (validEntries.length === 0) throw new Error('Please add at least one valid date');
 
-      if (dateType === 'month' && month && year) {
-        // First day of selected month
-        const monthIndex = months.indexOf(month);
-        arrivalDate = `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
-      } else if (dateType === 'range' && startDate) {
-        arrivalDate = startDate;
-        departureDate = endDate || null;
-      } else {
-        // Default to today
-        arrivalDate = new Date().toISOString().split('T')[0];
-      }
+      // Create visits for each date entry
+      const visits = validEntries.map(entry => {
+        let arrivalDate: string;
+        let departureDate: string | null = null;
 
-      // Create the visit with source=manual
-      const { data: visit, error: visitError } = await supabase
-        .from('visits')
-        .insert({
+        if (entry.dateType === 'month' && entry.month && entry.year) {
+          const monthIndex = months.indexOf(entry.month);
+          arrivalDate = `${entry.year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
+        } else if (entry.dateType === 'range' && entry.startDate) {
+          arrivalDate = entry.startDate;
+          departureDate = entry.endDate || null;
+        } else {
+          arrivalDate = new Date().toISOString().split('T')[0];
+        }
+
+        return {
           user_id: user.id,
           country_iso2: selectedCountry,
           arrival_date: arrivalDate,
           departure_date: departureDate,
           source: 'manual',
           source_confidence: 'high',
-        })
-        .select()
-        .single();
+        };
+      });
+
+      // Insert all visits
+      const { error: visitError } = await supabase
+        .from('visits')
+        .insert(visits);
 
       if (visitError) throw visitError;
 
       // If city is included, create a place entry if it doesn't exist
       if (includeCity && cityName.trim()) {
-        // Check if place already exists
         const { data: existingPlace } = await supabase
           .from('places')
           .select('id')
@@ -154,14 +189,12 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
         });
       }
 
-      // TODO: Handle image uploads when storage is set up
-      // For now, we'll skip image upload functionality
-
-      return visit;
+      return visits;
     },
     onSuccess: () => {
       const countryName = countries.find(c => c.iso2 === selectedCountry)?.name || selectedCountry;
-      toast.success(`Added trip to ${countryName}!`);
+      const visitCount = dateEntries.filter(isDateEntryValid).length;
+      toast.success(`Added ${visitCount} visit${visitCount > 1 ? 's' : ''} to ${countryName}!`);
       queryClient.invalidateQueries({ queryKey: ['visits'] });
       queryClient.invalidateQueries({ queryKey: ['country-notes'] });
       onOpenChange(false);
@@ -187,10 +220,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const isValid = selectedCountry && (
-    (dateType === 'month' && month && year) ||
-    (dateType === 'range' && startDate)
-  );
+  const isValid = selectedCountry && dateEntries.some(isDateEntryValid);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -201,7 +231,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
             Add a Trip
           </DialogTitle>
           <DialogDescription>
-            Record a country you've visited.
+            Record a country you've visited. Add multiple dates for repeat visits.
           </DialogDescription>
         </DialogHeader>
 
@@ -259,78 +289,119 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
               )}
             </div>
 
-            {/* Date Selection */}
+            {/* Date Entries */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                <Label>When did you visit?</Label>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <Label>When did you visit?</Label>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addDateEntry}
+                  className="gap-1"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add Date
+                </Button>
               </div>
               
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant={dateType === 'month' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setDateType('month')}
-                >
-                  Month/Year
-                </Button>
-                <Button
-                  type="button"
-                  variant={dateType === 'range' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setDateType('range')}
-                >
-                  Date Range
-                </Button>
-              </div>
+              <div className="space-y-4">
+                {dateEntries.map((entry, index) => (
+                  <div key={entry.id} className="p-3 rounded-lg border bg-muted/30 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Visit {index + 1}
+                      </span>
+                      {dateEntries.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeDateEntry(entry.id)}
+                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant={entry.dateType === 'month' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => updateDateEntry(entry.id, { dateType: 'month' })}
+                      >
+                        Month/Year
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={entry.dateType === 'range' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => updateDateEntry(entry.id, { dateType: 'range' })}
+                      >
+                        Date Range
+                      </Button>
+                    </div>
 
-              {dateType === 'month' ? (
-                <div className="flex gap-2">
-                  <Select value={month} onValueChange={setMonth}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {months.map(m => (
-                        <SelectItem key={m} value={m}>{m}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={year} onValueChange={setYear}>
-                    <SelectTrigger className="w-24">
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <ScrollArea className="h-[200px]">
-                        {years.map(y => (
-                          <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                        ))}
-                      </ScrollArea>
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div className="flex gap-2 items-center">
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs text-muted-foreground">Start</Label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
+                    {entry.dateType === 'month' ? (
+                      <div className="flex gap-2">
+                        <Select 
+                          value={entry.month} 
+                          onValueChange={(value) => updateDateEntry(entry.id, { month: value })}
+                        >
+                          <SelectTrigger className="flex-1">
+                            <SelectValue placeholder="Month" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {months.map(m => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select 
+                          value={entry.year} 
+                          onValueChange={(value) => updateDateEntry(entry.id, { year: value })}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue placeholder="Year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <ScrollArea className="h-[200px]">
+                              {years.map(y => (
+                                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                              ))}
+                            </ScrollArea>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2 items-center">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Start</Label>
+                          <Input
+                            type="date"
+                            value={entry.startDate}
+                            onChange={(e) => updateDateEntry(entry.id, { startDate: e.target.value })}
+                          />
+                        </div>
+                        <span className="text-muted-foreground mt-5">to</span>
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-xs text-muted-foreground">End (optional)</Label>
+                          <Input
+                            type="date"
+                            value={entry.endDate}
+                            onChange={(e) => updateDateEntry(entry.id, { endDate: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <span className="text-muted-foreground mt-5">to</span>
-                  <div className="flex-1 space-y-1">
-                    <Label className="text-xs text-muted-foreground">End (optional)</Label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
 
             {/* Note (Optional) */}
@@ -413,7 +484,9 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
             ) : (
               <Check className="w-4 h-4" />
             )}
-            Add Trip
+            Add {dateEntries.filter(isDateEntryValid).length > 1 
+              ? `${dateEntries.filter(isDateEntryValid).length} Visits` 
+              : 'Trip'}
           </Button>
         </div>
       </DialogContent>
