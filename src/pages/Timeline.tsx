@@ -1,32 +1,90 @@
 import { Header } from '@/components/Header';
-import { mockTrips } from '@/data/mockData';
 import { getCountryByIso } from '@/data/countries';
 import { format, getYear } from 'date-fns';
-import { Calendar, MapPin, ChevronDown, Plane, Edit2 } from 'lucide-react';
+import { Calendar, MapPin, ChevronDown, Plane, Edit2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
+interface Visit {
+  id: string;
+  country_iso2: string;
+  arrival_date: string;
+  departure_date: string | null;
+  source: string;
+  trip_id: string | null;
+}
+
+interface Trip {
+  id: string;
+  title: string | null;
+  start_date: string;
+  end_date: string | null;
+  source: string;
+  visits: Visit[];
+}
+
 export default function Timeline() {
   const navigate = useNavigate();
-  
-  // Group trips by year
-  const tripsByYear = mockTrips.reduce((acc, trip) => {
-    const year = getYear(new Date(trip.startDate));
-    if (!acc[year]) acc[year] = [];
-    acc[year].push(trip);
-    return acc;
-  }, {} as Record<number, typeof mockTrips>);
+  const { user } = useAuth();
 
-  const years = Object.keys(tripsByYear)
+  // Fetch visits from database
+  const { data: visits = [], isLoading } = useQuery({
+    queryKey: ['timeline-visits', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('visits')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('arrival_date', { ascending: false });
+      
+      if (error) throw error;
+      return data as Visit[];
+    },
+    enabled: !!user,
+  });
+
+  // Group visits by year (since we may not have trips, we'll group by year directly)
+  const visitsByYear = visits.reduce((acc, visit) => {
+    const year = getYear(new Date(visit.arrival_date));
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(visit);
+    return acc;
+  }, {} as Record<number, Visit[]>);
+
+  const years = Object.keys(visitsByYear)
     .map(Number)
     .sort((a, b) => b - a);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-16 text-center">
+          <h1 className="text-2xl font-display font-bold text-foreground mb-4">
+            Sign In Required
+          </h1>
+          <p className="text-muted-foreground mb-8">
+            Please sign in to view your timeline.
+          </p>
+          <Button onClick={() => navigate('/auth')}>
+            Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,18 +101,30 @@ export default function Timeline() {
           </p>
         </section>
 
-        {/* Timeline */}
-        <div className="space-y-8">
-          {years.map((year, yearIndex) => (
-            <YearSection 
-              key={year} 
-              year={year} 
-              trips={tripsByYear[year]}
-              defaultOpen={yearIndex === 0}
-              onCountryClick={(iso) => navigate(`/country/${iso}`)}
-            />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : years.length === 0 ? (
+          <div className="text-center py-16 space-y-4">
+            <p className="text-muted-foreground">No visits recorded yet.</p>
+            <Button onClick={() => navigate('/')}>
+              Add Your First Trip
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {years.map((year, yearIndex) => (
+              <YearSection 
+                key={year} 
+                year={year} 
+                visits={visitsByYear[year]}
+                defaultOpen={yearIndex === 0}
+                onCountryClick={(iso) => navigate(`/country/${iso}`)}
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
@@ -62,15 +132,15 @@ export default function Timeline() {
 
 interface YearSectionProps {
   year: number;
-  trips: typeof mockTrips;
+  visits: Visit[];
   defaultOpen?: boolean;
   onCountryClick: (iso: string) => void;
 }
 
-function YearSection({ year, trips, defaultOpen = false, onCountryClick }: YearSectionProps) {
+function YearSection({ year, visits, defaultOpen = false, onCountryClick }: YearSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
-  const totalCountries = [...new Set(trips.flatMap(t => t.visits.map(v => v.countryIso2)))].length;
+  const uniqueCountries = [...new Set(visits.map(v => v.country_iso2))].length;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -81,9 +151,9 @@ function YearSection({ year, trips, defaultOpen = false, onCountryClick }: YearS
               {year}
             </span>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{trips.length} trips</span>
+              <span>{visits.length} visit{visits.length !== 1 ? 's' : ''}</span>
               <span>•</span>
-              <span>{totalCountries} countries</span>
+              <span>{uniqueCountries} countr{uniqueCountries !== 1 ? 'ies' : 'y'}</span>
             </div>
           </div>
           <ChevronDown className={cn(
@@ -95,10 +165,10 @@ function YearSection({ year, trips, defaultOpen = false, onCountryClick }: YearS
       
       <CollapsibleContent>
         <div className="pt-4 space-y-4 pl-4 border-l-2 border-border ml-6">
-          {trips.map((trip, index) => (
-            <TripCard 
-              key={trip.id} 
-              trip={trip} 
+          {visits.map((visit, index) => (
+            <VisitCard 
+              key={visit.id} 
+              visit={visit} 
               index={index}
               onCountryClick={onCountryClick}
             />
@@ -109,14 +179,15 @@ function YearSection({ year, trips, defaultOpen = false, onCountryClick }: YearS
   );
 }
 
-interface TripCardProps {
-  trip: typeof mockTrips[0];
+interface VisitCardProps {
+  visit: Visit;
   index: number;
   onCountryClick: (iso: string) => void;
 }
 
-function TripCard({ trip, index, onCountryClick }: TripCardProps) {
-  const visitCountries = [...new Set(trip.visits.map(v => v.countryIso2))];
+function VisitCard({ visit, index, onCountryClick }: VisitCardProps) {
+  const country = getCountryByIso(visit.country_iso2);
+  if (!country) return null;
   
   return (
     <div 
@@ -126,23 +197,30 @@ function TripCard({ trip, index, onCountryClick }: TripCardProps) {
       {/* Timeline dot */}
       <div className="absolute -left-[calc(1rem+5px)] top-4 w-3 h-3 rounded-full bg-primary border-2 border-background" />
       
-      <div className="card-elevated p-5 space-y-4">
-        {/* Trip Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1.5">
-            <h3 className="text-lg font-semibold text-foreground">
-              {trip.title || 'Untitled Trip'}
+      <button
+        onClick={() => onCountryClick(visit.country_iso2)}
+        className="w-full card-elevated p-5 space-y-2 text-left hover:bg-muted/50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
+            {country.iso2}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-foreground truncate">
+              {country.name}
             </h3>
-            
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
                 <span>
-                  {format(new Date(trip.startDate), 'MMM d')} - {format(new Date(trip.endDate), 'MMM d')}
+                  {visit.departure_date 
+                    ? `${format(new Date(visit.arrival_date), 'MMM d, yyyy')} - ${format(new Date(visit.departure_date), 'MMM d, yyyy')}`
+                    : format(new Date(visit.arrival_date), 'MMM d, yyyy')
+                  }
                 </span>
               </div>
               
-              {trip.source === 'flight' && (
+              {visit.source === 'flight' && (
                 <div className="flex items-center gap-1">
                   <Plane className="w-3.5 h-3.5" />
                   <span>Via flight</span>
@@ -150,44 +228,8 @@ function TripCard({ trip, index, onCountryClick }: TripCardProps) {
               )}
             </div>
           </div>
-          
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-            <Edit2 className="w-4 h-4" />
-          </Button>
         </div>
-
-        {/* Visits */}
-        <div className="space-y-2">
-          {trip.visits.map(visit => {
-            const country = getCountryByIso(visit.countryIso2);
-            if (!country) return null;
-            
-            return (
-              <button
-                key={visit.id}
-                onClick={() => onCountryClick(visit.countryIso2)}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
-              >
-                <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-                  {country.iso2}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{country.name}</p>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="w-3 h-3" />
-                    <span>
-                      {visit.departureDate 
-                        ? `${format(new Date(visit.arrivalDate), 'MMM d')} - ${format(new Date(visit.departureDate), 'MMM d')}`
-                        : format(new Date(visit.arrivalDate), 'MMM d')
-                      }
-                    </span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      </button>
     </div>
   );
 }
