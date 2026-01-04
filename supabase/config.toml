@@ -1,1 +1,4 @@
 project_id = "biawucdjcqwgzlxdgiet"
+
+[functions.get-shared-data]
+verify_jwt = false

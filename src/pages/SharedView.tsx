@@ -54,7 +54,7 @@ const countryPaths: Record<string, string> = {
 export default function SharedView() {
   const { token } = useParams<{ token: string }>();
   const { data: shareLink, isLoading: linkLoading, error: linkError } = usePublicShareLink(token);
-  const { data: userData, isLoading: dataLoading } = useSharedUserData(shareLink?.user_id, shareLink);
+  const { data: userData, isLoading: dataLoading } = useSharedUserData(token, shareLink);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedContinent, setSelectedContinent] = useState<string | null>(null);
 
