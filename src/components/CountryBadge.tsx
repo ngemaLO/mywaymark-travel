@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Country } from '@/data/countries';
 import { Check } from 'lucide-react';
@@ -10,13 +11,14 @@ interface CountryBadgeProps {
   showLabel?: boolean;
 }
 
-export function CountryBadge({ 
+export const CountryBadge = forwardRef<HTMLButtonElement, CountryBadgeProps>(({ 
   country, 
   visited, 
   size = 'md', 
   onClick,
-  showLabel = true 
-}: CountryBadgeProps) {
+  showLabel = true,
+  ...props
+}, ref) => {
   const sizeClasses = {
     sm: 'w-12 h-12 text-xs',
     md: 'w-16 h-16 text-sm',
@@ -31,6 +33,7 @@ export function CountryBadge({
 
   return (
     <button
+      ref={ref}
       onClick={onClick}
       disabled={!visited}
       className={cn(
@@ -38,6 +41,7 @@ export function CountryBadge({
         visited && "hover:scale-105 cursor-pointer",
         !visited && "opacity-40 cursor-not-allowed"
       )}
+      {...props}
     >
       <div
         className={cn(
@@ -69,4 +73,6 @@ export function CountryBadge({
       )}
     </button>
   );
-}
+});
+
+CountryBadge.displayName = 'CountryBadge';

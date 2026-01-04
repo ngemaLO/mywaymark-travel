@@ -128,17 +128,15 @@ export function BadgeGrid() {
                   countryName={country.name}
                   enabled={isVisited}
                 >
-                  <div>
-                    <CountryBadge
-                      country={country}
-                      visited={isVisited}
-                      onClick={() => {
-                        if (isVisited) {
-                          navigate(`/country/${country.iso2}`);
-                        }
-                      }}
-                    />
-                  </div>
+                  <CountryBadge
+                    country={country}
+                    visited={isVisited}
+                    onClick={() => {
+                      if (isVisited) {
+                        navigate(`/country/${country.iso2}`);
+                      }
+                    }}
+                  />
                 </CountryHoverCard>
               </div>
             );
