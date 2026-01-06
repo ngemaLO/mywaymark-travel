@@ -1,7 +1,7 @@
 import { Header } from '@/components/Header';
 import { getCountryByIso } from '@/data/countries';
 import { format, getYear } from 'date-fns';
-import { Calendar, MapPin, ChevronDown, Plane, Edit2, Loader2 } from 'lucide-react';
+import { Calendar, ChevronDown, Plane, Edit2, Loader2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
@@ -14,6 +14,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { EditVisitModal } from '@/components/EditVisitModal';
+import { DeleteVisitDialog } from '@/components/DeleteVisitDialog';
 
 interface Visit {
   id: string;
@@ -24,18 +26,11 @@ interface Visit {
   trip_id: string | null;
 }
 
-interface Trip {
-  id: string;
-  title: string | null;
-  start_date: string;
-  end_date: string | null;
-  source: string;
-  visits: Visit[];
-}
-
 export default function Timeline() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
+  const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null);
 
   // Fetch visits from database
   const { data: visits = [], isLoading } = useQuery({
@@ -55,7 +50,7 @@ export default function Timeline() {
     enabled: !!user,
   });
 
-  // Group visits by year (since we may not have trips, we'll group by year directly)
+  // Group visits by year
   const visitsByYear = visits.reduce((acc, visit) => {
     const year = getYear(new Date(visit.arrival_date));
     if (!acc[year]) acc[year] = [];
@@ -121,11 +116,25 @@ export default function Timeline() {
                 visits={visitsByYear[year]}
                 defaultOpen={yearIndex === 0}
                 onCountryClick={(iso) => navigate(`/country/${iso}`)}
+                onEditVisit={setEditingVisit}
+                onDeleteVisit={setDeletingVisit}
               />
             ))}
           </div>
         )}
       </main>
+
+      <EditVisitModal
+        visit={editingVisit}
+        open={!!editingVisit}
+        onOpenChange={(open) => !open && setEditingVisit(null)}
+      />
+
+      <DeleteVisitDialog
+        visit={deletingVisit}
+        open={!!deletingVisit}
+        onOpenChange={(open) => !open && setDeletingVisit(null)}
+      />
     </div>
   );
 }
@@ -135,9 +144,11 @@ interface YearSectionProps {
   visits: Visit[];
   defaultOpen?: boolean;
   onCountryClick: (iso: string) => void;
+  onEditVisit: (visit: Visit) => void;
+  onDeleteVisit: (visit: Visit) => void;
 }
 
-function YearSection({ year, visits, defaultOpen = false, onCountryClick }: YearSectionProps) {
+function YearSection({ year, visits, defaultOpen = false, onCountryClick, onEditVisit, onDeleteVisit }: YearSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
   const uniqueCountries = [...new Set(visits.map(v => v.country_iso2))].length;
@@ -171,6 +182,8 @@ function YearSection({ year, visits, defaultOpen = false, onCountryClick }: Year
               visit={visit} 
               index={index}
               onCountryClick={onCountryClick}
+              onEdit={() => onEditVisit(visit)}
+              onDelete={() => onDeleteVisit(visit)}
             />
           ))}
         </div>
@@ -183,32 +196,37 @@ interface VisitCardProps {
   visit: Visit;
   index: number;
   onCountryClick: (iso: string) => void;
+  onEdit: () => void;
+  onDelete: () => void;
 }
 
-function VisitCard({ visit, index, onCountryClick }: VisitCardProps) {
+function VisitCard({ visit, index, onCountryClick, onEdit, onDelete }: VisitCardProps) {
   const country = getCountryByIso(visit.country_iso2);
   if (!country) return null;
   
   return (
     <div 
-      className="relative opacity-0 animate-fade-in"
+      className="relative opacity-0 animate-fade-in group"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Timeline dot */}
       <div className="absolute -left-[calc(1rem+5px)] top-4 w-3 h-3 rounded-full bg-primary border-2 border-background" />
       
-      <button
-        onClick={() => onCountryClick(visit.country_iso2)}
-        className="w-full card-elevated p-5 space-y-2 text-left hover:bg-muted/50 transition-colors"
-      >
+      <div className="w-full card-elevated p-5 space-y-2 text-left hover:bg-muted/50 transition-colors">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
+          <button
+            onClick={() => onCountryClick(visit.country_iso2)}
+            className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold hover:opacity-90 transition-opacity"
+          >
             {country.iso2}
-          </div>
+          </button>
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-foreground truncate">
+            <button
+              onClick={() => onCountryClick(visit.country_iso2)}
+              className="text-lg font-semibold text-foreground truncate hover:text-primary transition-colors text-left"
+            >
               {country.name}
-            </h3>
+            </button>
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
@@ -228,8 +246,34 @@ function VisitCard({ visit, index, onCountryClick }: VisitCardProps) {
               )}
             </div>
           </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            >
+              <Edit2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
-      </button>
+      </div>
     </div>
   );
 }

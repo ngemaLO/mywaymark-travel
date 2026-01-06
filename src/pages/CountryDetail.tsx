@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CityCombobox } from '@/components/CityCombobox';
+import { EditVisitModal } from '@/components/EditVisitModal';
+import { DeleteVisitDialog } from '@/components/DeleteVisitDialog';
 import { 
   ArrowLeft, 
   Check, 
@@ -31,6 +33,7 @@ import { format } from 'date-fns';
 import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { Visit } from '@/hooks/useVisits';
 
 export default function CountryDetail() {
   const { iso } = useParams<{ iso: string }>();
@@ -40,10 +43,12 @@ export default function CountryDetail() {
   const [imageUrl, setImageUrl] = useState('');
   const [cityName, setCityName] = useState('');
   const [isAddingCity, setIsAddingCity] = useState(false);
+  const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
+  const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null);
   
   const country = iso ? getCountryByIso(iso) : null;
   const { isVisited, isLoading: visitsLoading } = useVisitedCountries();
-  const { visitCount } = useVisitsByCountry(iso || '');
+  const { visits: countryVisits, visitCount } = useVisitsByCountry(iso || '');
   const { data: note, isLoading: noteLoading } = useCountryNote(iso || '');
   const { data: images = [], isLoading: imagesLoading } = useCountryImages(iso || '');
   const { data: trips = [], isLoading: tripsLoading } = useTripsByCountry(iso || '');
@@ -503,6 +508,65 @@ export default function CountryDetail() {
               </p>
             </section>
 
+            {/* Visits Section */}
+            <section className="card-elevated p-6 space-y-4">
+              <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Your Visits
+              </h2>
+              
+              {countryVisits.length > 0 ? (
+                <div className="space-y-3">
+                  {countryVisits.map((visit) => (
+                    <div 
+                      key={visit.id}
+                      className="group flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 text-sm text-foreground">
+                          <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span>
+                            {visit.departure_date 
+                              ? `${format(new Date(visit.arrival_date), 'MMM d, yyyy')} - ${format(new Date(visit.departure_date), 'MMM d, yyyy')}`
+                              : format(new Date(visit.arrival_date), 'MMM d, yyyy')
+                            }
+                          </span>
+                        </div>
+                        {visit.source && visit.source !== 'manual' && (
+                          <span className="text-xs text-muted-foreground capitalize mt-1">
+                            via {visit.source}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingVisit(visit)}
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeletingVisit(visit)}
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No visits recorded yet.
+                </p>
+              )}
+            </section>
+
             {/* Trips Section */}
             {tripsLoading ? (
               <section className="card-elevated p-6 space-y-4">
@@ -562,6 +626,18 @@ export default function CountryDetail() {
           </div>
         </div>
       </main>
+
+      <EditVisitModal
+        visit={editingVisit}
+        open={!!editingVisit}
+        onOpenChange={(open) => !open && setEditingVisit(null)}
+      />
+
+      <DeleteVisitDialog
+        visit={deletingVisit}
+        open={!!deletingVisit}
+        onOpenChange={(open) => !open && setDeletingVisit(null)}
+      />
     </div>
   );
 }
