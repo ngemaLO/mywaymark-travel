@@ -22,13 +22,20 @@ export function useStats() {
       // Get unique countries from visits
       const { data: visits, error: visitsError } = await supabase
         .from('visits')
-        .select('country_iso2, place_id')
+        .select('country_iso2')
         .eq('user_id', user.id);
 
       if (visitsError) throw visitsError;
 
       const uniqueCountries = new Set(visits?.map(v => v.country_iso2) || []);
-      const uniquePlaces = new Set(visits?.filter(v => v.place_id).map(v => v.place_id) || []);
+
+      // Get cities count from user_places
+      const { count: citiesCount, error: citiesError } = await supabase
+        .from('user_places')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (citiesError) throw citiesError;
 
       // Get trip count
       const { count: tripCount, error: tripsError } = await supabase
@@ -48,7 +55,7 @@ export function useStats() {
 
       return {
         countriesVisited: uniqueCountries.size,
-        citiesVisited: uniquePlaces.size,
+        citiesVisited: citiesCount || 0,
         totalTrips: tripCount || 0,
         totalFlights: flightCount || 0,
       };
