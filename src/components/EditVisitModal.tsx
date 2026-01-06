@@ -28,6 +28,11 @@ interface EditVisitModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
+// Get today's date in YYYY-MM-DD format for max date validation
+const getTodayString = () => {
+  return new Date().toISOString().split('T')[0];
+};
+
 export function EditVisitModal({ visit, open, onOpenChange }: EditVisitModalProps) {
   const [arrivalDate, setArrivalDate] = useState('');
   const [departureDate, setDepartureDate] = useState('');
@@ -35,6 +40,7 @@ export function EditVisitModal({ visit, open, onOpenChange }: EditVisitModalProp
   
   const updateMutation = useUpdateVisit();
   const country = visit ? getCountryByIso(visit.country_iso2) : null;
+  const today = getTodayString();
 
   useEffect(() => {
     if (visit && open) {
@@ -56,7 +62,9 @@ export function EditVisitModal({ visit, open, onOpenChange }: EditVisitModalProp
     onOpenChange(false);
   };
 
-  const isValid = arrivalDate && (!hasDeparture || (hasDeparture && departureDate && departureDate >= arrivalDate));
+  const isValid = arrivalDate && 
+    arrivalDate <= today && 
+    (!hasDeparture || (hasDeparture && departureDate && departureDate >= arrivalDate && departureDate <= today));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -73,7 +81,9 @@ export function EditVisitModal({ visit, open, onOpenChange }: EditVisitModalProp
               type="date"
               value={arrivalDate}
               onChange={(e) => setArrivalDate(e.target.value)}
+              max={today}
             />
+            <p className="text-xs text-muted-foreground">Cannot be in the future</p>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -96,6 +106,7 @@ export function EditVisitModal({ visit, open, onOpenChange }: EditVisitModalProp
                 value={departureDate}
                 onChange={(e) => setDepartureDate(e.target.value)}
                 min={arrivalDate}
+                max={today}
               />
             </div>
           )}
