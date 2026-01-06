@@ -184,87 +184,97 @@ export function CityCombobox({ countryIso2, value, onSelect, disabled }: CityCom
   }, [countryCities, searchQuery]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          disabled={disabled}
-          className="w-full justify-between font-normal"
-        >
-          {value || "Select or type a city..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0 z-50 bg-popover" align="start">
-        <Command>
-          <CommandInput 
-            placeholder="Search cities..." 
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-          />
-          <CommandList>
-            {filteredCities.length === 0 && !searchQuery && (
-              <CommandEmpty>No popular cities found. Type to add a custom city.</CommandEmpty>
-            )}
-            {filteredCities.length === 0 && searchQuery && (
-              <CommandGroup heading="Add custom city">
-                <CommandItem
-                  value={searchQuery}
-                  onSelect={() => {
-                    onSelect(searchQuery);
-                    setOpen(false);
-                    setSearchQuery('');
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add "{searchQuery}"
-                </CommandItem>
-              </CommandGroup>
-            )}
-            {filteredCities.length > 0 && (
-              <CommandGroup heading="Popular cities">
-                {filteredCities.slice(0, 20).map((city) => (
+    <div className="space-y-1.5">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className="w-full justify-between font-normal"
+          >
+            {value || "Select or type a city..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0 z-50 bg-popover" align="start">
+          <Command>
+            <CommandInput 
+              placeholder="Type to search or add a city..." 
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+            />
+            <CommandList>
+              {filteredCities.length === 0 && !searchQuery && (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  <p>No popular cities found.</p>
+                  <p className="text-xs mt-1">Start typing to add your city</p>
+                </div>
+              )}
+              {filteredCities.length === 0 && searchQuery && (
+                <CommandGroup heading="Add your city">
                   <CommandItem
-                    key={city}
-                    value={city}
+                    value={searchQuery}
                     onSelect={() => {
-                      onSelect(city);
+                      onSelect(searchQuery);
                       setOpen(false);
                       setSearchQuery('');
                     }}
+                    className="cursor-pointer"
                   >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === city ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {city}
+                    <Plus className="mr-2 h-4 w-4 text-primary" />
+                    <span>Add "<strong>{searchQuery}</strong>"</span>
                   </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-            {searchQuery && filteredCities.length > 0 && !filteredCities.some(c => c.toLowerCase() === searchQuery.toLowerCase()) && (
-              <CommandGroup heading="Add custom city">
-                <CommandItem
-                  value={`custom-${searchQuery}`}
-                  onSelect={() => {
-                    onSelect(searchQuery);
-                    setOpen(false);
-                    setSearchQuery('');
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add "{searchQuery}"
-                </CommandItem>
-              </CommandGroup>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                </CommandGroup>
+              )}
+              {filteredCities.length > 0 && (
+                <CommandGroup heading="Popular cities">
+                  {filteredCities.slice(0, 20).map((city) => (
+                    <CommandItem
+                      key={city}
+                      value={city}
+                      onSelect={() => {
+                        onSelect(city);
+                        setOpen(false);
+                        setSearchQuery('');
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          value === city ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {city}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              {searchQuery && filteredCities.length > 0 && !filteredCities.some(c => c.toLowerCase() === searchQuery.toLowerCase()) && (
+                <CommandGroup heading="Add your city">
+                  <CommandItem
+                    value={`custom-${searchQuery}`}
+                    onSelect={() => {
+                      onSelect(searchQuery);
+                      setOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Plus className="mr-2 h-4 w-4 text-primary" />
+                    <span>Add "<strong>{searchQuery}</strong>"</span>
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <p className="text-xs text-muted-foreground">
+        Can't find your city? Just type it in and press enter.
+      </p>
+    </div>
   );
 }
 
