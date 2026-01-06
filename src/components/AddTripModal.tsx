@@ -133,30 +133,46 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
       const validEntries = dateEntries.filter(isDateEntryValid);
       if (validEntries.length === 0) throw new Error('Please add at least one valid date');
 
-      // Create visits for each date entry
-      const visits = validEntries.map(entry => {
-        let arrivalDate: string;
+      // Create visits for each date entry - only include entries with proper dates
+      const visits: Array<{
+        user_id: string;
+        country_iso2: string;
+        arrival_date: string;
+        departure_date: string | null;
+        source: string;
+        source_confidence: string;
+      }> = [];
+
+      for (const entry of validEntries) {
+        let arrivalDate: string | null = null;
         let departureDate: string | null = null;
 
         if (entry.dateType === 'month' && entry.month && entry.year) {
           const monthIndex = months.indexOf(entry.month);
-          arrivalDate = `${entry.year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
+          if (monthIndex >= 0) {
+            arrivalDate = `${entry.year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
+          }
         } else if (entry.dateType === 'range' && entry.startDate) {
           arrivalDate = entry.startDate;
           departureDate = entry.endDate || null;
-        } else {
-          arrivalDate = new Date().toISOString().split('T')[0];
         }
 
-        return {
-          user_id: user.id,
-          country_iso2: selectedCountry,
-          arrival_date: arrivalDate,
-          departure_date: departureDate,
-          source: 'manual',
-          source_confidence: 'high',
-        };
-      });
+        // Only add visit if we have a valid arrival date
+        if (arrivalDate) {
+          visits.push({
+            user_id: user.id,
+            country_iso2: selectedCountry,
+            arrival_date: arrivalDate,
+            departure_date: departureDate,
+            source: 'manual',
+            source_confidence: 'high',
+          });
+        }
+      }
+
+      if (visits.length === 0) {
+        throw new Error('No valid dates provided');
+      }
 
       // Insert all visits
       const { error: visitError } = await supabase
