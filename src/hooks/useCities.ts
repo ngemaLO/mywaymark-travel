@@ -72,11 +72,9 @@ export function useAddCity() {
     mutationFn: async ({ 
       countryIso2, 
       cityName,
-      arrivalDate 
     }: { 
       countryIso2: string; 
       cityName: string;
-      arrivalDate?: string;
     }) => {
       if (!user) throw new Error('Not authenticated');
 
@@ -109,19 +107,28 @@ export function useAddCity() {
         placeId = newPlace.id;
       }
 
-      // Create a visit record with this place
-      const { error: visitError } = await supabase
+      // Find an existing visit for this country to link the city to
+      // (don't create a new visit - just associate the city with an existing one)
+      const { data: existingVisits } = await supabase
         .from('visits')
-        .insert({
-          user_id: user.id,
-          country_iso2: countryIso2,
-          place_id: placeId,
-          arrival_date: arrivalDate || new Date().toISOString().split('T')[0],
-          source: 'manual',
-          source_confidence: 'high',
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('country_iso2', countryIso2)
+        .is('place_id', null)
+        .order('arrival_date', { ascending: false })
+        .limit(1);
 
-      if (visitError) throw visitError;
+      if (existingVisits && existingVisits.length > 0) {
+        // Link the city to the most recent visit without a place
+        const { error: updateError } = await supabase
+          .from('visits')
+          .update({ place_id: placeId })
+          .eq('id', existingVisits[0].id);
+
+        if (updateError) throw updateError;
+      }
+      // If no visit exists without a place, just create the place record
+      // The city will still show up in the list
 
       return { placeId };
     },
