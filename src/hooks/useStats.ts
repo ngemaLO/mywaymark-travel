@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface TravelStats {
   countriesVisited: number;
   citiesVisited: number;
-  totalTrips: number;
   totalFlights: number;
 }
 
@@ -16,7 +15,7 @@ export function useStats() {
     queryKey: ['stats', user?.id],
     queryFn: async (): Promise<TravelStats> => {
       if (!user) {
-        return { countriesVisited: 0, citiesVisited: 0, totalTrips: 0, totalFlights: 0 };
+        return { countriesVisited: 0, citiesVisited: 0, totalFlights: 0 };
       }
 
       // Get unique countries from visits
@@ -38,13 +37,6 @@ export function useStats() {
       if (citiesError) throw citiesError;
 
       // Get trip count
-      const { count: tripCount, error: tripsError } = await supabase
-        .from('trips')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      if (tripsError) throw tripsError;
-
       // Get flight count
       const { count: flightCount, error: flightsError } = await supabase
         .from('flights')
@@ -56,7 +48,6 @@ export function useStats() {
       return {
         countriesVisited: uniqueCountries.size,
         citiesVisited: citiesCount || 0,
-        totalTrips: tripCount || 0,
         totalFlights: flightCount || 0,
       };
     },
