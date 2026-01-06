@@ -46,9 +46,14 @@ const months = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Generate years (last 50 years to now)
+// Generate years (last 50 years to now - no future years)
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 51 }, (_, i) => currentYear - i);
+
+// Get today's date in YYYY-MM-DD format for max date validation
+const getTodayString = () => {
+  return new Date().toISOString().split('T')[0];
+};
 
 const createEmptyDateEntry = (): DateEntry => ({
   id: crypto.randomUUID(),
@@ -386,6 +391,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
                             type="date"
                             value={entry.startDate}
                             onChange={(e) => updateDateEntry(entry.id, { startDate: e.target.value })}
+                            max={getTodayString()}
                           />
                         </div>
                         <span className="text-muted-foreground mt-5">to</span>
@@ -395,6 +401,8 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
                             type="date"
                             value={entry.endDate}
                             onChange={(e) => updateDateEntry(entry.id, { endDate: e.target.value })}
+                            min={entry.startDate}
+                            max={getTodayString()}
                           />
                         </div>
                       </div>
