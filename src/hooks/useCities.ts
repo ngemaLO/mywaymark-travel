@@ -10,7 +10,6 @@ export interface City {
   type: string;
   lat: number | null;
   lng: number | null;
-  visitCount: number;
 }
 
 export function useCitiesByCountry(countryIso2: string) {
@@ -21,32 +20,23 @@ export function useCitiesByCountry(countryIso2: string) {
     queryFn: async (): Promise<City[]> => {
       if (!user || !countryIso2) return [];
 
-      // Get all visits for this country that have a place_id
-      const { data: visits, error: visitsError } = await supabase
-        .from('visits')
+      // Get user's places for this country from user_places table
+      const { data: userPlaces, error: userPlacesError } = await supabase
+        .from('user_places')
         .select('place_id')
-        .eq('user_id', user.id)
-        .eq('country_iso2', countryIso2)
-        .not('place_id', 'is', null);
+        .eq('user_id', user.id);
 
-      if (visitsError) throw visitsError;
-      if (!visits || visits.length === 0) return [];
+      if (userPlacesError) throw userPlacesError;
+      if (!userPlaces || userPlaces.length === 0) return [];
 
-      // Count visits per place
-      const placeVisitCounts = visits.reduce((acc, visit) => {
-        if (visit.place_id) {
-          acc[visit.place_id] = (acc[visit.place_id] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>);
+      const placeIds = userPlaces.map(up => up.place_id);
 
-      const placeIds = Object.keys(placeVisitCounts);
-
-      // Get place details
+      // Get place details for this country
       const { data: places, error: placesError } = await supabase
         .from('places')
         .select('*')
-        .in('id', placeIds);
+        .in('id', placeIds)
+        .eq('country_iso2', countryIso2);
 
       if (placesError) throw placesError;
 
@@ -57,7 +47,6 @@ export function useCitiesByCountry(countryIso2: string) {
         type: place.type,
         lat: place.lat,
         lng: place.lng,
-        visitCount: placeVisitCounts[place.id] || 0,
       }));
     },
     enabled: !!user && !!countryIso2,
@@ -78,7 +67,7 @@ export function useAddCity() {
     }) => {
       if (!user) throw new Error('Not authenticated');
 
-      // First, check if this city already exists
+      // First, check if this city already exists as a place
       let { data: existingPlace } = await supabase
         .from('places')
         .select('id')
@@ -107,39 +96,41 @@ export function useAddCity() {
         placeId = newPlace.id;
       }
 
-      // Find an existing visit for this country to link the city to
-      // (don't create a new visit - just associate the city with an existing one)
-      const { data: existingVisits } = await supabase
-        .from('visits')
+      // Check if user already has this place
+      const { data: existingUserPlace } = await supabase
+        .from('user_places')
         .select('id')
         .eq('user_id', user.id)
-        .eq('country_iso2', countryIso2)
-        .is('place_id', null)
-        .order('arrival_date', { ascending: false })
-        .limit(1);
+        .eq('place_id', placeId)
+        .maybeSingle();
 
-      if (existingVisits && existingVisits.length > 0) {
-        // Link the city to the most recent visit without a place
-        const { error: updateError } = await supabase
-          .from('visits')
-          .update({ place_id: placeId })
-          .eq('id', existingVisits[0].id);
-
-        if (updateError) throw updateError;
+      if (existingUserPlace) {
+        throw new Error('You have already added this city');
       }
-      // If no visit exists without a place, just create the place record
-      // The city will still show up in the list
+
+      // Link user to this place
+      const { error: linkError } = await supabase
+        .from('user_places')
+        .insert({
+          user_id: user.id,
+          place_id: placeId,
+        });
+
+      if (linkError) throw linkError;
 
       return { placeId };
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cities', variables.countryIso2] });
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
       toast.success(`Added ${variables.cityName}!`);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Failed to add city:', error);
-      toast.error('Failed to add city. Please try again.');
+      if (error.message.includes('already added')) {
+        toast.error('You have already added this city');
+      } else {
+        toast.error('Failed to add city. Please try again.');
+      }
     },
   });
 }
@@ -158,9 +149,9 @@ export function useRemoveCity() {
     }) => {
       if (!user) throw new Error('Not authenticated');
 
-      // Remove visits associated with this place for this user
+      // Remove user's link to this place
       const { error } = await supabase
-        .from('visits')
+        .from('user_places')
         .delete()
         .eq('user_id', user.id)
         .eq('place_id', placeId);
@@ -169,7 +160,6 @@ export function useRemoveCity() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cities', variables.countryIso2] });
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
       toast.success('City removed');
     },
     onError: (error) => {

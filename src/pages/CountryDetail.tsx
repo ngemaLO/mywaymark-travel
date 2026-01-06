@@ -383,11 +383,6 @@ export default function CountryDetail() {
                           <span className="text-sm font-medium text-foreground">
                             {city.name}
                           </span>
-                          {city.visitCount > 1 && (
-                            <span className="text-xs text-muted-foreground">
-                              ×{city.visitCount}
-                            </span>
-                          )}
                           <button
                             onClick={() => handleRemoveCity(city.id)}
                             disabled={removeCityMutation.isPending}
