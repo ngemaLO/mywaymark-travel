@@ -1,4 +1,4 @@
-import { Globe, MapPin, Plane, Route } from 'lucide-react';
+import { Globe, MapPin, Plane } from 'lucide-react';
 import { useStats } from '@/hooks/useStats';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -43,17 +43,16 @@ export function StatsRow() {
 
   if (!user) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[0, 1, 2, 3].map((i) => (
+      <div className="grid grid-cols-3 gap-4">
+        {[0, 1, 2].map((i) => (
           <div key={i} className="stat-card text-center text-muted-foreground">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted mb-2 mx-auto">
               {i === 0 && <Globe className="w-5 h-5" />}
               {i === 1 && <MapPin className="w-5 h-5" />}
-              {i === 2 && <Route className="w-5 h-5" />}
-              {i === 3 && <Plane className="w-5 h-5" />}
+              {i === 2 && <Plane className="w-5 h-5" />}
             </div>
             <span className="text-2xl font-display font-bold">0</span>
-            <span className="text-sm">{['Countries', 'Cities', 'Trips', 'Flights'][i]}</span>
+            <span className="text-sm">{['Countries', 'Cities', 'Flights'][i]}</span>
           </div>
         ))}
       </div>
@@ -62,8 +61,7 @@ export function StatsRow() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCardSkeleton />
+      <div className="grid grid-cols-3 gap-4">
         <StatCardSkeleton />
         <StatCardSkeleton />
         <StatCardSkeleton />
@@ -72,7 +70,7 @@ export function StatsRow() {
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-3 gap-4">
       <StatCard 
         icon={<Globe className="w-5 h-5" />}
         value={stats?.countriesVisited ?? 0}
@@ -86,16 +84,10 @@ export function StatsRow() {
         delay={100}
       />
       <StatCard 
-        icon={<Route className="w-5 h-5" />}
-        value={stats?.totalTrips ?? 0}
-        label="Trips"
-        delay={200}
-      />
-      <StatCard 
         icon={<Plane className="w-5 h-5" />}
         value={stats?.totalFlights ?? 0}
         label="Flights"
-        delay={300}
+        delay={200}
       />
     </div>
   );
