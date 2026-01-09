@@ -2,6 +2,7 @@ import { Header } from '@/components/Header';
 import { WorldMap } from '@/components/WorldMap';
 import { StatsRow } from '@/components/StatsRow';
 import { TravelContext } from '@/components/TravelContext';
+import { OnThisDay } from '@/components/OnThisDay';
 import { BadgeGrid } from '@/components/BadgeGrid';
 import { TimelinePreview } from '@/components/TimelinePreview';
 import { useNavigate } from 'react-router-dom';
@@ -78,6 +79,9 @@ const Index = () => {
 
             {/* Travel Context */}
             <TravelContext />
+
+            {/* On This Day Memory */}
+            <OnThisDay />
 
             {/* Two Column Layout */}
             <div className="grid lg:grid-cols-3 gap-8">
