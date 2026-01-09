@@ -1,11 +1,26 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useVisits } from '@/hooks/useVisits';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCountryByIso } from '@/data/countries';
+import { supabase } from '@/integrations/supabase/client';
 
 export function OnThisDay() {
   const { user } = useAuth();
   const { data: visits = [], isLoading } = useVisits();
+
+  // Fetch places to get city names
+  const { data: places = [] } = useQuery({
+    queryKey: ['places'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('places')
+        .select('id, name, type');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   if (!user || isLoading) return null;
   if (visits.length === 0) return null;
@@ -43,20 +58,33 @@ export function OnThisDay() {
   const memory = sortedMatches[0];
   const memoryDate = new Date(memory.arrival_date);
   const memoryYear = memoryDate.getFullYear();
+  const yearDifference = currentYear - memoryYear;
   const country = getCountryByIso(memory.country_iso2);
 
   if (!country) return null;
 
+  // Get city name if available
+  const place = memory.place_id ? places.find(p => p.id === memory.place_id) : null;
+  const cityName = place?.type === 'city' ? place.name : null;
+
+  // Build location text
+  const locationText = cityName ? `${cityName}, ${country.name}` : country.name;
+
+  // Build the reflective copy
+  const timePhrase = yearDifference === 1 
+    ? 'A year ago today' 
+    : `On this day in ${memoryYear}`;
+
   return (
     <section className="py-3">
       <p className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">On this day</span>
-        {' '}in {memoryYear}, you were in{' '}
+        <span className="font-medium text-foreground">{timePhrase}</span>
+        {', you were travelling in '}
         <Link 
           to={`/country/${country.iso2}`} 
           className="text-foreground hover:underline underline-offset-2"
         >
-          {country.name}
+          {locationText}
         </Link>
         .
       </p>
