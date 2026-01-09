@@ -9,17 +9,21 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisitedCountries } from '@/hooks/useVisits';
 import { Button } from '@/components/ui/button';
-import { Plus, MapPin } from 'lucide-react';
+import { Plus, MapPin, Home } from 'lucide-react';
 import { useState } from 'react';
 import { AddTripModal } from '@/components/AddTripModal';
+import { useCurrentHomeBase } from '@/hooks/useHomeBase';
+import { getCountryByIso } from '@/data/countries';
 
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { visitedIsos, isLoading } = useVisitedCountries();
   const [addTripOpen, setAddTripOpen] = useState(false);
+  const { homeBase } = useCurrentHomeBase();
 
   const hasVisits = visitedIsos.length > 0;
+  const homeCountry = homeBase ? getCountryByIso(homeBase.country_iso2) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,6 +83,16 @@ const Index = () => {
 
             {/* Travel Context */}
             <TravelContext />
+
+            {/* Home Base Display */}
+            {homeCountry && (
+              <section className="py-2">
+                <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <Home className="w-3.5 h-3.5" />
+                  <span>Home base: {homeCountry.name}</span>
+                </p>
+              </section>
+            )}
 
             {/* On This Day Memory */}
             <OnThisDay />
