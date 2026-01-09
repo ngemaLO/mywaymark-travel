@@ -15,7 +15,7 @@ export function OnThisDay() {
   const todayMonth = today.getMonth();
   const currentYear = today.getFullYear();
 
-  // Find visits that match today's day and month from previous years
+  // Find visits where today's day/month falls within the visit date range in previous years
   const matchingVisits = visits.filter(visit => {
     const arrivalDate = new Date(visit.arrival_date);
     const visitYear = arrivalDate.getFullYear();
@@ -23,8 +23,14 @@ export function OnThisDay() {
     // Must be from a previous year
     if (visitYear >= currentYear) return false;
     
-    // Check if day and month match
-    return arrivalDate.getDate() === todayDay && arrivalDate.getMonth() === todayMonth;
+    // Create a "this day in that year" date for comparison
+    const thisDayThatYear = new Date(visitYear, todayMonth, todayDay);
+    
+    // Check if this day falls within the visit range
+    const startDate = new Date(visit.arrival_date);
+    const endDate = visit.departure_date ? new Date(visit.departure_date) : startDate;
+    
+    return thisDayThatYear >= startDate && thisDayThatYear <= endDate;
   });
 
   if (matchingVisits.length === 0) return null;
