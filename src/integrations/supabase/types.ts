@@ -162,6 +162,36 @@ export type Database = {
           },
         ]
       }
+      home_bases: {
+        Row: {
+          country_iso2: string
+          created_at: string | null
+          end_date: string | null
+          id: string
+          start_date: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          country_iso2: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          start_date: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          country_iso2?: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       places: {
         Row: {
           country_iso2: string

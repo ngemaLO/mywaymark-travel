@@ -7,6 +7,7 @@ import { MapHoverCard } from '@/components/MapHoverCard';
 import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
+import { useCurrentHomeBase } from '@/hooks/useHomeBase';
 
 interface WorldMapProps {
   onCountryClick?: (iso2: string) => void;
@@ -53,6 +54,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   const { visitedIsos, isLoading } = useVisitedCountries();
   const { user } = useAuth();
+  const { homeBase } = useCurrentHomeBase();
 
   // Fetch world TopoJSON data
   useEffect(() => {
@@ -338,7 +340,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return null;
   }, [overseasTerritories, getIso2FromFeature]);
 
-  // Get fill color - use flag colors for visited countries
+  // Get fill color - use flag colors for visited countries, subtle pattern for home base
   const getPolygonFill = useCallback((iso2: string | null, isOverseas: boolean) => {
     if (!iso2) return 'hsl(var(--map-land))';
     
@@ -346,9 +348,15 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     if (isOverseas) {
       return 'hsl(var(--map-land))';
     }
-    
+
+    const isHomeBase = homeBase?.country_iso2 === iso2;
     const isVisited = visitedIsos.includes(iso2);
     const isHovered = hoveredCountry === iso2;
+
+    // Home base gets a subtle, distinct treatment
+    if (isHomeBase) {
+      return isHovered ? 'hsl(var(--muted-foreground) / 0.25)' : 'hsl(var(--muted-foreground) / 0.15)';
+    }
 
     if (!isVisited) {
       return isHovered ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
@@ -369,7 +377,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     }
     
     return 'hsl(var(--map-visited))';
-  }, [hoveredCountry, visitedIsos]);
+  }, [hoveredCountry, visitedIsos, homeBase]);
 
   const handleCountryClick = (iso2: string | null) => {
     if (iso2 && visitedIsos.includes(iso2) && onCountryClick) {

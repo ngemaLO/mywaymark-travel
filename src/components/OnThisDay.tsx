@@ -4,10 +4,12 @@ import { useVisits } from '@/hooks/useVisits';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCountryByIso } from '@/data/countries';
 import { supabase } from '@/integrations/supabase/client';
+import { useHomeBases, isDateInHomeBase } from '@/hooks/useHomeBase';
 
 export function OnThisDay() {
   const { user } = useAuth();
   const { data: visits = [], isLoading } = useVisits();
+  const { data: homeBases = [] } = useHomeBases();
 
   // Fetch places to get city names
   const { data: places = [] } = useQuery({
@@ -31,12 +33,18 @@ export function OnThisDay() {
   const currentYear = today.getFullYear();
 
   // Find visits where today's day/month falls within the visit date range in previous years
+  // Exclude visits that fall within a home base period
   const matchingVisits = visits.filter(visit => {
     const arrivalDate = new Date(visit.arrival_date);
     const visitYear = arrivalDate.getFullYear();
     
     // Must be from a previous year
     if (visitYear >= currentYear) return false;
+    
+    // Exclude if this visit was during a home base period
+    if (isDateInHomeBase(visit.arrival_date, visit.country_iso2, homeBases)) {
+      return false;
+    }
     
     // Create a "this day in that year" date for comparison
     const thisDayThatYear = new Date(visitYear, todayMonth, todayDay);

@@ -12,15 +12,32 @@ import {
   Upload,
   Link as LinkIcon,
   Navigation,
-  MapPin
+  MapPin,
+  Home,
+  X
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCurrentHomeBase, useHomeBaseMutations } from '@/hooks/useHomeBase';
+import { getCountryByIso, countries } from '@/data/countries';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export default function Settings() {
   const [displayName, setDisplayName] = useState('Explorer');
   const [tripModeEnabled, setTripModeEnabled] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
   const navigate = useNavigate();
+  
+  const { homeBase, isLoading: homeBaseLoading } = useCurrentHomeBase();
+  const { setHomeBase, clearHomeBase } = useHomeBaseMutations();
+  
+  const currentHomeCountry = homeBase ? getCountryByIso(homeBase.country_iso2) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,6 +89,69 @@ export default function Settings() {
                 Email cannot be changed. Contact support for assistance.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Home Base Section */}
+        <section className="card-elevated p-6 space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Home className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-lg font-display font-semibold text-foreground">
+              Home Base
+            </h2>
+          </div>
+          
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Your home base represents where you currently live. It won't count as a trip in your travel stats.
+            </p>
+
+            {currentHomeCountry ? (
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                <div className="space-y-0.5">
+                  <p className="font-medium text-foreground">{currentHomeCountry.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Since {new Date(homeBase!.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => clearHomeBase.mutate()}
+                  disabled={clearHomeBase.isPending}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map(country => (
+                      <SelectItem key={country.iso2} value={country.iso2}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={() => {
+                    if (selectedCountry) {
+                      setHomeBase.mutate({ countryIso2: selectedCountry });
+                      setSelectedCountry('');
+                    }
+                  }}
+                  disabled={!selectedCountry || setHomeBase.isPending}
+                >
+                  Set
+                </Button>
+              </div>
+            )}
           </div>
         </section>
 
