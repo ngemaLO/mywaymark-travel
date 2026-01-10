@@ -535,17 +535,17 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
             transform={`translate(${homeBaseCentroid.x}, ${homeBaseCentroid.y})`}
             className="pointer-events-none"
           >
-            {/* Outer glow/ring */}
+            {/* Outer circle */}
             <circle 
-              r="12" 
+              r="8" 
               fill="hsl(var(--background))" 
               stroke="hsl(var(--foreground))"
-              strokeWidth="2"
-              className="drop-shadow-md"
+              strokeWidth="1.5"
+              className="drop-shadow-sm"
             />
-            {/* Home icon - manually drawn SVG path for the home icon */}
+            {/* Home icon - scaled down */}
             <path
-              d="M0 -5 L5 0 L4 0 L4 4 L1 4 L1 1 L-1 1 L-1 4 L-4 4 L-4 0 L-5 0 Z"
+              d="M0 -3.5 L3.5 0 L2.8 0 L2.8 2.8 L0.7 2.8 L0.7 0.7 L-0.7 0.7 L-0.7 2.8 L-2.8 2.8 L-2.8 0 L-3.5 0 Z"
               fill="hsl(var(--foreground))"
               strokeWidth="0"
             />

@@ -6,6 +6,7 @@ import { useCountryNote, useSaveCountryNote } from '@/hooks/useCountryNotes';
 import { useCountryImages, useAddCountryImage, useDeleteCountryImage, useUploadCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
 import { useTripsByCountry } from '@/hooks/useTripsByCountry';
 import { useCitiesByCountry, useAddCity, useRemoveCity } from '@/hooks/useCities';
+import { useCurrentHomeBase } from '@/hooks/useHomeBase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +28,8 @@ import {
   Loader2,
   AlertCircle,
   Building2,
-  Plus
+  Plus,
+  Home
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState, useRef } from 'react';
@@ -53,6 +55,7 @@ export default function CountryDetail() {
   const { data: images = [], isLoading: imagesLoading } = useCountryImages(iso || '');
   const { data: trips = [], isLoading: tripsLoading } = useTripsByCountry(iso || '');
   const { data: cities = [], isLoading: citiesLoading } = useCitiesByCountry(iso || '');
+  const { homeBase } = useCurrentHomeBase();
   const saveNoteMutation = useSaveCountryNote();
   const addImageMutation = useAddCountryImage();
   const uploadImageMutation = useUploadCountryImage();
@@ -62,6 +65,7 @@ export default function CountryDetail() {
   const removeCityMutation = useRemoveCity();
   
   const visited = iso ? isVisited(iso) : false;
+  const isHomeBase = homeBase?.country_iso2 === iso;
   const [noteText, setNoteText] = useState('');
   
   // Sync note text when data loads
@@ -223,13 +227,26 @@ export default function CountryDetail() {
               <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
                 {country.name}
               </h1>
-              <span className="px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 bg-primary/10 text-primary">
-                <Check className="w-3 h-3" />
-                Visited
-              </span>
+              {isHomeBase ? (
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 bg-foreground/10 text-foreground border border-foreground/20">
+                  <Home className="w-3 h-3" />
+                  Home
+                </span>
+              ) : (
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 bg-primary/10 text-primary">
+                  <Check className="w-3 h-3" />
+                  Visited
+                </span>
+              )}
             </div>
             <p className="text-muted-foreground">
-              {country.continent} • {visitCount} visit{visitCount !== 1 ? 's' : ''}
+              {country.continent}
+              {!isHomeBase && visitCount > 0 && (
+                <> • {visitCount} visit{visitCount !== 1 ? 's' : ''}</>
+              )}
+              {isHomeBase && homeBase?.start_date && (
+                <> • Home since {new Date(homeBase.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
+              )}
             </p>
           </div>
         </section>
