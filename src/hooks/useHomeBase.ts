@@ -56,20 +56,33 @@ export function useHomeBaseMutations() {
   const queryClient = useQueryClient();
 
   const setHomeBase = useMutation({
-    mutationFn: async ({ countryIso2, startDate }: { countryIso2: string; startDate?: string }) => {
+    mutationFn: async ({ 
+      countryIso2, 
+      startDate, 
+      endDate,
+      stillLivingHere = false 
+    }: { 
+      countryIso2: string; 
+      startDate?: string;
+      endDate?: string;
+      stillLivingHere?: boolean;
+    }) => {
       if (!user) throw new Error('Not authenticated');
       
       const today = new Date().toISOString().split('T')[0];
       const start = startDate || today;
+      const end = stillLivingHere ? null : (endDate || null);
 
-      // End any existing active home bases
-      const { error: updateError } = await supabase
-        .from('home_bases')
-        .update({ end_date: start })
-        .eq('user_id', user.id)
-        .is('end_date', null);
+      // If this is a new "current" home base, end any existing active home bases
+      if (stillLivingHere || !endDate) {
+        const { error: updateError } = await supabase
+          .from('home_bases')
+          .update({ end_date: start })
+          .eq('user_id', user.id)
+          .is('end_date', null);
 
-      if (updateError) throw updateError;
+        if (updateError) throw updateError;
+      }
 
       // Create new home base
       const { data, error } = await supabase
@@ -78,7 +91,7 @@ export function useHomeBaseMutations() {
           user_id: user.id,
           country_iso2: countryIso2,
           start_date: start,
-          end_date: null,
+          end_date: end,
         })
         .select()
         .single();
@@ -88,10 +101,10 @@ export function useHomeBaseMutations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['home_bases'] });
-      toast.success('Home base updated');
+      toast.success('Home base added');
     },
     onError: (error) => {
-      toast.error('Failed to update home base');
+      toast.error('Failed to add home base');
       console.error('Home base error:', error);
     },
   });
