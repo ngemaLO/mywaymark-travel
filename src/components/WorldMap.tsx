@@ -8,6 +8,7 @@ import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
+import { Home } from 'lucide-react';
 
 interface WorldMapProps {
   onCountryClick?: (iso2: string) => void;
@@ -370,15 +371,15 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return isHovered ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
   }, [hoveredCountry, visitedIsos, homeBase]);
 
-  // Get stroke style - home base gets a distinct stroke pattern
+  // Get stroke style - home base gets a distinct stroke
   const getPolygonStroke = useCallback((iso2: string | null) => {
     const isHomeBase = homeBase?.country_iso2 === iso2;
     
     if (isHomeBase) {
       return {
         stroke: 'hsl(var(--foreground))',
-        strokeWidth: 1.5,
-        strokeDasharray: '3,2'
+        strokeWidth: 2,
+        strokeDasharray: undefined
       };
     }
     
@@ -388,6 +389,23 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       strokeDasharray: undefined
     };
   }, [homeBase]);
+
+  // Calculate home base centroid for icon placement
+  const homeBaseCentroid = useMemo(() => {
+    if (!homeBase || !geoData) return null;
+    
+    const homeCountryFeature = geoData.find(feature => {
+      const iso2 = getIso2FromFeature(feature);
+      return iso2 === homeBase.country_iso2;
+    });
+    
+    if (!homeCountryFeature) return null;
+    
+    const centroid = geoCentroid(homeCountryFeature as GeoJSON.Feature);
+    const projected = projection(centroid);
+    
+    return projected ? { x: projected[0], y: projected[1] } : null;
+  }, [homeBase, geoData, getIso2FromFeature, projection]);
 
   const handleCountryClick = (iso2: string | null) => {
     if (iso2 && visitedIsos.includes(iso2) && onCountryClick) {
@@ -511,6 +529,28 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
             />
           );
         })}
+        {/* Home base icon marker */}
+        {homeBaseCentroid && (
+          <g 
+            transform={`translate(${homeBaseCentroid.x}, ${homeBaseCentroid.y})`}
+            className="pointer-events-none"
+          >
+            {/* Outer glow/ring */}
+            <circle 
+              r="12" 
+              fill="hsl(var(--background))" 
+              stroke="hsl(var(--foreground))"
+              strokeWidth="2"
+              className="drop-shadow-md"
+            />
+            {/* Home icon - manually drawn SVG path for the home icon */}
+            <path
+              d="M0 -5 L5 0 L4 0 L4 4 L1 4 L1 1 L-1 1 L-1 4 L-4 4 L-4 0 L-5 0 Z"
+              fill="hsl(var(--foreground))"
+              strokeWidth="0"
+            />
+          </g>
+        )}
       </svg>
 
       {/* Legend */}
@@ -521,13 +561,9 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         </div>
         {homeBase && (
           <div className="flex items-center gap-1.5">
-            <div 
-              className="w-3 h-3 rounded-sm" 
-              style={{ 
-                backgroundColor: getCountryByIso(homeBase.country_iso2)?.flagPrimaryColor || 'hsl(var(--primary))',
-                border: '1.5px dashed hsl(var(--foreground))'
-              }} 
-            />
+            <div className="w-4 h-4 rounded-full bg-background border-2 border-foreground flex items-center justify-center">
+              <Home className="w-2.5 h-2.5 text-foreground" />
+            </div>
             <span className="text-muted-foreground">Home base</span>
           </div>
         )}
