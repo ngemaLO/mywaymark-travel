@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useCurrentHomeBase } from '@/hooks/useHomeBase';
 
 interface Visit {
   id: string;
@@ -18,21 +19,30 @@ interface Visit {
 export function TimelinePreview() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { homeBase } = useCurrentHomeBase();
 
   const { data: visits = [], isLoading } = useQuery({
-    queryKey: ['recent-visits', user?.id],
+    queryKey: ['recent-visits', user?.id, homeBase?.country_iso2],
     queryFn: async () => {
       if (!user) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('visits')
         .select('*')
         .eq('user_id', user.id)
         .order('arrival_date', { ascending: false })
-        .limit(5);
+        .limit(10); // Fetch more to account for filtering
+      
+      const { data, error } = await query;
       
       if (error) throw error;
-      return data as Visit[];
+      
+      // Filter out home base country and limit to 5
+      const filtered = (data as Visit[])
+        .filter(v => v.country_iso2 !== homeBase?.country_iso2)
+        .slice(0, 5);
+      
+      return filtered;
     },
     enabled: !!user,
   });
