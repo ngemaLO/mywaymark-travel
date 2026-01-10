@@ -553,8 +553,8 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         )}
       </svg>
 
-      {/* Legend - positioned in top-left to avoid Antarctica */}
-      <div className="absolute top-4 left-4 flex items-center gap-4 text-xs bg-card/90 backdrop-blur-sm px-3 py-2 rounded-md border border-border/50 shadow-sm">
+      {/* Legend - positioned in bottom-right to avoid land overlap */}
+      <div className="absolute bottom-4 right-4 flex items-center gap-4 text-xs bg-card/90 backdrop-blur-sm px-3 py-2 rounded-md border border-border/50 shadow-sm">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#0055A4] via-[#009C3B] to-[#BC002D]" />
           <span className="text-muted-foreground">Visited (flag colors)</span>
