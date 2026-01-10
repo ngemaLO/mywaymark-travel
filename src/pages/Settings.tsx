@@ -17,7 +17,8 @@ import {
   MapPin,
   Home,
   X,
-  CalendarIcon
+  CalendarIcon,
+  Plus
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -40,10 +41,15 @@ export default function Settings() {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const navigate = useNavigate();
   
-  const { homeBase, isLoading: homeBaseLoading } = useCurrentHomeBase();
-  const { setHomeBase, clearHomeBase } = useHomeBaseMutations();
+  const { homeBase, homeBases, isLoading: homeBaseLoading } = useCurrentHomeBase();
+  const { setHomeBase, deleteHomeBase } = useHomeBaseMutations();
   
   const currentHomeCountry = homeBase ? getCountryByIso(homeBase.country_iso2) : null;
+
+  const resetForm = () => {
+    setSelectedCountry('');
+    setStartDate(undefined);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -111,86 +117,143 @@ export default function Settings() {
           
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Your home base represents where you currently live. It won't count as a trip in your travel stats.
+              Track where you've lived. Home base periods won't count as trips in your travel stats.
             </p>
 
-            {currentHomeCountry ? (
-              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-                <div className="space-y-0.5">
-                  <p className="font-medium text-foreground">{currentHomeCountry.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Since {new Date(homeBase!.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                  </p>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => clearHomeBase.mutate()}
-                  disabled={clearHomeBase.isPending}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select a country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map(country => (
-                        <SelectItem key={country.iso2} value={country.iso2}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "flex-1 justify-start text-left font-normal",
-                          !startDate && "text-muted-foreground"
-                        )}
+            {/* Existing home bases list */}
+            {homeBases.length > 0 && (
+              <div className="space-y-2">
+                {homeBases.map((hb) => {
+                  const country = getCountryByIso(hb.country_iso2);
+                  const isActive = !hb.end_date;
+                  return (
+                    <div 
+                      key={hb.id} 
+                      className={cn(
+                        "flex items-center justify-between p-4 rounded-lg",
+                        isActive ? "bg-primary/5 border border-primary/20" : "bg-muted/50"
+                      )}
+                    >
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">{country?.name || hb.country_iso2}</p>
+                          {isActive && (
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(hb.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                          {hb.end_date && (
+                            <> — {new Date(hb.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
+                          )}
+                          {!hb.end_date && ' — Present'}
+                        </p>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => deleteHomeBase.mutate(hb.id)}
+                        disabled={deleteHomeBase.isPending}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "PPP") : "When did you move here?"}
+                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={setStartDate}
-                        initialFocus
-                        disabled={(date) => date > new Date()}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  
-                  <Button 
-                    onClick={() => {
-                      if (selectedCountry && startDate) {
-                        setHomeBase.mutate({ 
-                          countryIso2: selectedCountry, 
-                          startDate: format(startDate, 'yyyy-MM-dd') 
-                        });
-                        setSelectedCountry('');
-                        setStartDate(undefined);
-                      }
-                    }}
-                    disabled={!selectedCountry || !startDate || setHomeBase.isPending}
-                  >
-                    Set
-                  </Button>
-                </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
+
+            {/* Add new home base form */}
+            <div className="space-y-3 pt-2 border-t border-border">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                Add home base
+              </p>
+              
+              <div className="flex gap-2">
+                <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map(country => (
+                      <SelectItem key={country.iso2} value={country.iso2}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedCountry && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setSelectedCountry('')}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal",
+                        !startDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : "When did you move here?"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      disabled={(date) => date > new Date()}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {startDate && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => setStartDate(undefined)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <Button 
+                  className="flex-1"
+                  onClick={() => {
+                    if (selectedCountry && startDate) {
+                      setHomeBase.mutate({ 
+                        countryIso2: selectedCountry, 
+                        startDate: format(startDate, 'yyyy-MM-dd') 
+                      });
+                      resetForm();
+                    }
+                  }}
+                  disabled={!selectedCountry || !startDate || setHomeBase.isPending}
+                >
+                  Add Home Base
+                </Button>
+                {(selectedCountry || startDate) && (
+                  <Button variant="outline" onClick={resetForm}>
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 
