@@ -340,7 +340,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     return null;
   }, [overseasTerritories, getIso2FromFeature]);
 
-  // Get fill color - use flag colors for visited countries, subtle pattern for home base
+  // Get fill color - use flag colors for visited countries (including home base)
   const getPolygonFill = useCallback((iso2: string | null, isOverseas: boolean) => {
     if (!iso2) return 'hsl(var(--map-land))';
     
@@ -353,31 +353,41 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     const isVisited = visitedIsos.includes(iso2);
     const isHovered = hoveredCountry === iso2;
 
-    // Home base gets a subtle, distinct treatment
-    if (isHomeBase) {
-      return isHovered ? 'hsl(var(--muted-foreground) / 0.25)' : 'hsl(var(--muted-foreground) / 0.15)';
+    // Both home base and visited countries use flag colors
+    if (isHomeBase || isVisited) {
+      const country = getCountryByIso(iso2);
+      const flagColor = country?.flagPrimaryColor;
+      
+      if (flagColor) {
+        return flagColor;
+      }
+
+      // Fallback to default visited color if no flag color
+      return isHovered ? 'hsl(var(--map-visited-hover))' : 'hsl(var(--map-visited))';
     }
 
-    if (!isVisited) {
-      return isHovered ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
-    }
-
-    // Use the country's flag color for visited countries
-    const country = getCountryByIso(iso2);
-    const flagColor = country?.flagPrimaryColor;
-    
-    if (flagColor) {
-      // Add slight brightness adjustment on hover
-      return isHovered ? flagColor : flagColor;
-    }
-
-    // Fallback to default visited color if no flag color
-    if (isHovered) {
-      return 'hsl(var(--map-visited-hover))';
-    }
-    
-    return 'hsl(var(--map-visited))';
+    // Not visited
+    return isHovered ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
   }, [hoveredCountry, visitedIsos, homeBase]);
+
+  // Get stroke style - home base gets a distinct stroke pattern
+  const getPolygonStroke = useCallback((iso2: string | null) => {
+    const isHomeBase = homeBase?.country_iso2 === iso2;
+    
+    if (isHomeBase) {
+      return {
+        stroke: 'hsl(var(--foreground))',
+        strokeWidth: 1.5,
+        strokeDasharray: '3,2'
+      };
+    }
+    
+    return {
+      stroke: 'hsl(var(--map-border))',
+      strokeWidth: 0.5,
+      strokeDasharray: undefined
+    };
+  }, [homeBase]);
 
   const handleCountryClick = (iso2: string | null) => {
     if (iso2 && visitedIsos.includes(iso2) && onCountryClick) {
@@ -426,8 +436,11 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         {/* Country paths - using expanded polygons for proper overseas detection */}
         {expandedPolygons.map((polygon, index) => {
           const iso2 = getIso2FromFeature(polygon.originalFeature);
+          const isHomeBase = homeBase?.country_iso2 === iso2 && !polygon.isOverseas;
           const isVisited = iso2 ? visitedIsos.includes(iso2) && !polygon.isOverseas : false;
+          const isClickable = (isVisited || isHomeBase) && !polygon.isOverseas;
           const path = pathGenerator(polygon.geometry);
+          const strokeStyle = getPolygonStroke(polygon.isOverseas ? null : iso2);
           
           if (!path) return null;
           
@@ -438,10 +451,11 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
               key={`${polygon.originalFeature.id || index}-${index}`}
               d={path}
               fill={getPolygonFill(iso2, polygon.isOverseas)}
-              stroke="hsl(var(--border))"
-              strokeWidth="0.5"
+              stroke={strokeStyle.stroke}
+              strokeWidth={strokeStyle.strokeWidth}
+              strokeDasharray={strokeStyle.strokeDasharray}
               className={`transition-all duration-300 ${
-                isVisited ? 'cursor-pointer hover:brightness-110' : 'cursor-default'
+                isClickable ? 'cursor-pointer hover:brightness-110' : 'cursor-default'
               }`}
               onMouseEnter={(e) => {
                 iso2 && setHoveredCountry(iso2);
@@ -453,7 +467,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                if (isVisited && iso2) {
+                if (isClickable && iso2) {
                   setMapHoverCard({ x, y, iso2, name: country?.name ?? iso2 });
                   setTooltip(null);
                   return;
@@ -475,7 +489,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                if (isVisited && iso2) {
+                if (isClickable && iso2) {
                   setMapHoverCard({ x, y, iso2, name: country?.name ?? iso2 });
                   return;
                 }
@@ -493,7 +507,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                 setTooltip(null);
                 setMapHoverCard(null);
               }}
-              onClick={() => handleCountryClick(iso2)}
+              onClick={() => isClickable && handleCountryClick(iso2)}
             />
           );
         })}
@@ -505,6 +519,18 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
           <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#0055A4] via-[#009C3B] to-[#BC002D]" />
           <span className="text-muted-foreground">Visited (flag colors)</span>
         </div>
+        {homeBase && (
+          <div className="flex items-center gap-1.5">
+            <div 
+              className="w-3 h-3 rounded-sm" 
+              style={{ 
+                backgroundColor: getCountryByIso(homeBase.country_iso2)?.flagPrimaryColor || 'hsl(var(--primary))',
+                border: '1.5px dashed hsl(var(--foreground))'
+              }} 
+            />
+            <span className="text-muted-foreground">Home base</span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-land))' }} />
           <span className="text-muted-foreground">Not visited</span>
