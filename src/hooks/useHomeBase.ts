@@ -121,7 +121,29 @@ export function useHomeBaseMutations() {
     },
   });
 
-  return { setHomeBase, clearHomeBase };
+  const deleteHomeBase = useMutation({
+    mutationFn: async (homeBaseId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('home_bases')
+        .delete()
+        .eq('id', homeBaseId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['home_bases'] });
+      toast.success('Home base deleted');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete home base');
+      console.error('Home base error:', error);
+    },
+  });
+
+  return { setHomeBase, clearHomeBase, deleteHomeBase };
 }
 
 // Helper to check if a date falls within any home base period
