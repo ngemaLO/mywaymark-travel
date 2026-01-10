@@ -39,6 +39,8 @@ export default function Settings() {
   const [tripModeEnabled, setTripModeEnabled] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [stillLivingHere, setStillLivingHere] = useState(true);
   const navigate = useNavigate();
   
   const { homeBase, homeBases, isLoading: homeBaseLoading } = useCurrentHomeBase();
@@ -49,6 +51,8 @@ export default function Settings() {
   const resetForm = () => {
     setSelectedCountry('');
     setStartDate(undefined);
+    setEndDate(undefined);
+    setStillLivingHere(true);
   };
 
   return (
@@ -207,7 +211,7 @@ export default function Settings() {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP") : "When did you move here?"}
+                      {startDate ? format(startDate, "MMM yyyy") : "Start date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -215,8 +219,8 @@ export default function Settings() {
                       mode="single"
                       selected={startDate}
                       onSelect={setStartDate}
-                      initialFocus
-                      disabled={(date) => date > new Date()}
+                      defaultMonth={startDate}
+                      disabled={(date) => date > new Date() || (endDate ? date > endDate : false)}
                     />
                   </PopoverContent>
                 </Popover>
@@ -231,6 +235,59 @@ export default function Settings() {
                 )}
               </div>
 
+              {/* Still living here toggle */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium text-foreground">Still living here</p>
+                  <p className="text-xs text-muted-foreground">Toggle off to set an end date</p>
+                </div>
+                <Switch
+                  checked={stillLivingHere}
+                  onCheckedChange={(checked) => {
+                    setStillLivingHere(checked);
+                    if (checked) setEndDate(undefined);
+                  }}
+                />
+              </div>
+
+              {/* End date picker - only shown when not still living here */}
+              {!stillLivingHere && (
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start text-left font-normal",
+                          !endDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {endDate ? format(endDate, "MMM yyyy") : "End date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={setEndDate}
+                        defaultMonth={endDate || startDate}
+                        disabled={(date) => date > new Date() || (startDate ? date < startDate : false)}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {endDate && (
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => setEndDate(undefined)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
               <div className="flex gap-2">
                 <Button 
                   className="flex-1"
@@ -238,16 +295,18 @@ export default function Settings() {
                     if (selectedCountry && startDate) {
                       setHomeBase.mutate({ 
                         countryIso2: selectedCountry, 
-                        startDate: format(startDate, 'yyyy-MM-dd') 
+                        startDate: format(startDate, 'yyyy-MM-dd'),
+                        endDate: endDate ? format(endDate, 'yyyy-MM-dd') : undefined,
+                        stillLivingHere
                       });
                       resetForm();
                     }
                   }}
-                  disabled={!selectedCountry || !startDate || setHomeBase.isPending}
+                  disabled={!selectedCountry || !startDate || (!stillLivingHere && !endDate) || setHomeBase.isPending}
                 >
                   Add Home Base
                 </Button>
-                {(selectedCountry || startDate) && (
+                {(selectedCountry || startDate || endDate) && (
                   <Button variant="outline" onClick={resetForm}>
                     Clear
                   </Button>
