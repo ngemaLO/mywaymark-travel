@@ -144,11 +144,11 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     'Tokelau': { parentIso2: 'NZ', parentName: 'New Zealand', territoryName: 'Tokelau', type: 'dependent territory' },
   }), []);
 
-  // Projection and path generator
+  // Projection and path generator - adjusted for better global coverage
   const projection = useMemo(() => 
     geoNaturalEarth1()
-      .scale(160)
-      .translate([400, 200])
+      .scale(150)
+      .translate([400, 220])
   , []);
 
   const pathGenerator = useMemo(() => geoPath(projection), [projection]);
@@ -447,7 +447,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       />
 
       <svg
-        viewBox="0 0 800 450"
+        viewBox="0 0 800 480"
         className="w-full h-full relative z-10"
         preserveAspectRatio="xMidYMid meet"
       >
@@ -492,7 +492,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                 }
 
                 const svgX = (x / rect.width) * 800;
-                const svgY = (y / rect.height) * 450;
+                const svgY = (y / rect.height) * 480;
                 const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
                 const info = getTooltipInfo(polygon.originalFeature, lngLat);
                 if (info) {
@@ -513,7 +513,7 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
                 }
 
                 const svgX = (x / rect.width) * 800;
-                const svgY = (y / rect.height) * 450;
+                const svgY = (y / rect.height) * 480;
                 const lngLat = projection.invert?.([svgX, svgY]) as [number, number] | undefined;
                 const info = getTooltipInfo(polygon.originalFeature, lngLat);
                 if (info) {
@@ -553,8 +553,8 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         )}
       </svg>
 
-      {/* Legend */}
-      <div className="absolute bottom-4 left-4 flex items-center gap-4 text-xs">
+      {/* Legend - positioned higher to avoid Antarctica */}
+      <div className="absolute bottom-12 left-4 flex items-center gap-4 text-xs bg-background/80 backdrop-blur-sm px-3 py-2 rounded-md">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#0055A4] via-[#009C3B] to-[#BC002D]" />
           <span className="text-muted-foreground">Visited (flag colors)</span>
