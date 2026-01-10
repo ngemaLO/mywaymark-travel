@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
   User, 
   Shield, 
@@ -14,12 +16,15 @@ import {
   Navigation,
   MapPin,
   Home,
-  X
+  X,
+  CalendarIcon
 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrentHomeBase, useHomeBaseMutations } from '@/hooks/useHomeBase';
 import { getCountryByIso, countries } from '@/data/countries';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -32,6 +37,7 @@ export default function Settings() {
   const [displayName, setDisplayName] = useState('Explorer');
   const [tripModeEnabled, setTripModeEnabled] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const navigate = useNavigate();
   
   const { homeBase, isLoading: homeBaseLoading } = useCurrentHomeBase();
@@ -126,30 +132,63 @@ export default function Settings() {
                 </Button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select a country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map(country => (
-                      <SelectItem key={country.iso2} value={country.iso2}>
-                        {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button 
-                  onClick={() => {
-                    if (selectedCountry) {
-                      setHomeBase.mutate({ countryIso2: selectedCountry });
-                      setSelectedCountry('');
-                    }
-                  }}
-                  disabled={!selectedCountry || setHomeBase.isPending}
-                >
-                  Set
-                </Button>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map(country => (
+                        <SelectItem key={country.iso2} value={country.iso2}>
+                          {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start text-left font-normal",
+                          !startDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {startDate ? format(startDate, "PPP") : "When did you move here?"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={setStartDate}
+                        initialFocus
+                        disabled={(date) => date > new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  
+                  <Button 
+                    onClick={() => {
+                      if (selectedCountry && startDate) {
+                        setHomeBase.mutate({ 
+                          countryIso2: selectedCountry, 
+                          startDate: format(startDate, 'yyyy-MM-dd') 
+                        });
+                        setSelectedCountry('');
+                        setStartDate(undefined);
+                      }
+                    }}
+                    disabled={!selectedCountry || !startDate || setHomeBase.isPending}
+                  >
+                    Set
+                  </Button>
+                </div>
               </div>
             )}
           </div>
