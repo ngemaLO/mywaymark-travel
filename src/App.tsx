@@ -11,6 +11,7 @@ import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import SharedView from "./pages/SharedView";
 import ShareLinksManagement from "./pages/ShareLinksManagement";
+import Chapters from "./pages/Chapters";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/share/:token" element={<SharedView />} />
             <Route path="/share-links" element={<ShareLinksManagement />} />
+            <Route path="/chapters" element={<Chapters />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

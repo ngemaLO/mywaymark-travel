@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      chapter_trips: {
+        Row: {
+          added_method: Database["public"]["Enums"]["chapter_trip_method"]
+          chapter_id: string
+          created_at: string
+          id: string
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          added_method?: Database["public"]["Enums"]["chapter_trip_method"]
+          chapter_id: string
+          created_at?: string
+          id?: string
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          added_method?: Database["public"]["Enums"]["chapter_trip_method"]
+          chapter_id?: string
+          created_at?: string
+          id?: string
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapter_trips_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_trips_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chapters: {
+        Row: {
+          cover_style: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          home_base_country_iso2: string | null
+          id: string
+          is_private: boolean
+          start_date: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cover_style?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          home_base_country_iso2?: string | null
+          id?: string
+          is_private?: boolean
+          start_date: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cover_style?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          home_base_country_iso2?: string | null
+          id?: string
+          is_private?: boolean
+          start_date?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapters_home_base_country_iso2_fkey"
+            columns: ["home_base_country_iso2"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["iso2"]
+          },
+        ]
+      }
       countries: {
         Row: {
           continent: string
@@ -451,7 +543,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      chapter_trip_method: "auto" | "manual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -578,6 +670,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      chapter_trip_method: ["auto", "manual"],
+    },
   },
 } as const
