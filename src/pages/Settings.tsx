@@ -409,19 +409,6 @@ export default function Settings() {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
               <div className="space-y-0.5">
-                <p className="font-medium text-foreground">Import Data</p>
-                <p className="text-sm text-muted-foreground">
-                  Import flights from a CSV file
-                </p>
-              </div>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Upload className="w-4 h-4" />
-                Import
-              </Button>
-            </div>
-            
-            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
-              <div className="space-y-0.5">
                 <p className="font-medium text-foreground">Export Data</p>
                 <p className="text-sm text-muted-foreground">
                   Download all your travel data as JSON
