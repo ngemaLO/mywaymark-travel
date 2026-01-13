@@ -1,12 +1,16 @@
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import { Calendar, ArrowRight, Loader2, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
+import { useChapters } from '@/hooks/useChapters';
+import { useMemo } from 'react';
+
+export type TimelineScopeValue = 'all' | 'current' | string;
 
 interface Visit {
   id: string;
@@ -14,15 +18,55 @@ interface Visit {
   arrival_date: string;
   departure_date: string | null;
   source: string;
+  trip_id: string | null;
 }
 
-export function TimelinePreview() {
+interface TimelinePreviewProps {
+  scope?: TimelineScopeValue;
+}
+
+export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { homeBase } = useCurrentHomeBase();
+  const { data: chapters = [] } = useChapters();
+
+  // Determine current chapter
+  const today = new Date().toISOString().split('T')[0];
+  const currentChapter = chapters.find(c => 
+    c.start_date <= today && (!c.end_date || c.end_date >= today)
+  );
+
+  // Resolve scope to chapter ID
+  const effectiveChapterId = useMemo(() => {
+    if (scope === 'all') return null;
+    if (scope === 'current') return currentChapter?.id || null;
+    return scope; // It's a chapter ID
+  }, [scope, currentChapter]);
+
+  const selectedChapter = useMemo(() => {
+    if (!effectiveChapterId) return null;
+    return chapters.find(c => c.id === effectiveChapterId) || null;
+  }, [effectiveChapterId, chapters]);
+
+  // Fetch chapter_trips if chapter scope is active
+  const { data: chapterTripIds = [] } = useQuery({
+    queryKey: ['chapter-trips-timeline', user?.id, effectiveChapterId],
+    queryFn: async () => {
+      if (!user || !effectiveChapterId) return [];
+      const { data, error } = await supabase
+        .from('chapter_trips')
+        .select('trip_id')
+        .eq('user_id', user.id)
+        .eq('chapter_id', effectiveChapterId);
+      if (error) throw error;
+      return data.map(ct => ct.trip_id);
+    },
+    enabled: !!user && !!effectiveChapterId,
+  });
 
   const { data: visits = [], isLoading } = useQuery({
-    queryKey: ['recent-visits', user?.id, homeBase?.country_iso2],
+    queryKey: ['recent-visits', user?.id, homeBase?.country_iso2, effectiveChapterId, chapterTripIds],
     queryFn: async () => {
       if (!user) return [];
       
@@ -31,20 +75,30 @@ export function TimelinePreview() {
         .select('*')
         .eq('user_id', user.id)
         .order('arrival_date', { ascending: false })
-        .limit(10); // Fetch more to account for filtering
+        .limit(15); // Fetch more to account for filtering
       
       const { data, error } = await query;
       
       if (error) throw error;
       
+      let filtered = data as Visit[];
+      
+      // If chapter scope is active, filter to chapter trips
+      if (effectiveChapterId && chapterTripIds.length > 0) {
+        filtered = filtered.filter(v => v.trip_id && chapterTripIds.includes(v.trip_id));
+      } else if (effectiveChapterId && chapterTripIds.length === 0) {
+        // Chapter has no trips
+        return [];
+      }
+      
       // Filter out home base country and limit to 5
-      const filtered = (data as Visit[])
+      filtered = filtered
         .filter(v => v.country_iso2 !== homeBase?.country_iso2)
         .slice(0, 5);
       
       return filtered;
     },
-    enabled: !!user,
+    enabled: !!user && (scope === 'all' || chapterTripIds.length > 0 || !effectiveChapterId),
   });
 
   if (!user) {
@@ -64,15 +118,28 @@ export function TimelinePreview() {
     );
   }
 
+  const title = scope === 'all' 
+    ? 'Recent Trips' 
+    : selectedChapter 
+      ? `Recent in ${selectedChapter.title}`
+      : 'Recent Trips';
+
   if (visits.length === 0) {
     return (
       <div className="card-elevated p-6">
         <h2 className="text-xl font-display font-semibold text-foreground mb-4">
-          Recent Trips
+          {title}
         </h2>
-        <p className="text-sm text-muted-foreground text-center py-4">
-          No trips yet. Add your first trip to see it here.
-        </p>
+        <div className="text-center py-4 space-y-2">
+          {scope !== 'all' && selectedChapter && (
+            <BookOpen className="w-8 h-8 mx-auto text-muted-foreground/50" />
+          )}
+          <p className="text-sm text-muted-foreground">
+            {scope === 'all' 
+              ? 'No trips yet. Add your first trip to see it here.'
+              : 'No trips in this chapter yet.'}
+          </p>
+        </div>
       </div>
     );
   }
@@ -80,7 +147,7 @@ export function TimelinePreview() {
   return (
     <div className="card-elevated p-6 space-y-4">
       <h2 className="text-xl font-display font-semibold text-foreground">
-        Recent Trips
+        {title}
       </h2>
       
       <div className="space-y-3">
@@ -114,7 +181,12 @@ export function TimelinePreview() {
       <Button 
         variant="ghost" 
         className="w-full text-muted-foreground hover:text-foreground"
-        onClick={() => navigate('/timeline')}
+        onClick={() => {
+          const params = scope !== 'all' && effectiveChapterId 
+            ? `?chapter=${scope === 'current' ? 'current' : effectiveChapterId}` 
+            : '';
+          navigate(`/timeline${params}`);
+        }}
       >
         View Full Timeline
         <ArrowRight className="w-4 h-4 ml-2" />

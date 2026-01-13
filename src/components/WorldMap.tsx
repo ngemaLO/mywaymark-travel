@@ -22,8 +22,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 
+export type MapScopeValue = 'all' | 'current' | string;
+
 interface WorldMapProps {
   onCountryClick?: (iso2: string) => void;
+  scope?: MapScopeValue;
 }
 
 interface CountryFeature {
@@ -56,7 +59,7 @@ interface TooltipState {
   subtitle?: string;
 }
 
-export function WorldMap({ onCountryClick }: WorldMapProps) {
+export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [mapHoverCard, setMapHoverCard] = useState<{
@@ -71,9 +74,9 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
   const { user } = useAuth();
   const { homeBase } = useCurrentHomeBase();
 
-  // Chapter scope state
-  const [mapScope, setMapScope] = useState<MapScope>('all');
-  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+  // Chapter scope state - use external scope if provided
+  const [internalMapScope, setInternalMapScope] = useState<MapScope>('all');
+  const [internalSelectedChapterId, setInternalSelectedChapterId] = useState<string | null>(null);
 
   // Fetch chapters
   const { data: chapters = [] } = useChapters();
@@ -83,6 +86,19 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
   const currentChapter = chapters.find(c => 
     c.start_date <= today && (!c.end_date || c.end_date >= today)
   );
+
+  // Resolve external scope to internal values
+  const isExternallyControlled = externalScope !== undefined;
+  const mapScope: MapScope = isExternallyControlled 
+    ? (externalScope === 'all' ? 'all' : 'chapter')
+    : internalMapScope;
+  
+  const selectedChapterId = isExternallyControlled
+    ? (externalScope === 'all' ? null : externalScope === 'current' ? currentChapter?.id || null : externalScope)
+    : internalSelectedChapterId;
+  
+  const setMapScope = isExternallyControlled ? () => {} : setInternalMapScope;
+  const setSelectedChapterId = isExternallyControlled ? () => {} : setInternalSelectedChapterId;
 
   // Fetch chapter_trips for selected chapter
   const { data: chapterTrips = [] } = useQuery({
@@ -544,77 +560,79 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         }}
       />
 
-      {/* Scope toggle - top left */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-        <div className="flex items-center bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg shadow-sm overflow-hidden">
-          <button
-            onClick={() => handleScopeChange('all')}
-            className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
-              mapScope === 'all' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            All Time
-          </button>
-          <button
-            onClick={() => handleScopeChange('chapter')}
-            className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
-              mapScope === 'chapter' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-            }`}
-            disabled={chapters.length === 0}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Chapter
-          </button>
-        </div>
+      {/* Scope toggle - top left (only show if not externally controlled) */}
+      {!isExternallyControlled && (
+        <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+          <div className="flex items-center bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg shadow-sm overflow-hidden">
+            <button
+              onClick={() => handleScopeChange('all')}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                mapScope === 'all' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" />
+              All Time
+            </button>
+            <button
+              onClick={() => handleScopeChange('chapter')}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                mapScope === 'chapter' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+              disabled={chapters.length === 0}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Chapter
+            </button>
+          </div>
 
-        {/* Chapter selector dropdown */}
-        {mapScope === 'chapter' && chapters.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="bg-card/90 backdrop-blur-sm border-border/50 shadow-sm gap-2">
-                <span className="truncate max-w-32">
-                  {selectedChapter?.title || 'Select Chapter'}
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {currentChapter && (
-                <>
-                  <DropdownMenuItem onClick={() => setSelectedChapterId(currentChapter.id)}>
+          {/* Chapter selector dropdown */}
+          {mapScope === 'chapter' && chapters.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="bg-card/90 backdrop-blur-sm border-border/50 shadow-sm gap-2">
+                  <span className="truncate max-w-32">
+                    {selectedChapter?.title || 'Select Chapter'}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                {currentChapter && (
+                  <>
+                    <DropdownMenuItem onClick={() => setSelectedChapterId(currentChapter.id)}>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium">Current Chapter</p>
+                        <p className="text-xs text-muted-foreground truncate">{currentChapter.title}</p>
+                      </div>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                {chapters.map((chapter) => (
+                  <DropdownMenuItem 
+                    key={chapter.id} 
+                    onClick={() => setSelectedChapterId(chapter.id)}
+                  >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium">Current Chapter</p>
-                      <p className="text-xs text-muted-foreground truncate">{currentChapter.title}</p>
+                      <p className="truncate">{chapter.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(chapter.start_date), 'MMM yyyy')}
+                        {chapter.end_date 
+                          ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
+                          : ' - Present'
+                        }
+                      </p>
                     </div>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
-              )}
-              {chapters.map((chapter) => (
-                <DropdownMenuItem 
-                  key={chapter.id} 
-                  onClick={() => setSelectedChapterId(chapter.id)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate">{chapter.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(chapter.start_date), 'MMM yyyy')}
-                      {chapter.end_date 
-                        ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
-                        : ' - Present'
-                      }
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      )}
 
       <svg
         viewBox="0 0 800 480"

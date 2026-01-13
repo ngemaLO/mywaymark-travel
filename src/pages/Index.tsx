@@ -6,6 +6,7 @@ import { OnThisDay } from '@/components/OnThisDay';
 import { BadgeGrid } from '@/components/BadgeGrid';
 import { TimelinePreview } from '@/components/TimelinePreview';
 import { CurrentChapterCard } from '@/components/CurrentChapterCard';
+import { DashboardScopeSelector, type DashboardScopeValue } from '@/components/DashboardScopeSelector';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisitedCountries } from '@/hooks/useVisits';
@@ -22,6 +23,7 @@ const Index = () => {
   const { visitedIsos, isLoading } = useVisitedCountries();
   const [addTripOpen, setAddTripOpen] = useState(false);
   const { homeBase } = useCurrentHomeBase();
+  const [dashboardScope, setDashboardScope] = useState<DashboardScopeValue>('all');
 
   const hasVisits = visitedIsos.length > 0;
   const homeCountry = homeBase ? getCountryByIso(homeBase.country_iso2) : null;
@@ -33,13 +35,18 @@ const Index = () => {
       <main className="container py-8 space-y-10">
         {/* Hero Section */}
         <section className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-              Your Travel Story
-            </h1>
-            <p className="text-muted-foreground max-w-lg">
-              Track every country, every city, every moment. Your private travel ledger with beautifully shareable views.
-            </p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
+                Your Travel Story
+              </h1>
+              <p className="text-muted-foreground max-w-lg">
+                Track every country, every city, every moment. Your private travel ledger with beautifully shareable views.
+              </p>
+            </div>
+            {user && hasVisits && (
+              <DashboardScopeSelector value={dashboardScope} onChange={setDashboardScope} />
+            )}
           </div>
         </section>
 
@@ -74,7 +81,10 @@ const Index = () => {
           <>
             {/* World Map */}
             <section className="opacity-0 animate-fade-in" style={{ animationDelay: '100ms' }}>
-              <WorldMap onCountryClick={(iso) => navigate(`/country/${iso}`)} />
+              <WorldMap 
+                onCountryClick={(iso) => navigate(`/country/${iso}`)} 
+                scope={dashboardScope}
+              />
             </section>
 
             {/* Stats Row */}
@@ -113,7 +123,7 @@ const Index = () => {
 
               {/* Timeline Preview */}
               <section className="lg:col-span-1">
-                <TimelinePreview />
+                <TimelinePreview scope={dashboardScope} />
               </section>
             </div>
           </>
