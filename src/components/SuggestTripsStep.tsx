@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Check, ChevronDown } from 'lucide-react';
+import { Loader2, Check, ChevronDown, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { useSuggestedTripsForChapter, useAddChapterTrips, type Chapter } from '@/hooks/useChapters';
 import { useQuery } from '@tanstack/react-query';
@@ -86,6 +86,14 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
     });
   };
 
+  const selectAllSuggested = () => {
+    setSelectedSuggested(new Set(suggestedTrips.map(t => t.id)));
+  };
+
+  const clearAllSuggested = () => {
+    setSelectedSuggested(new Set());
+  };
+
   const handleConfirm = async () => {
     // Add suggested trips with 'auto' method
     const autoTripIds = Array.from(selectedSuggested);
@@ -113,6 +121,7 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
 
   const isLoading = loadingSuggested || loadingAll;
   const totalSelected = selectedSuggested.size + selectedManual.size;
+  const allSuggestedSelected = selectedSuggested.size === suggestedTrips.length && suggestedTrips.length > 0;
 
   if (isLoading) {
     return (
@@ -128,13 +137,50 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
         <div className="space-y-4 pr-4">
           {/* Suggested Trips */}
           {suggestedTrips.length > 0 ? (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-foreground">
-                Suggested Trips ({suggestedTrips.length})
-              </h4>
-              <p className="text-xs text-muted-foreground">
-                These trips overlap with your chapter dates.
-              </p>
+            <div className="space-y-3">
+              {/* Header with count */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-foreground">
+                    Suggested Trips
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={selectAllSuggested}
+                      className={cn(
+                        "text-xs transition-colors",
+                        allSuggestedSelected 
+                          ? "text-muted-foreground/50 cursor-default" 
+                          : "text-primary hover:text-primary/80"
+                      )}
+                      disabled={allSuggestedSelected}
+                    >
+                      Select all
+                    </button>
+                    <span className="text-muted-foreground/30">•</span>
+                    <button
+                      type="button"
+                      onClick={clearAllSuggested}
+                      className={cn(
+                        "text-xs transition-colors",
+                        selectedSuggested.size === 0 
+                          ? "text-muted-foreground/50 cursor-default" 
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      disabled={selectedSuggested.size === 0}
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  We found {suggestedTrips.length} trip{suggestedTrips.length !== 1 ? 's' : ''} that overlap{suggestedTrips.length === 1 ? 's' : ''} this chapter's dates.
+                </p>
+              </div>
+              
+              {/* Trip list */}
               <div className="space-y-2">
                 {suggestedTrips.map((trip) => (
                   <TripCheckItem
@@ -142,14 +188,19 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
                     trip={trip}
                     checked={selectedSuggested.has(trip.id)}
                     onCheckedChange={() => toggleSuggested(trip.id)}
+                    subtext="Overlaps chapter date range"
                   />
                 ))}
               </div>
             </div>
           ) : (
-            <div className="py-6 text-center">
+            <div className="py-6 text-center space-y-2">
+              <Calendar className="w-8 h-8 mx-auto text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">
                 No trips found that overlap with this chapter's dates.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                You can manually add trips from outside the date range below.
               </p>
             </div>
           )}
@@ -174,6 +225,8 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
                       trip={trip}
                       checked={selectedManual.has(trip.id)}
                       onCheckedChange={() => toggleManual(trip.id)}
+                      subtext="Outside chapter date range"
+                      subtextMuted
                     />
                   ))}
                 </div>
@@ -209,9 +262,11 @@ interface TripCheckItemProps {
   trip: Trip;
   checked: boolean;
   onCheckedChange: () => void;
+  subtext?: string;
+  subtextMuted?: boolean;
 }
 
-function TripCheckItem({ trip, checked, onCheckedChange }: TripCheckItemProps) {
+function TripCheckItem({ trip, checked, onCheckedChange, subtext, subtextMuted }: TripCheckItemProps) {
   const dateDisplay = trip.end_date
     ? `${format(new Date(trip.start_date), 'MMM d, yyyy')} - ${format(new Date(trip.end_date), 'MMM d, yyyy')}`
     : format(new Date(trip.start_date), 'MMM d, yyyy');
@@ -227,6 +282,14 @@ function TripCheckItem({ trip, checked, onCheckedChange }: TripCheckItemProps) {
           {trip.title || 'Untitled Trip'}
         </p>
         <p className="text-xs text-muted-foreground">{dateDisplay}</p>
+        {subtext && (
+          <p className={cn(
+            "text-xs mt-0.5",
+            subtextMuted ? "text-muted-foreground/60" : "text-primary/70"
+          )}>
+            {subtext}
+          </p>
+        )}
       </div>
     </label>
   );
