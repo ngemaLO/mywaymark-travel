@@ -5,6 +5,7 @@ import { TravelContext } from '@/components/TravelContext';
 import { OnThisDay } from '@/components/OnThisDay';
 import { BadgeGrid } from '@/components/BadgeGrid';
 import { TimelinePreview } from '@/components/TimelinePreview';
+import { CurrentChapterCard } from '@/components/CurrentChapterCard';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisitedCountries } from '@/hooks/useVisits';
@@ -83,6 +84,9 @@ const Index = () => {
 
             {/* Travel Context */}
             <TravelContext />
+
+            {/* Current Chapter */}
+            <CurrentChapterCard />
 
             {/* Home Base Display */}
             {homeCountry && (
