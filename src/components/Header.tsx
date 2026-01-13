@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plane, Plus, Navigation } from 'lucide-react';
+import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plus, Navigation } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShareModal } from '@/components/ShareModal';
-import { FlightsImportModal } from '@/components/FlightsImportModal';
 import { AddTripModal } from '@/components/AddTripModal';
 import { CheckInModal } from '@/components/CheckInModal';
 import {
@@ -29,7 +28,6 @@ const navItems = [
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [flightsImportOpen, setFlightsImportOpen] = useState(false);
   const [addTripOpen, setAddTripOpen] = useState(false);
   const [checkInOpen, setCheckInOpen] = useState(false);
   const navigate = useNavigate();
@@ -98,24 +96,6 @@ export function Header() {
                   <Plus className="w-4 h-4" />
                   Add Trip
                 </Button>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="hidden sm:flex gap-2"
-                    >
-                      Import
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setFlightsImportOpen(true)}>
-                      <Plane className="w-4 h-4 mr-2" />
-                      Flights CSV
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
                 
                 <Button
                   variant="outline"
@@ -208,19 +188,6 @@ export function Header() {
                         <Plus className="w-4 h-4" />
                         Add Trip
                       </Button>
-
-                      <p className="text-xs text-muted-foreground px-3 mb-1 mt-4">Import Data</p>
-                      <Button 
-                        variant="ghost" 
-                        className="justify-start gap-3"
-                        onClick={() => {
-                          setFlightsImportOpen(true);
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <Plane className="w-4 h-4" />
-                        Flights CSV
-                      </Button>
                       
                       <hr className="my-4 border-border" />
                       
@@ -280,7 +247,6 @@ export function Header() {
       </header>
 
       <ShareModal open={shareModalOpen} onOpenChange={setShareModalOpen} />
-      <FlightsImportModal open={flightsImportOpen} onOpenChange={setFlightsImportOpen} />
       <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />
       <CheckInModal open={checkInOpen} onOpenChange={setCheckInOpen} />
     </>
