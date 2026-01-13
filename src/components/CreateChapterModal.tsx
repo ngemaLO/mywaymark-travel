@@ -204,13 +204,13 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
               {/* Home Base (Optional) */}
               <div className="space-y-2">
                 <Label htmlFor="home-base">Home Base (optional)</Label>
-                <Select value={homeBase} onValueChange={setHomeBase}>
+              <Select value={homeBase || "__none__"} onValueChange={(val) => setHomeBase(val === "__none__" ? "" : val)}>
                   <SelectTrigger id="home-base">
                     <SelectValue placeholder="Select a country..." />
                   </SelectTrigger>
                   <SelectContent>
                     <ScrollArea className="h-[200px]">
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="__none__">None</SelectItem>
                       {countries.map(country => (
                         <SelectItem key={country.iso2} value={country.iso2}>
                           {country.name}
