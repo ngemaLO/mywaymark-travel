@@ -94,10 +94,10 @@ const Index = () => {
 
             {/* Two Column Layout - Collection primary, Timeline secondary */}
             <div className="grid lg:grid-cols-3 gap-10 pt-4">
-              {/* Country Collection - Primary feature */}
+              {/* Visited Countries - Primary feature */}
               <section className="lg:col-span-2 space-y-4">
                 <h2 className="text-lg font-display font-semibold text-foreground">
-                  Country Collection
+                  Visited Countries
                 </h2>
                 <BadgeGrid />
               </section>
