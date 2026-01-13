@@ -8,7 +8,19 @@ import { geoNaturalEarth1, geoPath, geoCentroid } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
-import { Home } from 'lucide-react';
+import { Home, Globe, BookOpen } from 'lucide-react';
+import { useChapters, type Chapter } from '@/hooks/useChapters';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { format } from 'date-fns';
 
 interface WorldMapProps {
   onCountryClick?: (iso2: string) => void;
@@ -31,6 +43,8 @@ interface ExpandedPolygon {
   isOverseas: boolean;
   overseasInfo?: { parentName: string; territoryName: string; type: string };
 }
+
+type MapScope = 'all' | 'chapter';
 
 // TopoJSON URL from Natural Earth via jsdelivr
 const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
@@ -56,6 +70,66 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
   const { visitedIsos, isLoading } = useVisitedCountries();
   const { user } = useAuth();
   const { homeBase } = useCurrentHomeBase();
+
+  // Chapter scope state
+  const [mapScope, setMapScope] = useState<MapScope>('all');
+  const [selectedChapterId, setSelectedChapterId] = useState<string | null>(null);
+
+  // Fetch chapters
+  const { data: chapters = [] } = useChapters();
+
+  // Determine current chapter
+  const today = new Date().toISOString().split('T')[0];
+  const currentChapter = chapters.find(c => 
+    c.start_date <= today && (!c.end_date || c.end_date >= today)
+  );
+
+  // Fetch chapter_trips for selected chapter
+  const { data: chapterTrips = [] } = useQuery({
+    queryKey: ['chapter-trips', user?.id, selectedChapterId],
+    queryFn: async () => {
+      if (!user || !selectedChapterId) return [];
+      const { data, error } = await supabase
+        .from('chapter_trips')
+        .select('trip_id')
+        .eq('user_id', user.id)
+        .eq('chapter_id', selectedChapterId);
+      if (error) throw error;
+      return data.map(ct => ct.trip_id);
+    },
+    enabled: !!user && !!selectedChapterId && mapScope === 'chapter',
+  });
+
+  // Fetch visits for selected chapter's trips to get country codes
+  const { data: chapterVisits = [] } = useQuery({
+    queryKey: ['chapter-visits', user?.id, chapterTrips],
+    queryFn: async () => {
+      if (!user || chapterTrips.length === 0) return [];
+      const { data, error } = await supabase
+        .from('visits')
+        .select('country_iso2')
+        .eq('user_id', user.id)
+        .in('trip_id', chapterTrips);
+      if (error) throw error;
+      return [...new Set(data.map(v => v.country_iso2))];
+    },
+    enabled: !!user && chapterTrips.length > 0 && mapScope === 'chapter',
+  });
+
+  // Compute which countries to show as visited
+  const displayedVisitedIsos = useMemo(() => {
+    if (mapScope === 'all') {
+      return visitedIsos;
+    }
+    // Chapter scope: only show countries from chapter trips
+    return chapterVisits;
+  }, [mapScope, visitedIsos, chapterVisits]);
+
+  // Get selected chapter info
+  const selectedChapter = useMemo(() => {
+    if (!selectedChapterId) return null;
+    return chapters.find(c => c.id === selectedChapterId) || null;
+  }, [selectedChapterId, chapters]);
 
   // Fetch world TopoJSON data
   useEffect(() => {
@@ -347,12 +421,20 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     
     // Overseas territories never show as visited (they're counted under parent for stats)
     if (isOverseas) {
-      return 'hsl(var(--map-land))';
+      return mapScope === 'chapter' 
+        ? 'hsl(var(--map-land) / 0.4)' 
+        : 'hsl(var(--map-land))';
     }
 
     const isHomeBase = homeBase?.country_iso2 === iso2;
-    const isVisited = visitedIsos.includes(iso2);
+    const isVisited = displayedVisitedIsos.includes(iso2);
     const isHovered = hoveredCountry === iso2;
+
+    // In chapter mode, dim countries that are visited all-time but not in this chapter
+    if (mapScope === 'chapter' && !isVisited && visitedIsos.includes(iso2)) {
+      // Show as dimmed visited (ghost of all-time visited)
+      return 'hsl(var(--map-land) / 0.6)';
+    }
 
     // Both home base and visited countries use flag colors
     if (isHomeBase || isVisited) {
@@ -367,9 +449,13 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       return isHovered ? 'hsl(var(--map-visited-hover))' : 'hsl(var(--map-visited))';
     }
 
-    // Not visited
+    // Not visited - dim more in chapter mode
+    if (mapScope === 'chapter') {
+      return isHovered ? 'hsl(var(--map-land-hover) / 0.5)' : 'hsl(var(--map-land) / 0.4)';
+    }
+
     return isHovered ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
-  }, [hoveredCountry, visitedIsos, homeBase]);
+  }, [hoveredCountry, displayedVisitedIsos, visitedIsos, homeBase, mapScope]);
 
   // Get stroke style - home base gets a distinct stroke
   const getPolygonStroke = useCallback((iso2: string | null) => {
@@ -384,11 +470,11 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
     }
     
     return {
-      stroke: 'hsl(var(--map-border))',
+      stroke: mapScope === 'chapter' ? 'hsl(var(--map-border) / 0.5)' : 'hsl(var(--map-border))',
       strokeWidth: 0.5,
       strokeDasharray: undefined
     };
-  }, [homeBase]);
+  }, [homeBase, mapScope]);
 
   // Calculate home base centroid for icon placement
   const homeBaseCentroid = useMemo(() => {
@@ -408,8 +494,20 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
   }, [homeBase, geoData, getIso2FromFeature, projection]);
 
   const handleCountryClick = (iso2: string | null) => {
+    // Allow clicking any visited country (all-time) for navigation
     if (iso2 && visitedIsos.includes(iso2) && onCountryClick) {
       onCountryClick(iso2);
+    }
+  };
+
+  const handleScopeChange = (scope: MapScope) => {
+    setMapScope(scope);
+    if (scope === 'all') {
+      setSelectedChapterId(null);
+    } else if (scope === 'chapter' && currentChapter) {
+      setSelectedChapterId(currentChapter.id);
+    } else if (scope === 'chapter' && chapters.length > 0) {
+      setSelectedChapterId(chapters[0].id);
     }
   };
 
@@ -446,6 +544,78 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         }}
       />
 
+      {/* Scope toggle - top left */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+        <div className="flex items-center bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg shadow-sm overflow-hidden">
+          <button
+            onClick={() => handleScopeChange('all')}
+            className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              mapScope === 'all' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+          >
+            <Globe className="w-3.5 h-3.5" />
+            All Time
+          </button>
+          <button
+            onClick={() => handleScopeChange('chapter')}
+            className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+              mapScope === 'chapter' 
+                ? 'bg-primary text-primary-foreground' 
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            }`}
+            disabled={chapters.length === 0}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            Chapter
+          </button>
+        </div>
+
+        {/* Chapter selector dropdown */}
+        {mapScope === 'chapter' && chapters.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="bg-card/90 backdrop-blur-sm border-border/50 shadow-sm gap-2">
+                <span className="truncate max-w-32">
+                  {selectedChapter?.title || 'Select Chapter'}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              {currentChapter && (
+                <>
+                  <DropdownMenuItem onClick={() => setSelectedChapterId(currentChapter.id)}>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium">Current Chapter</p>
+                      <p className="text-xs text-muted-foreground truncate">{currentChapter.title}</p>
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {chapters.map((chapter) => (
+                <DropdownMenuItem 
+                  key={chapter.id} 
+                  onClick={() => setSelectedChapterId(chapter.id)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate">{chapter.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(chapter.start_date), 'MMM yyyy')}
+                      {chapter.end_date 
+                        ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
+                        : ' - Present'
+                      }
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+
       <svg
         viewBox="0 0 800 480"
         className="w-full h-full relative z-10"
@@ -455,8 +625,9 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
         {expandedPolygons.map((polygon, index) => {
           const iso2 = getIso2FromFeature(polygon.originalFeature);
           const isHomeBase = homeBase?.country_iso2 === iso2 && !polygon.isOverseas;
-          const isVisited = iso2 ? visitedIsos.includes(iso2) && !polygon.isOverseas : false;
-          const isClickable = (isVisited || isHomeBase) && !polygon.isOverseas;
+          const isVisited = iso2 ? displayedVisitedIsos.includes(iso2) && !polygon.isOverseas : false;
+          const isVisitedAllTime = iso2 ? visitedIsos.includes(iso2) && !polygon.isOverseas : false;
+          const isClickable = (isVisitedAllTime || isHomeBase) && !polygon.isOverseas;
           const path = pathGenerator(polygon.geometry);
           const strokeStyle = getPolygonStroke(polygon.isOverseas ? null : iso2);
           
@@ -557,8 +728,16 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       <div className="absolute bottom-4 right-4 flex items-center gap-4 text-xs bg-card/90 backdrop-blur-sm px-3 py-2 rounded-md border border-border/50 shadow-sm">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#0055A4] via-[#009C3B] to-[#BC002D]" />
-          <span className="text-muted-foreground">Visited (flag colors)</span>
+          <span className="text-muted-foreground">
+            {mapScope === 'chapter' ? 'Visited (this chapter)' : 'Visited (all time)'}
+          </span>
         </div>
+        {mapScope === 'chapter' && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-land) / 0.6)' }} />
+            <span className="text-muted-foreground">Other visits</span>
+          </div>
+        )}
         {homeBase && (
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded-full bg-background border-2 border-foreground flex items-center justify-center">
@@ -576,7 +755,10 @@ export function WorldMap({ onCountryClick }: WorldMapProps) {
       {/* Visited count badge */}
       <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-border/50 shadow-md">
         <span className="text-sm font-medium text-foreground">
-          {visitedIsos.length} countries
+          {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
+          {mapScope === 'chapter' && selectedChapter && (
+            <span className="text-muted-foreground ml-1">in chapter</span>
+          )}
         </span>
       </div>
 
