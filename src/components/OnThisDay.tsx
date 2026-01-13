@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getCountryByIso } from '@/data/countries';
 import { supabase } from '@/integrations/supabase/client';
 import { useHomeBases, isDateInHomeBase } from '@/hooks/useHomeBase';
+import { Sparkles } from 'lucide-react';
 
 export function OnThisDay() {
   const { user } = useAuth();
@@ -64,9 +65,7 @@ export function OnThisDay() {
   );
   
   const memory = sortedMatches[0];
-  const memoryDate = new Date(memory.arrival_date);
-  const memoryYear = memoryDate.getFullYear();
-  const yearDifference = currentYear - memoryYear;
+  const memoryYear = new Date(memory.arrival_date).getFullYear();
   const country = getCountryByIso(memory.country_iso2);
 
   if (!country) return null;
@@ -78,23 +77,19 @@ export function OnThisDay() {
   // Build location text
   const locationText = cityName ? `${cityName}, ${country.name}` : country.name;
 
-  // Build the reflective copy
-  const timePhrase = yearDifference === 1 
-    ? 'A year ago today' 
-    : `On this day in ${memoryYear}`;
-
   return (
-    <section className="py-3">
-      <p className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">{timePhrase}</span>
-        {', you were travelling in '}
-        <Link 
-          to={`/country/${country.iso2}`} 
-          className="text-foreground hover:underline underline-offset-2"
-        >
-          {locationText}
-        </Link>
-        .
+    <section className="flex justify-center py-2">
+      <p className="text-sm text-muted-foreground/80 italic flex items-center gap-2">
+        <Sparkles className="w-3.5 h-3.5 text-primary/60" />
+        <span>
+          On this day in {memoryYear}, you were in{' '}
+          <Link 
+            to={`/country/${country.iso2}`} 
+            className="text-foreground/80 hover:text-foreground hover:underline underline-offset-2 not-italic"
+          >
+            {locationText}
+          </Link>
+        </span>
       </p>
     </section>
   );

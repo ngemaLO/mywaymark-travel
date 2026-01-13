@@ -1,6 +1,6 @@
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { Calendar, ArrowRight, Loader2, BookOpen } from 'lucide-react';
+import { ArrowRight, Loader2, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -91,12 +91,10 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
         return [];
       }
       
-      // Filter out home base country and limit to 5
+      // Filter out home base country and limit to 3
       filtered = filtered
         .filter(v => v.country_iso2 !== homeBase?.country_iso2)
-        .slice(0, 5);
-      
-      return filtered;
+        .slice(0, 3);
     },
     enabled: !!user && (scope === 'all' || chapterTripIds.length > 0 || !effectiveChapterId),
   });
@@ -107,50 +105,30 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
 
   if (isLoading) {
     return (
-      <div className="card-elevated p-6">
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4">
+      <div className="space-y-4">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
           Recent Trips
-        </h2>
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </h3>
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       </div>
     );
   }
 
-  const title = scope === 'all' 
-    ? 'Recent Trips' 
-    : selectedChapter 
-      ? `Recent in ${selectedChapter.title}`
-      : 'Recent Trips';
+  // Remove unused title variable since we use static heading now
 
   if (visits.length === 0) {
-    return (
-      <div className="card-elevated p-6">
-        <h2 className="text-xl font-display font-semibold text-foreground mb-4">
-          {title}
-        </h2>
-        <div className="text-center py-4 space-y-2">
-          {scope !== 'all' && selectedChapter && (
-            <BookOpen className="w-8 h-8 mx-auto text-muted-foreground/50" />
-          )}
-          <p className="text-sm text-muted-foreground">
-            {scope === 'all' 
-              ? 'No trips yet. Add your first trip to see it here.'
-              : 'No trips in this chapter yet.'}
-          </p>
-        </div>
-      </div>
-    );
+    return null; // Don't show empty state, just hide the section
   }
 
   return (
-    <div className="card-elevated p-6 space-y-4">
-      <h2 className="text-xl font-display font-semibold text-foreground">
-        {title}
-      </h2>
+    <div className="space-y-4">
+      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+        Recent Trips
+      </h3>
       
-      <div className="space-y-3">
+      <div className="space-y-2">
         {visits.map((visit) => {
           const country = getCountryByIso(visit.country_iso2);
           if (!country) return null;
@@ -159,19 +137,18 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
             <button
               key={visit.id}
               onClick={() => navigate(`/country/${visit.country_iso2}`)}
-              className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group"
             >
-              <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm shrink-0">
+              <div className="w-8 h-8 rounded-md bg-muted text-muted-foreground flex items-center justify-center font-medium text-xs shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 {country.iso2}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground text-sm truncate">
                   {country.name}
                 </p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Calendar className="w-3 h-3" />
-                  <span>{format(new Date(visit.arrival_date), 'MMM yyyy')}</span>
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(visit.arrival_date), 'MMM yyyy')}
+                </p>
               </div>
             </button>
           );
@@ -180,7 +157,8 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
 
       <Button 
         variant="ghost" 
-        className="w-full text-muted-foreground hover:text-foreground"
+        size="sm"
+        className="w-full text-muted-foreground hover:text-foreground text-xs"
         onClick={() => {
           const params = scope !== 'all' && effectiveChapterId 
             ? `?chapter=${scope === 'current' ? 'current' : effectiveChapterId}` 
@@ -189,7 +167,7 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
         }}
       >
         View Full Timeline
-        <ArrowRight className="w-4 h-4 ml-2" />
+        <ArrowRight className="w-3 h-3 ml-1.5" />
       </Button>
     </div>
   );
