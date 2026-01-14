@@ -157,17 +157,17 @@
       repeating-linear-gradient(
         0deg,
         transparent,
-        transparent 78px,
-        hsl(200 30% 50% / 0.4) 78px,
-        hsl(200 30% 50% / 0.4) 80px
+        transparent 79px,
+        hsl(200 30% 60% / 0.12) 79px,
+        hsl(200 30% 60% / 0.12) 80px
       ),
       /* Longitude lines - vertical */
       repeating-linear-gradient(
         90deg,
         transparent,
-        transparent 78px,
-        hsl(200 30% 50% / 0.4) 78px,
-        hsl(200 30% 50% / 0.4) 80px
+        transparent 79px,
+        hsl(200 30% 60% / 0.12) 79px,
+        hsl(200 30% 60% / 0.12) 80px
       );
     background-size: 80px 80px;
     background-attachment: fixed;
