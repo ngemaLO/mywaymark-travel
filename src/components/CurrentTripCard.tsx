@@ -107,13 +107,11 @@ export function CurrentTripCard() {
         </div>
       </div>
 
-      {currentTrip.trip_id && (
-        <MeetInPersonModal
-          open={meetModalOpen}
-          onOpenChange={setMeetModalOpen}
-          tripId={currentTrip.trip_id}
-        />
-      )}
+      <MeetInPersonModal
+        open={meetModalOpen}
+        onOpenChange={setMeetModalOpen}
+        tripId={currentTrip.trip_id || currentTrip.id}
+      />
     </section>
   );
 }
