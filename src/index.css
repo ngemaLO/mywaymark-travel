@@ -158,16 +158,16 @@
         0deg,
         transparent,
         transparent 79px,
-        hsl(var(--map-grid) / 0.06) 79px,
-        hsl(var(--map-grid) / 0.06) 80px
+        hsl(var(--map-grid) / 0.15) 79px,
+        hsl(var(--map-grid) / 0.15) 80px
       ),
       /* Longitude lines - vertical */
       repeating-linear-gradient(
         90deg,
         transparent,
         transparent 79px,
-        hsl(var(--map-grid) / 0.06) 79px,
-        hsl(var(--map-grid) / 0.06) 80px
+        hsl(var(--map-grid) / 0.15) 79px,
+        hsl(var(--map-grid) / 0.15) 80px
       );
     background-size: 80px 80px;
     background-attachment: fixed;
