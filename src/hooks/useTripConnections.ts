@@ -253,18 +253,21 @@ export function useCreateConnectionRequest() {
         .maybeSingle();
 
       if (existing) {
-        if (existing.status === 'active') {
+        // Cast to our interface since DB types may not be updated yet
+        const existingConn = existing as unknown as TripConnection;
+        
+        if (existingConn.status === 'active') {
           throw new Error('Already connected');
         }
-        if (existing.status === 'rejected') {
+        if (existingConn.status === 'rejected') {
           throw new Error('Connection was declined');
         }
         // If pending, mark this user as confirmed
-        const isUserA = existing.user_a_id === user.id;
+        const isUserA = existingConn.user_a_id === user.id;
         const updateField = isUserA ? 'user_a_confirmed' : 'user_b_confirmed';
-        const otherConfirmed = isUserA ? existing.user_b_confirmed : existing.user_a_confirmed;
+        const otherConfirmed = isUserA ? existingConn.user_b_confirmed : existingConn.user_a_confirmed;
 
-        const updates: any = { [updateField]: true };
+        const updates: Record<string, boolean | string> = { [updateField]: true };
         
         // If both are now confirmed, set to active
         if (otherConfirmed) {
@@ -274,7 +277,7 @@ export function useCreateConnectionRequest() {
         const { data, error } = await supabase
           .from('trip_connections')
           .update(updates)
-          .eq('id', existing.id)
+          .eq('id', existingConn.id)
           .select()
           .single();
 
@@ -325,19 +328,22 @@ export function useConfirmConnection() {
       if (!user) throw new Error('Must be logged in');
 
       // Get the connection first
-      const { data: connection, error: fetchError } = await supabase
+      const { data: connectionData, error: fetchError } = await supabase
         .from('trip_connections')
         .select('*')
         .eq('id', connectionId)
         .single();
 
-      if (fetchError || !connection) throw new Error('Connection not found');
+      if (fetchError || !connectionData) throw new Error('Connection not found');
+
+      // Cast to our interface since DB types may not be updated yet
+      const connection = connectionData as unknown as TripConnection;
 
       const isUserA = connection.user_a_id === user.id;
       const updateField = isUserA ? 'user_a_confirmed' : 'user_b_confirmed';
       const otherConfirmed = isUserA ? connection.user_b_confirmed : connection.user_a_confirmed;
 
-      const updates: any = { [updateField]: true };
+      const updates: Record<string, boolean | string> = { [updateField]: true };
       
       // If both are now confirmed, set to active
       if (otherConfirmed) {

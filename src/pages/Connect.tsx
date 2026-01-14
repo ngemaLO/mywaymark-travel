@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { ConnectionPreview } from '@/components/connections/ConnectionPreview';
 import { QRScanner } from '@/components/connections/QRScanner';
-import { useLookupCode } from '@/hooks/useTripConnections';
+import { useLookupCode, CodeLookupResult } from '@/hooks/useTripConnections';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ export default function Connect() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [codeData, setCodeData] = useState<any>(null);
+  const [codeData, setCodeData] = useState<CodeLookupResult | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const lookupCode = useLookupCode();
 
@@ -35,6 +35,11 @@ export default function Connect() {
 
   const handleCancel = () => {
     navigate('/');
+  };
+
+  const handleCodeScanned = (data: CodeLookupResult) => {
+    setCodeData(data);
+    setShowScanner(false);
   };
 
   if (authLoading) {
@@ -86,7 +91,7 @@ export default function Connect() {
                 Scan or Enter Code
               </h1>
               <QRScanner
-                onCodeScanned={setCodeData}
+                onCodeScanned={handleCodeScanned}
                 onCancel={handleCancel}
               />
             </>
