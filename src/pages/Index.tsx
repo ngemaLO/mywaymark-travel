@@ -26,7 +26,7 @@ const Index = () => {
   const hasVisits = visitedIsos.length > 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
       
       <main className="container py-8 space-y-12">
