@@ -149,40 +149,46 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-family: 'Instrument Sans', system-ui, sans-serif;
-  }
-
-  /* Subtle cartographic grid background - only visible on large empty surfaces */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-    opacity: 0.025;
+    background-color: hsl(var(--background));
     background-image: 
       /* Latitude lines - horizontal */
       repeating-linear-gradient(
         0deg,
         transparent,
         transparent 79px,
-        hsl(var(--map-grid)) 79px,
-        hsl(var(--map-grid)) 80px
+        hsl(var(--map-grid) / 0.025) 79px,
+        hsl(var(--map-grid) / 0.025) 80px
       ),
       /* Longitude lines - vertical */
       repeating-linear-gradient(
         90deg,
         transparent,
         transparent 79px,
-        hsl(var(--map-grid)) 79px,
-        hsl(var(--map-grid)) 80px
+        hsl(var(--map-grid) / 0.025) 79px,
+        hsl(var(--map-grid) / 0.025) 80px
       );
     background-size: 80px 80px;
+    background-attachment: fixed;
   }
 
-  .dark body::before {
-    opacity: 0.03;
+  .dark body {
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 79px,
+        hsl(var(--map-grid) / 0.035) 79px,
+        hsl(var(--map-grid) / 0.035) 80px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 79px,
+        hsl(var(--map-grid) / 0.035) 79px,
+        hsl(var(--map-grid) / 0.035) 80px
+      );
   }
 
   h1, h2, h3, h4, h5, h6 {
