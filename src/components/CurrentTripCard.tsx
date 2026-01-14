@@ -1,16 +1,19 @@
+import { useState } from 'react';
 import { useCurrentTrip, useEndCurrentTrip } from '@/hooks/useCurrentTrip';
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { MapPin, ArrowRight, Check, Loader2 } from 'lucide-react';
+import { MapPin, Check, Loader2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { MeetInPersonModal } from '@/components/connections/MeetInPersonModal';
 
 export function CurrentTripCard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { data: currentTrip, isLoading } = useCurrentTrip();
   const endTripMutation = useEndCurrentTrip();
+  const [meetModalOpen, setMeetModalOpen] = useState(false);
 
   if (!user || isLoading) {
     return null;
@@ -57,7 +60,7 @@ export function CurrentTripCard() {
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 <Button
                   variant="default"
                   size="sm"
@@ -70,9 +73,18 @@ export function CurrentTripCard() {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => setMeetModalOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  Meet in Person
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => endTripMutation.mutate(currentTrip.id)}
                   disabled={endTripMutation.isPending}
-                  className="gap-1.5"
+                  className="gap-1.5 text-muted-foreground"
                 >
                   {endTripMutation.isPending ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -94,6 +106,14 @@ export function CurrentTripCard() {
           </div>
         </div>
       </div>
+
+      {currentTrip.trip_id && (
+        <MeetInPersonModal
+          open={meetModalOpen}
+          onOpenChange={setMeetModalOpen}
+          tripId={currentTrip.trip_id}
+        />
+      )}
     </section>
   );
 }
