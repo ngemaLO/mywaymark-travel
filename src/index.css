@@ -293,7 +293,7 @@
     @apply text-xs font-medium uppercase tracking-wider pb-2 mb-4;
     font-family: 'Instrument Sans', system-ui, sans-serif;
     letter-spacing: 0.1em;
-    color: hsl(210 15% 50%);
+    color: hsl(215 20% 45%);
     border-bottom: 1px solid hsl(var(--border) / 0.3);
   }
 
@@ -301,10 +301,22 @@
     color: hsl(210 15% 55%);
   }
 
+  /* Alternative section heading without border */
+  .section-heading-alt {
+    @apply text-xs font-medium uppercase tracking-wider mb-4;
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    letter-spacing: 0.1em;
+    color: hsl(215 20% 45%);
+  }
+
+  .dark .section-heading-alt {
+    color: hsl(210 15% 55%);
+  }
+
   /* Ghost pill button for secondary actions */
   .ghost-pill {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200;
-    color: hsl(210 15% 45%);
+    color: hsl(215 20% 40%);
     background: hsl(var(--muted) / 0.3);
     border: 1px solid hsl(var(--border) / 0.2);
   }
@@ -322,6 +334,45 @@
 
   .dark .ghost-pill:hover {
     background: hsl(var(--muted) / 0.25);
+  }
+
+  /* Place badge - compact country tiles */
+  .place-badge {
+    box-shadow: 
+      0 1px 3px 0 hsl(var(--foreground) / 0.08),
+      0 1px 2px -1px hsl(var(--foreground) / 0.08);
+    border: 1px solid hsl(0 0% 100% / 0.15);
+  }
+
+  .place-badge:hover {
+    box-shadow: 
+      0 4px 6px -1px hsl(var(--foreground) / 0.1),
+      0 2px 4px -2px hsl(var(--foreground) / 0.1);
+  }
+
+  /* Journey surface - subtle tinted background */
+  .journey-surface {
+    @apply rounded-xl p-5;
+    background: hsl(185 30% 97%);
+    border: 1px solid hsl(185 20% 90%);
+  }
+
+  .dark .journey-surface {
+    background: hsl(185 20% 12%);
+    border-color: hsl(185 15% 20%);
+  }
+
+  /* Places surface - off-white floating card */
+  .places-surface {
+    @apply rounded-xl p-6;
+    background: hsl(210 20% 98.5%);
+    border: 1px solid hsl(var(--border) / 0.2);
+    box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.04);
+  }
+
+  .dark .places-surface {
+    background: hsl(220 25% 12%);
+    border-color: hsl(var(--border) / 0.15);
   }
 }
 
