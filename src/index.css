@@ -181,8 +181,6 @@
         hsl(185 45% 45% / 0.09) 140px
       );
     background-size: 140px 140px;
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
   }
 
   .dark .grid-overlay {
