@@ -40,7 +40,8 @@ export function TravelContext() {
         First stop:{' '}
         <Link 
           to={`/country/${firstCountry.iso2}`} 
-          className="text-foreground/60 hover:text-foreground hover:underline underline-offset-2"
+          className="hover:underline underline-offset-2"
+          style={{ color: 'hsl(210 15% 40%)' }}
         >
           {firstCountry.name}
         </Link>
@@ -54,7 +55,8 @@ export function TravelContext() {
         Home base:{' '}
         <Link 
           to={`/country/${homeCountry.iso2}`} 
-          className="text-foreground/60 hover:text-foreground hover:underline underline-offset-2"
+          className="hover:underline underline-offset-2"
+          style={{ color: 'hsl(210 15% 40%)' }}
         >
           {homeCountry.name}
         </Link>
@@ -66,12 +68,12 @@ export function TravelContext() {
 
   return (
     <section className="flex justify-center">
-      <p className="text-sm text-center text-muted-foreground/50">
+      <p className="text-sm text-center" style={{ color: 'hsl(210 15% 55%)' }}>
         {parts.map((part, i) => (
           <span key={i}>
             {part}
             {i < parts.length - 1 && (
-              <span className="mx-2 text-muted-foreground/30">·</span>
+              <span className="mx-2" style={{ color: 'hsl(210 15% 70%)' }}>·</span>
             )}
           </span>
         ))}

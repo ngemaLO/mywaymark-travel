@@ -145,37 +145,33 @@ export function BadgeGrid() {
         </div>
 
         {/* Show more/less button */}
-        <div className="flex items-center justify-center gap-4 pt-2">
+        <div className="flex items-center justify-center gap-3 pt-3">
           {filteredCountries.length > 12 && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setShowAll(!showAll)}
-              className="text-muted-foreground hover:text-foreground"
+              className="ghost-pill"
             >
               {showAll ? (
                 <>
-                  Show Less <ChevronUp className="ml-1 w-4 h-4" />
+                  Show Less <ChevronUp className="w-3 h-3" />
                 </>
               ) : (
                 <>
-                  Show All ({filteredCountries.length}) <ChevronDown className="ml-1 w-4 h-4" />
+                  Show All ({filteredCountries.length}) <ChevronDown className="w-3 h-3" />
                 </>
               )}
-            </Button>
+            </button>
           )}
           
           {/* Show all countries toggle */}
           {!showUnvisited && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setShowUnvisited(true)}
-              className="text-muted-foreground/60 hover:text-muted-foreground text-xs"
+              className="ghost-pill"
             >
-              <Globe className="w-3 h-3 mr-1" />
+              <Globe className="w-3 h-3" />
               Show all countries
-            </Button>
+            </button>
           )}
         </div>
 

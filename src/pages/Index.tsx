@@ -103,7 +103,7 @@ const Index = () => {
             {/* Collections - lower on page */}
             <div className="grid lg:grid-cols-3 gap-12 pt-8">
               {/* Visited Countries */}
-              <section className="lg:col-span-2 space-y-6">
+              <section className="lg:col-span-2 content-surface p-6 space-y-5">
                 <h2 className="section-heading">
                   Visited Countries
                 </h2>

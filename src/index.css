@@ -228,6 +228,19 @@
     @apply bg-card/80 backdrop-blur-sm rounded-xl border border-border/20;
   }
 
+  /* Content surface - soft, breathable background for text sections */
+  .content-surface {
+    @apply relative rounded-xl;
+    background: hsl(var(--card) / 0.6);
+    border: 1px solid hsl(var(--border) / 0.15);
+    backdrop-filter: blur(8px);
+  }
+
+  .dark .content-surface {
+    background: hsl(var(--card) / 0.4);
+    border-color: hsl(var(--border) / 0.1);
+  }
+
   .badge-country {
     @apply relative flex items-center justify-center rounded-lg overflow-hidden transition-all duration-300;
   }
@@ -275,11 +288,40 @@
     @apply absolute left-0 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-primary/80 border-2 border-background;
   }
 
-  /* Section heading - editorial, not functional */
+  /* Section heading - editorial, with subtle underline */
   .section-heading {
-    @apply text-sm font-medium text-muted-foreground/70 uppercase tracking-wider;
+    @apply text-xs font-medium uppercase tracking-wider pb-2 mb-4;
     font-family: 'Instrument Sans', system-ui, sans-serif;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
+    color: hsl(210 15% 50%);
+    border-bottom: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .dark .section-heading {
+    color: hsl(210 15% 55%);
+  }
+
+  /* Ghost pill button for secondary actions */
+  .ghost-pill {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200;
+    color: hsl(210 15% 45%);
+    background: hsl(var(--muted) / 0.3);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .ghost-pill:hover {
+    background: hsl(var(--muted) / 0.5);
+    border-color: hsl(var(--border) / 0.4);
+    box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.08);
+  }
+
+  .dark .ghost-pill {
+    color: hsl(210 15% 60%);
+    background: hsl(var(--muted) / 0.15);
+  }
+
+  .dark .ghost-pill:hover {
+    background: hsl(var(--muted) / 0.25);
   }
 }
 
