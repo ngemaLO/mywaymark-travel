@@ -11,7 +11,7 @@ export interface CurrentTrip {
   departure_date: string | null;
   place_id: string | null;
   trip_id: string | null;
-  is_travel: boolean;
+  is_travel: boolean | null; // null means not explicitly set
 }
 
 export interface TravelState {
@@ -49,7 +49,7 @@ export function useCurrentTrip() {
       
       if (!data) return null;
 
-      // Extract is_travel from the joined trip, default to true if no trip record
+      // Extract is_travel from the joined trip, null if no trip record
       const tripData = data.trips as { id: string; is_travel: boolean } | null;
       
       return {
@@ -59,7 +59,7 @@ export function useCurrentTrip() {
         departure_date: data.departure_date,
         place_id: data.place_id,
         trip_id: data.trip_id,
-        is_travel: tripData?.is_travel ?? true, // Default to travel if no trip record
+        is_travel: tripData?.is_travel ?? null, // null means not explicitly set
       } as CurrentTrip;
     },
     enabled: !!user,
@@ -89,23 +89,36 @@ export function useTravelState(): { data: TravelState | null; isLoading: boolean
     };
   }
 
-  // Has an ongoing visit marked as travel
-  if (currentTrip.is_travel) {
+  // Determine if this is travel or at home
+  // Priority: explicit is_travel setting > home base comparison
+  let isTravel: boolean;
+  
+  if (currentTrip.is_travel !== null) {
+    // Explicitly set - use the value
+    isTravel = currentTrip.is_travel;
+  } else {
+    // Not explicitly set - infer from home base
+    // If current trip is in home base country, default to "at home"
+    // Otherwise, default to "travelling"
+    isTravel = homeBase?.country_iso2 !== currentTrip.country_iso2;
+  }
+
+  if (isTravel) {
     return {
       data: {
         type: 'travelling',
-        currentTrip,
+        currentTrip: { ...currentTrip, is_travel: true },
         homeBaseCountry: homeBase?.country_iso2 || null,
       },
       isLoading: false,
     };
   }
 
-  // Has an ongoing visit but NOT marked as travel (at home)
+  // At home
   return {
     data: {
       type: 'at_home',
-      currentTrip,
+      currentTrip: { ...currentTrip, is_travel: false },
       homeBaseCountry: currentTrip.country_iso2,
     },
     isLoading: false,
@@ -156,6 +169,71 @@ export function useEndCurrentTrip() {
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to end trip');
+    },
+  });
+}
+
+// Toggle whether current visit is "travel" or "at home"
+export function useSetTravelStatus() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ visitId, tripId, isTravel }: { visitId: string; tripId: string | null; isTravel: boolean }) => {
+      if (!user) throw new Error('Must be logged in');
+
+      if (tripId) {
+        // Update existing trip record
+        const { error } = await supabase
+          .from('trips')
+          .update({ is_travel: isTravel })
+          .eq('id', tripId)
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+      } else {
+        // Need to create a trip record and link it to the visit
+        const { data: visit } = await supabase
+          .from('visits')
+          .select('arrival_date')
+          .eq('id', visitId)
+          .single();
+
+        if (!visit) throw new Error('Visit not found');
+
+        // Create trip record
+        const { data: newTrip, error: tripError } = await supabase
+          .from('trips')
+          .insert({
+            user_id: user.id,
+            start_date: visit.arrival_date,
+            end_date: null,
+            source: 'manual',
+            is_travel: isTravel,
+          })
+          .select('id')
+          .single();
+
+        if (tripError) throw tripError;
+
+        // Link visit to trip
+        const { error: visitError } = await supabase
+          .from('visits')
+          .update({ trip_id: newTrip.id })
+          .eq('id', visitId)
+          .eq('user_id', user.id);
+
+        if (visitError) throw visitError;
+      }
+    },
+    onSuccess: (_, { isTravel }) => {
+      toast.success(isTravel ? 'Marked as travel trip' : 'Marked as at home');
+      queryClient.invalidateQueries({ queryKey: ['current-trip'] });
+      queryClient.invalidateQueries({ queryKey: ['visits'] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update travel status');
     },
   });
 }
