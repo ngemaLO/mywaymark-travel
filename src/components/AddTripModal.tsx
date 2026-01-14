@@ -38,6 +38,7 @@ interface DateEntry {
   year: string;
   startDate: string;
   endDate: string;
+  isOngoing: boolean;
 }
 
 // Generate months for selector
@@ -62,6 +63,7 @@ const createEmptyDateEntry = (): DateEntry => ({
   year: currentYear.toString(),
   startDate: '',
   endDate: '',
+  isOngoing: false,
 });
 
 export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
@@ -154,7 +156,8 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
           }
         } else if (entry.dateType === 'range' && entry.startDate) {
           arrivalDate = entry.startDate;
-          departureDate = entry.endDate || null;
+          // If ongoing, departure_date stays null; otherwise use the end date
+          departureDate = entry.isOngoing ? null : (entry.endDate || null);
         }
 
         // Only add visit if we have a valid arrival date
@@ -400,26 +403,50 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
                         </Select>
                       </div>
                     ) : (
-                      <div className="flex gap-2 items-center">
-                        <div className="flex-1 space-y-1">
-                          <Label className="text-xs text-muted-foreground">Start</Label>
-                          <Input
-                            type="date"
-                            value={entry.startDate}
-                            onChange={(e) => updateDateEntry(entry.id, { startDate: e.target.value })}
-                            max={getTodayString()}
-                          />
+                      <div className="space-y-3">
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1 space-y-1">
+                            <Label className="text-xs text-muted-foreground">Start</Label>
+                            <Input
+                              type="date"
+                              value={entry.startDate}
+                              onChange={(e) => updateDateEntry(entry.id, { startDate: e.target.value })}
+                              max={getTodayString()}
+                            />
+                          </div>
+                          {!entry.isOngoing && (
+                            <>
+                              <span className="text-muted-foreground mt-5">to</span>
+                              <div className="flex-1 space-y-1">
+                                <Label className="text-xs text-muted-foreground">End (optional)</Label>
+                                <Input
+                                  type="date"
+                                  value={entry.endDate}
+                                  onChange={(e) => updateDateEntry(entry.id, { endDate: e.target.value })}
+                                  min={entry.startDate}
+                                  max={getTodayString()}
+                                />
+                              </div>
+                            </>
+                          )}
                         </div>
-                        <span className="text-muted-foreground mt-5">to</span>
-                        <div className="flex-1 space-y-1">
-                          <Label className="text-xs text-muted-foreground">End (optional)</Label>
-                          <Input
-                            type="date"
-                            value={entry.endDate}
-                            onChange={(e) => updateDateEntry(entry.id, { endDate: e.target.value })}
-                            min={entry.startDate}
-                            max={getTodayString()}
+                        
+                        {/* Ongoing checkbox */}
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`ongoing-${entry.id}`}
+                            checked={entry.isOngoing}
+                            onCheckedChange={(checked) => updateDateEntry(entry.id, { 
+                              isOngoing: checked === true,
+                              endDate: checked === true ? '' : entry.endDate 
+                            })}
                           />
+                          <Label 
+                            htmlFor={`ongoing-${entry.id}`} 
+                            className="text-sm text-muted-foreground cursor-pointer"
+                          >
+                            This is my current trip (ongoing)
+                          </Label>
                         </div>
                       </div>
                     )}

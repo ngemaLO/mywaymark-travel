@@ -91,10 +91,13 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
         return [];
       }
       
-      // Filter out home base country and limit to 3
+      // Filter out home base country, ongoing trips (current trips), and limit to 3
       filtered = filtered
         .filter(v => v.country_iso2 !== homeBase?.country_iso2)
+        .filter(v => v.departure_date !== null) // Exclude ongoing trips
         .slice(0, 3);
+      
+      return filtered;
     },
     enabled: !!user && (scope === 'all' || chapterTripIds.length > 0 || !effectiveChapterId),
   });
