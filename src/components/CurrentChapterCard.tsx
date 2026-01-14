@@ -44,57 +44,57 @@ export function CurrentChapterCard() {
       <div className="card-elevated p-5 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-primary" />
-            <h3 className="font-display font-semibold text-foreground">
+            <BookOpen className="w-4 h-4 text-primary/70" />
+            <h3 className="section-heading">
               Current Chapter
             </h3>
           </div>
           <Link to="/chapters">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground">
-              <Settings className="w-3.5 h-3.5" />
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground/60 text-xs">
+              <Settings className="w-3 h-3" />
               Manage
             </Button>
           </Link>
         </div>
 
         <div className="space-y-2">
-          <h4 className="text-lg font-semibold text-foreground">
+          <h4 className="text-base font-display text-foreground">
             {currentChapter.title}
           </h4>
           
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
+            <Calendar className="w-3.5 h-3.5" />
             <span>{dateRange}</span>
           </div>
 
           {homeCountry && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
+              <MapPin className="w-3.5 h-3.5" />
               <span>Based in {homeCountry.name}</span>
             </div>
           )}
 
           {currentChapter.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-sm text-muted-foreground/60 line-clamp-2">
               {currentChapter.description}
             </p>
           )}
         </div>
 
-        {/* Quick Stats */}
-        <div className="flex items-center gap-6 pt-2 border-t border-border/50">
+        {/* Quick Stats - softer */}
+        <div className="flex items-center gap-6 pt-3 border-t border-border/30">
           <div className="flex items-center gap-2">
-            <Plane className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm">
-              <span className="font-semibold text-foreground">{chapterTrips.length}</span>
-              <span className="text-muted-foreground"> trip{chapterTrips.length !== 1 ? 's' : ''}</span>
+            <Plane className="w-3.5 h-3.5 text-muted-foreground/50" />
+            <span className="text-sm text-muted-foreground/70">
+              <span className="text-foreground/70">{chapterTrips.length}</span>
+              {' '}trip{chapterTrips.length !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm">
-              <span className="font-semibold text-foreground">{countries.length}</span>
-              <span className="text-muted-foreground"> countr{countries.length !== 1 ? 'ies' : 'y'}</span>
+            <MapPin className="w-3.5 h-3.5 text-muted-foreground/50" />
+            <span className="text-sm text-muted-foreground/70">
+              <span className="text-foreground/70">{countries.length}</span>
+              {' '}countr{countries.length !== 1 ? 'ies' : 'y'}
             </span>
           </div>
         </div>

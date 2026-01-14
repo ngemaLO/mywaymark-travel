@@ -26,39 +26,43 @@ const Index = () => {
   const hasVisits = visitedIsos.length > 0;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      {/* Subtle cartographic grid - fades before map */}
+      <div className="grid-overlay" aria-hidden="true" />
+      
       <Header />
       
-      <main className="container py-8 space-y-12">
-        {/* Hero Section */}
-        <section className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
-              <h1 className="text-2xl md:text-3xl font-display font-bold text-foreground">
-                Your Travel Story
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Your private travel ledger
-              </p>
-            </div>
-            {user && hasVisits && (
-              <DashboardScopeSelector value={dashboardScope} onChange={setDashboardScope} />
-            )}
+      <main className="container relative z-10 pt-12 pb-8">
+        {/* Hero Section - generous whitespace */}
+        <section className="text-center mb-8">
+          <div className="space-y-2 max-w-lg mx-auto">
+            <h1 className="text-2xl md:text-3xl font-display text-foreground">
+              Your Travel Story
+            </h1>
+            <p className="text-sm text-muted-foreground/70">
+              A private ledger of places you've been
+            </p>
           </div>
+          
+          {user && hasVisits && (
+            <div className="mt-6">
+              <DashboardScopeSelector value={dashboardScope} onChange={setDashboardScope} />
+            </div>
+          )}
         </section>
 
         {/* Empty State for new users */}
         {user && !isLoading && !hasVisits ? (
-          <section className="py-20 text-center space-y-8">
+          <section className="py-24 text-center space-y-8">
             <div className="space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center">
-                <MapPin className="w-10 h-10 text-muted-foreground" />
+              <div className="w-20 h-20 mx-auto rounded-full bg-muted/50 flex items-center justify-center">
+                <MapPin className="w-10 h-10 text-muted-foreground/60" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-xl font-display font-semibold text-foreground">
+                <h2 className="text-xl font-display text-foreground">
                   Welcome to Waymark
                 </h2>
-                <p className="text-muted-foreground max-w-sm mx-auto text-sm">
+                <p className="text-muted-foreground/70 max-w-sm mx-auto text-sm">
                   Start building your travel story by adding your first trip. Nothing is tracked automatically — you're always in control.
                 </p>
               </div>
@@ -70,55 +74,55 @@ const Index = () => {
             </Button>
           </section>
         ) : (
-          <>
-            {/* World Map - Hero */}
-            <section className="py-4">
+          <div className="space-y-16">
+            {/* World Map - The Hero */}
+            <section className="py-6">
               <WorldMap 
                 onCountryClick={(iso) => navigate(`/country/${iso}`)} 
                 scope={dashboardScope}
               />
             </section>
 
-            {/* Stats - Single understated metric */}
-            <section className="py-2">
+            {/* Stats - Understated, centered */}
+            <section>
               <StatsRow />
             </section>
 
-            {/* Current Trip - Near the top */}
+            {/* Current Trip - Contextual presence */}
             <CurrentTripCard />
 
-            {/* Travel Context - Elegant single line */}
-            <TravelContext />
-
-            {/* On This Day - Reflective accent */}
+            {/* Memory moments - subtle accent */}
             <OnThisDay />
 
-            {/* Current Chapter */}
+            {/* Travel Context - elegant single line */}
+            <TravelContext />
+
+            {/* Current Chapter - softened */}
             <CurrentChapterCard />
 
-            {/* Two Column Layout - Collection primary, Timeline secondary */}
-            <div className="grid lg:grid-cols-3 gap-10 pt-4">
-              {/* Visited Countries - Primary feature */}
-              <section className="lg:col-span-2 space-y-4">
-                <h2 className="text-lg font-display font-semibold text-foreground">
+            {/* Collections - lower on page */}
+            <div className="grid lg:grid-cols-3 gap-12 pt-8">
+              {/* Visited Countries */}
+              <section className="lg:col-span-2 space-y-6">
+                <h2 className="section-heading">
                   Visited Countries
                 </h2>
                 <BadgeGrid />
               </section>
 
-              {/* Recent Trips - De-emphasized */}
+              {/* Recent Trips - de-emphasized */}
               <section className="lg:col-span-1">
                 <TimelinePreview scope={dashboardScope} />
               </section>
             </div>
-          </>
+          </div>
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/30 py-10 mt-20">
-        <div className="container text-center text-xs text-muted-foreground/60">
-          <p>Waymark — Your private travel ledger</p>
+      {/* Footer - barely there */}
+      <footer className="border-t border-border/20 py-12 mt-24">
+        <div className="container text-center text-xs text-muted-foreground/40">
+          <p>Waymark</p>
         </div>
       </footer>
 

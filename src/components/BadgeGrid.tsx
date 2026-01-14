@@ -90,16 +90,16 @@ export function BadgeGrid() {
 
   return (
     <>
-      <div className="space-y-4">
-        {/* Continent filter pills - only show continents with visited countries */}
+      <div className="space-y-5">
+        {/* Continent filter pills - softer, less prominent */}
         {visitedContinents.length > 1 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             <button
               onClick={() => setSelectedContinent(null)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 selectedContinent === null
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  : 'bg-muted/50 text-muted-foreground/70 hover:bg-muted hover:text-muted-foreground'
               }`}
             >
               All
@@ -110,10 +110,10 @@ export function BadgeGrid() {
                 <button
                   key={continent}
                   onClick={() => setSelectedContinent(continent)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                     selectedContinent === continent
                       ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                      : 'bg-muted/50 text-muted-foreground/70 hover:bg-muted hover:text-muted-foreground'
                   }`}
                 >
                   {continent}
