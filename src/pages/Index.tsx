@@ -97,8 +97,8 @@ const Index = () => {
             {/* Travel Context - elegant single line */}
             <TravelContext />
 
-            {/* Journeys & Places - stacked cards */}
-            <section className="max-w-2xl mx-auto">
+            {/* Journeys & Places - stacked cards with elevation */}
+            <section className="max-w-2xl mx-auto rounded-xl shadow-[0_4px_20px_-4px_hsl(185_30%_50%/0.12)]">
               {/* Recent Journeys - rounded top only */}
               <div className="journey-surface-top p-5">
                 <h3 className="section-heading-alt">Recent Journeys</h3>
