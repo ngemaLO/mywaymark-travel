@@ -539,6 +539,7 @@ export type Database = {
           end_date: string | null
           id: string
           inferred: boolean | null
+          is_travel: boolean
           source: string
           start_date: string
           title: string | null
@@ -550,6 +551,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           inferred?: boolean | null
+          is_travel?: boolean
           source: string
           start_date: string
           title?: string | null
@@ -561,6 +563,7 @@ export type Database = {
           end_date?: string | null
           id?: string
           inferred?: boolean | null
+          is_travel?: boolean
           source?: string
           start_date?: string
           title?: string | null

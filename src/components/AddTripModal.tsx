@@ -39,6 +39,7 @@ interface DateEntry {
   startDate: string;
   endDate: string;
   isOngoing: boolean;
+  isTravel: boolean; // true = trip away from home, false = just being at home
 }
 
 // Generate months for selector
@@ -64,6 +65,7 @@ const createEmptyDateEntry = (): DateEntry => ({
   startDate: '',
   endDate: '',
   isOngoing: false,
+  isTravel: true, // Default to travel trip
 });
 
 export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
@@ -143,6 +145,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
         departure_date: string | null;
         source: string;
         source_confidence: string;
+        trip_id: string | null;
       }> = [];
 
       for (const entry of validEntries) {
@@ -162,6 +165,27 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
 
         // Only add visit if we have a valid arrival date
         if (arrivalDate) {
+          // For ongoing trips, create a trip record to track is_travel
+          let tripId: string | null = null;
+          
+          if (entry.isOngoing) {
+            // Create a trip record for ongoing visits
+            const { data: tripData, error: tripError } = await supabase
+              .from('trips')
+              .insert({
+                user_id: user.id,
+                start_date: arrivalDate,
+                end_date: null,
+                source: 'manual',
+                is_travel: entry.isTravel,
+              })
+              .select('id')
+              .single();
+            
+            if (tripError) throw tripError;
+            tripId = tripData.id;
+          }
+
           visits.push({
             user_id: user.id,
             country_iso2: selectedCountry,
@@ -169,6 +193,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
             departure_date: departureDate,
             source: 'manual',
             source_confidence: 'high',
+            trip_id: tripId,
           });
         }
       }
@@ -448,6 +473,36 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
                             This is my current trip (ongoing)
                           </Label>
                         </div>
+                        
+                        {/* Is this travel? - Only show for ongoing trips */}
+                        {entry.isOngoing && (
+                          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
+                            <p className="text-sm font-medium">Is this a trip away from home?</p>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                variant={entry.isTravel ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => updateDateEntry(entry.id, { isTravel: true })}
+                              >
+                                Yes, I'm travelling
+                              </Button>
+                              <Button
+                                type="button"
+                                variant={!entry.isTravel ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => updateDateEntry(entry.id, { isTravel: false })}
+                              >
+                                No, I'm at home
+                              </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {entry.isTravel 
+                                ? "This will show as your Current Trip." 
+                                : "This won't show as a trip - you're just at home."}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

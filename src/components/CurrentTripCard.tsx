@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useCurrentTrip, useEndCurrentTrip } from '@/hooks/useCurrentTrip';
+import { useTravelState, useEndCurrentTrip } from '@/hooks/useCurrentTrip';
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { MapPin, Check, Loader2, Users } from 'lucide-react';
+import { MapPin, Check, Loader2, Users, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +11,7 @@ import { MeetInPersonModal } from '@/components/connections/MeetInPersonModal';
 export function CurrentTripCard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: currentTrip, isLoading } = useCurrentTrip();
+  const { data: travelState, isLoading } = useTravelState();
   const endTripMutation = useEndCurrentTrip();
   const [meetModalOpen, setMeetModalOpen] = useState(false);
 
@@ -19,10 +19,55 @@ export function CurrentTripCard() {
     return null;
   }
 
-  if (!currentTrip) {
+  if (!travelState || travelState.type === 'none') {
     return null;
   }
 
+  // Show "At Home" state
+  if (travelState.type === 'at_home') {
+    const country = travelState.homeBaseCountry 
+      ? getCountryByIso(travelState.homeBaseCountry)
+      : null;
+
+    return (
+      <section className="py-4">
+        <div className="relative overflow-hidden rounded-xl border border-muted bg-gradient-to-br from-muted/30 via-background to-muted/30">
+          <div className="relative p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Home className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    At Home
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-display font-semibold text-foreground">
+                    {country?.name || 'Home'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    You're currently at your home base.
+                  </p>
+                </div>
+              </div>
+
+              {country && (
+                <div 
+                  className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-bold text-white shrink-0 opacity-60"
+                  style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--muted))' }}
+                >
+                  {country.iso2}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Show "Travelling" state
+  const currentTrip = travelState.currentTrip!;
   const country = getCountryByIso(currentTrip.country_iso2);
   if (!country) return null;
 
