@@ -154,13 +154,13 @@
     background-color: hsl(var(--background));
   }
 
-  /* Subtle grid overlay - fades before main content */
+  /* Subtle grid overlay - visible only behind map area */
   .grid-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 600px;
+    height: 500px;
     pointer-events: none;
     z-index: 0;
     background-image: 
@@ -169,20 +169,21 @@
         0deg,
         transparent,
         transparent 138px,
-        hsl(185 45% 45% / 0.09) 138px,
-        hsl(185 45% 45% / 0.09) 140px
+        hsl(185 45% 45% / 0.06) 138px,
+        hsl(185 45% 45% / 0.06) 140px
       ),
       /* Longitude lines - vertical */
       repeating-linear-gradient(
         90deg,
         transparent,
         transparent 138px,
-        hsl(185 45% 45% / 0.09) 138px,
-        hsl(185 45% 45% / 0.09) 140px
+        hsl(185 45% 45% / 0.06) 138px,
+        hsl(185 45% 45% / 0.06) 140px
       );
     background-size: 140px 140px;
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 70%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 70%, transparent 100%);
+    /* Fade out quickly after map area */
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 40%, transparent 75%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 40%, transparent 75%);
   }
 
   .dark .grid-overlay {
@@ -191,15 +192,15 @@
         0deg,
         transparent,
         transparent 138px,
-        hsl(185 50% 50% / 0.07) 138px,
-        hsl(185 50% 50% / 0.07) 140px
+        hsl(185 50% 50% / 0.05) 138px,
+        hsl(185 50% 50% / 0.05) 140px
       ),
       repeating-linear-gradient(
         90deg,
         transparent,
         transparent 138px,
-        hsl(185 50% 50% / 0.07) 138px,
-        hsl(185 50% 50% / 0.07) 140px
+        hsl(185 50% 50% / 0.05) 138px,
+        hsl(185 50% 50% / 0.05) 140px
       );
   }
 
@@ -399,6 +400,107 @@
   .dark .places-surface {
     background: hsl(220 25% 12%);
     border-color: hsl(var(--border) / 0.15);
+  }
+
+  /* Travel Summary Bar - anchored, editorial */
+  .travel-summary-bar {
+    @apply inline-flex items-center gap-1 px-4 py-2.5 rounded-full;
+    background: hsl(210 20% 94%);
+    border: 1px solid hsl(210 15% 88%);
+    box-shadow: 0 1px 3px hsl(215 25% 15% / 0.04);
+  }
+
+  .dark .travel-summary-bar {
+    background: hsl(220 20% 14%);
+    border-color: hsl(220 15% 22%);
+  }
+
+  .travel-summary-segment {
+    @apply flex items-center gap-1.5 text-xs;
+    color: hsl(215 15% 45%);
+  }
+
+  .travel-summary-segment + .travel-summary-segment::before {
+    content: '';
+    @apply w-px h-3 mx-2;
+    background: hsl(210 15% 80%);
+  }
+
+  .dark .travel-summary-segment + .travel-summary-segment::before {
+    background: hsl(220 15% 30%);
+  }
+
+  .dark .travel-summary-segment {
+    color: hsl(210 15% 60%);
+  }
+
+  .travel-summary-icon {
+    @apply flex-shrink-0;
+    color: hsl(185 45% 40%);
+  }
+
+  .dark .travel-summary-icon {
+    color: hsl(185 45% 55%);
+  }
+
+  .travel-summary-segment a {
+    color: hsl(215 20% 35%);
+  }
+
+  .dark .travel-summary-segment a {
+    color: hsl(210 15% 75%);
+  }
+
+  /* Memory Card - reflective, premium */
+  .memory-card {
+    @apply relative max-w-md w-full rounded-xl overflow-hidden;
+    background: hsl(0 0% 100%);
+    border: 1px solid hsl(38 60% 85%);
+    box-shadow: 
+      0 2px 8px -2px hsl(38 50% 50% / 0.08),
+      0 0 0 1px hsl(38 60% 90% / 0.5);
+  }
+
+  .dark .memory-card {
+    background: hsl(220 25% 13%);
+    border-color: hsl(38 40% 25%);
+    box-shadow: 
+      0 2px 8px -2px hsl(0 0% 0% / 0.2),
+      0 0 0 1px hsl(38 40% 20% / 0.3);
+  }
+
+  .memory-card-accent {
+    @apply absolute top-0 left-0 right-0 h-0.5;
+    background: linear-gradient(90deg, hsl(38 80% 60%) 0%, hsl(38 70% 70%) 100%);
+  }
+
+  .memory-card-content {
+    @apply flex items-start gap-3 px-4 py-3;
+  }
+
+  .memory-card-text {
+    @apply text-sm leading-relaxed;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    color: hsl(215 20% 40%);
+  }
+
+  .dark .memory-card-text {
+    color: hsl(210 15% 65%);
+  }
+
+  .memory-card-link {
+    @apply font-medium not-italic;
+    color: hsl(215 25% 30%);
+  }
+
+  .memory-card-link:hover {
+    @apply underline underline-offset-2;
+  }
+
+  .dark .memory-card-link {
+    color: hsl(210 15% 80%);
   }
 }
 

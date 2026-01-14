@@ -91,11 +91,11 @@ const Index = () => {
             {/* Current Trip - Contextual presence */}
             <CurrentTripCard />
 
-            {/* Memory moments - subtle accent */}
-            <OnThisDay />
-
-            {/* Travel Context - elegant single line */}
+            {/* Travel Summary Bar - anchored below map */}
             <TravelContext />
+
+            {/* Memory Card - reflective moment */}
+            <OnThisDay />
 
             {/* Journeys & Places - stacked cards with elevation */}
             <section className="max-w-2xl mx-auto rounded-xl shadow-[0_4px_20px_-4px_hsl(185_30%_50%/0.12)]">

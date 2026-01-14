@@ -77,21 +77,28 @@ export function OnThisDay() {
   // Build location text
   const locationText = cityName ? `${cityName}, ${country.name}` : country.name;
 
+  // Calculate years ago
+  const yearsAgo = currentYear - memoryYear;
+  const timePhrase = yearsAgo === 1 ? 'A year ago today' : `${yearsAgo} years ago today`;
+
   return (
-    <section className="flex justify-center">
-      <p className="text-sm italic flex items-center gap-2" style={{ color: 'hsl(210 15% 55%)' }}>
-        <Sparkles className="w-3 h-3" style={{ color: 'hsl(185 45% 45% / 0.5)' }} />
-        <span>
-          On this day in {memoryYear}, you were in{' '}
-          <Link 
-            to={`/country/${country.iso2}`} 
-            className="hover:underline underline-offset-2 not-italic"
-            style={{ color: 'hsl(210 15% 40%)' }}
-          >
-            {locationText}
-          </Link>
-        </span>
-      </p>
+    <section className="flex justify-center px-4">
+      <div className="memory-card">
+        <div className="memory-card-accent" />
+        <div className="memory-card-content">
+          <Sparkles className="w-4 h-4 text-amber-500/70 flex-shrink-0" />
+          <p className="memory-card-text">
+            {timePhrase}, you woke up in{' '}
+            <Link 
+              to={`/country/${country.iso2}`} 
+              className="memory-card-link"
+            >
+              {locationText}
+            </Link>
+            {' '}{country.iso2 === 'BR' ? '🇧🇷' : ''}
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

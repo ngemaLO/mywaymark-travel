@@ -3,6 +3,7 @@ import { useVisits } from '@/hooks/useVisits';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCountryByIso } from '@/data/countries';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
+import { Compass, Flag, Home } from 'lucide-react';
 
 export function TravelContext() {
   const { user } = useAuth();
@@ -23,61 +24,62 @@ export function TravelContext() {
   // Home base country
   const homeCountry = homeBase ? getCountryByIso(homeBase.country_iso2) : null;
 
-  // Build parts for the elegant line
-  const parts: React.ReactNode[] = [];
+  // Build segments for the summary bar
+  const segments: { icon: React.ReactNode; content: React.ReactNode }[] = [];
 
   if (firstYear) {
-    parts.push(
-      <span key="since">
-        Traveling since {firstYear}
-      </span>
-    );
+    segments.push({
+      icon: <Compass className="w-3.5 h-3.5" />,
+      content: <span>Traveling since {firstYear}</span>
+    });
   }
 
   if (firstCountry) {
-    parts.push(
-      <span key="first">
-        First stop:{' '}
-        <Link 
-          to={`/country/${firstCountry.iso2}`} 
-          className="hover:underline underline-offset-2"
-          style={{ color: 'hsl(210 15% 40%)' }}
-        >
-          {firstCountry.name}
-        </Link>
-      </span>
-    );
+    segments.push({
+      icon: <Flag className="w-3.5 h-3.5" />,
+      content: (
+        <span>
+          First stop:{' '}
+          <Link 
+            to={`/country/${firstCountry.iso2}`} 
+            className="font-medium hover:underline underline-offset-2"
+          >
+            {firstCountry.name}
+          </Link>
+        </span>
+      )
+    });
   }
 
   if (homeCountry) {
-    parts.push(
-      <span key="home">
-        Home base:{' '}
-        <Link 
-          to={`/country/${homeCountry.iso2}`} 
-          className="hover:underline underline-offset-2"
-          style={{ color: 'hsl(210 15% 40%)' }}
-        >
-          {homeCountry.name}
-        </Link>
-      </span>
-    );
+    segments.push({
+      icon: <Home className="w-3.5 h-3.5" />,
+      content: (
+        <span>
+          Home base:{' '}
+          <Link 
+            to={`/country/${homeCountry.iso2}`} 
+            className="font-medium hover:underline underline-offset-2"
+          >
+            {homeCountry.name}
+          </Link>
+        </span>
+      )
+    });
   }
 
-  if (parts.length === 0) return null;
+  if (segments.length === 0) return null;
 
   return (
     <section className="flex justify-center">
-      <p className="text-sm text-center" style={{ color: 'hsl(210 15% 55%)' }}>
-        {parts.map((part, i) => (
-          <span key={i}>
-            {part}
-            {i < parts.length - 1 && (
-              <span className="mx-2" style={{ color: 'hsl(210 15% 70%)' }}>·</span>
-            )}
-          </span>
+      <div className="travel-summary-bar">
+        {segments.map((segment, i) => (
+          <div key={i} className="travel-summary-segment">
+            <span className="travel-summary-icon">{segment.icon}</span>
+            {segment.content}
+          </div>
         ))}
-      </p>
+      </div>
     </section>
   );
 }
