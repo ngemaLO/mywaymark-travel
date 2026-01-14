@@ -1,12 +1,12 @@
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useTravelState, useEndCurrentTrip } from '@/hooks/useCurrentTrip';
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { MapPin, Check, Loader2, Users, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { MeetInPersonModal } from '@/components/connections/MeetInPersonModal';
+import { Home, MapPin, Users, Check, Loader2, Plus, Plane } from 'lucide-react';
+import { MeetInPersonModal } from './connections/MeetInPersonModal';
 
 export function CurrentTripCard() {
   const { user } = useAuth();
@@ -19,30 +19,55 @@ export function CurrentTripCard() {
     return null;
   }
 
-  if (!travelState || travelState.type === 'none') {
-    return null;
-  }
-
-  // Show "At Home" state - very subtle
-  if (travelState.type === 'at_home') {
-    const country = travelState.homeBaseCountry 
+  // "At Home" state - now prominent with CTA
+  if (!travelState || travelState.type === 'none' || travelState.type === 'at_home') {
+    const country = travelState?.homeBaseCountry 
       ? getCountryByIso(travelState.homeBaseCountry)
       : null;
 
     return (
-      <section className="flex justify-center">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground/60">
-          <Home className="w-3.5 h-3.5" />
-          <span>
-            At home in{' '}
-            <span className="text-foreground/70">{country?.name || 'your home base'}</span>
-          </span>
+      <section className="narrative-section">
+        <div className="current-state-card at-home">
+          <div className="flex items-center gap-3">
+            <div className="current-state-icon">
+              <Home className="w-5 h-5" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground/60">
+                Currently
+              </p>
+              <h2 className="text-lg font-display text-foreground">
+                {country ? `At home in ${country.name}` : 'At home'}
+              </h2>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2 mt-4">
+            <Button
+              onClick={() => navigate('/timeline')}
+              variant="default"
+              size="sm"
+              className="gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Log a Trip
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground"
+              onClick={() => navigate('/timeline')}
+            >
+              <Plane className="w-3.5 h-3.5" />
+              Plan a Trip
+            </Button>
+          </div>
         </div>
       </section>
     );
   }
 
-  // Show "Travelling" state - prominent but calm
+  // "Travelling" state - prominent with primary CTAs
   const currentTrip = travelState.currentTrip!;
   const country = getCountryByIso(currentTrip.country_iso2);
   if (!country) return null;
@@ -52,32 +77,34 @@ export function CurrentTripCard() {
   const daysAway = Math.floor((today.getTime() - arrivalDate.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <section>
-      <div className="card-elevated p-5">
+    <section className="narrative-section">
+      <div className="current-state-card travelling">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
-            {/* Header - subtle indicator */}
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-              <span className="text-xs text-muted-foreground/70 uppercase tracking-wider">
-                Currently in
-              </span>
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="current-state-icon travelling">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground/60">
+                  Currently in
+                </p>
+                <h2 className="text-lg font-display text-foreground">
+                  {country.name}
+                </h2>
+              </div>
             </div>
 
-            {/* Country Info */}
-            <div className="space-y-1">
-              <h3 className="text-lg font-display text-foreground">
-                {country.name}
-              </h3>
-              <p className="text-sm text-muted-foreground/70">
-                Since {format(arrivalDate, 'MMM d')}
-                {daysAway > 0 && (
-                  <span> · {daysAway} day{daysAway !== 1 ? 's' : ''}</span>
-                )}
-              </p>
-            </div>
+            {/* Duration info */}
+            <p className="text-sm text-muted-foreground/70 ml-11">
+              Since {format(arrivalDate, 'MMM d')}
+              {daysAway > 0 && (
+                <span> · {daysAway} day{daysAway !== 1 ? 's' : ''}</span>
+              )}
+            </p>
 
-            {/* Actions - restrained */}
+            {/* Actions - primary */}
             <div className="flex flex-wrap items-center gap-2 pt-2">
               <Button
                 variant="default"
@@ -89,10 +116,10 @@ export function CurrentTripCard() {
                 View Trip
               </Button>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 onClick={() => setMeetModalOpen(true)}
-                className="gap-1.5 text-muted-foreground"
+                className="gap-1.5"
               >
                 <Users className="w-3.5 h-3.5" />
                 Meet Someone
@@ -114,7 +141,7 @@ export function CurrentTripCard() {
             </div>
           </div>
 
-          {/* Country Badge - softer */}
+          {/* Country Badge */}
           <div 
             className="w-12 h-12 rounded-lg flex items-center justify-center text-lg font-semibold text-white/90 shrink-0"
             style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--primary))' }}
