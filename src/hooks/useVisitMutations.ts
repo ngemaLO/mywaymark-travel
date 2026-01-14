@@ -17,6 +17,14 @@ export function useUpdateVisit() {
     mutationFn: async (data: UpdateVisitData) => {
       if (!user) throw new Error('Not authenticated');
 
+      // First get the visit to find the trip_id
+      const { data: visit } = await supabase
+        .from('visits')
+        .select('trip_id')
+        .eq('id', data.id)
+        .single();
+
+      // Update the visit
       const { error } = await supabase
         .from('visits')
         .update({
@@ -28,11 +36,25 @@ export function useUpdateVisit() {
         .eq('user_id', user.id);
 
       if (error) throw error;
+
+      // Also update the associated trip's end_date if it exists
+      if (visit?.trip_id && data.departure_date) {
+        await supabase
+          .from('trips')
+          .update({ 
+            end_date: data.departure_date,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', visit.trip_id)
+          .eq('user_id', user.id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['visits'] });
       queryClient.invalidateQueries({ queryKey: ['timeline-visits'] });
       queryClient.invalidateQueries({ queryKey: ['travel-context'] });
+      queryClient.invalidateQueries({ queryKey: ['current-trip'] });
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
       toast.success('Visit updated');
     },
     onError: (error) => {
