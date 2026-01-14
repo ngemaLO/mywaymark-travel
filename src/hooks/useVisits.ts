@@ -77,9 +77,17 @@ export function useVisitsByCountry(countryIso2: string) {
   
   const countryVisits = visits.filter(v => v.country_iso2 === countryIso2);
   
+  // Calculate first visit year
+  const firstVisitYear = countryVisits.length > 0
+    ? countryVisits
+        .map(v => new Date(v.arrival_date).getFullYear())
+        .sort((a, b) => a - b)[0]
+    : null;
+  
   return {
     visits: countryVisits,
     visitCount: countryVisits.length,
+    firstVisitYear,
     ...rest,
   };
 }

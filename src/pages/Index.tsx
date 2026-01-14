@@ -3,8 +3,8 @@ import { WorldMap } from '@/components/WorldMap';
 import { StatsRow } from '@/components/StatsRow';
 import { TravelContext } from '@/components/TravelContext';
 import { OnThisDay } from '@/components/OnThisDay';
-import { BadgeGrid } from '@/components/BadgeGrid';
-import { TimelinePreview } from '@/components/TimelinePreview';
+import { PlacesGrid } from '@/components/PlacesGrid';
+import { RecentJourneys } from '@/components/RecentJourneys';
 import { CurrentChapterCard } from '@/components/CurrentChapterCard';
 import { CurrentTripCard } from '@/components/CurrentTripCard';
 import { DashboardScopeSelector, type DashboardScopeValue } from '@/components/DashboardScopeSelector';
@@ -39,7 +39,7 @@ const Index = () => {
             <h1 className="text-2xl md:text-3xl font-display text-foreground">
               Your Travel Story
             </h1>
-            <p className="text-sm text-muted-foreground/70">
+            <p className="text-sm" style={{ color: 'hsl(215 15% 55%)' }}>
               A private ledger of places you've been
             </p>
           </div>
@@ -56,13 +56,13 @@ const Index = () => {
           <section className="py-24 text-center space-y-8">
             <div className="space-y-4">
               <div className="w-20 h-20 mx-auto rounded-full bg-muted/50 flex items-center justify-center">
-                <MapPin className="w-10 h-10 text-muted-foreground/60" />
+                <MapPin className="w-10 h-10" style={{ color: 'hsl(215 15% 55%)' }} />
               </div>
               <div className="space-y-2">
                 <h2 className="text-xl font-display text-foreground">
                   Welcome to Waymark
                 </h2>
-                <p className="text-muted-foreground/70 max-w-sm mx-auto text-sm">
+                <p className="max-w-sm mx-auto text-sm" style={{ color: 'hsl(215 15% 50%)' }}>
                   Start building your travel story by adding your first trip. Nothing is tracked automatically — you're always in control.
                 </p>
               </div>
@@ -74,9 +74,9 @@ const Index = () => {
             </Button>
           </section>
         ) : (
-          <div className="space-y-16">
+          <div className="space-y-12">
             {/* World Map - The Hero */}
-            <section className="py-6">
+            <section className="py-4">
               <WorldMap 
                 onCountryClick={(iso) => navigate(`/country/${iso}`)} 
                 scope={dashboardScope}
@@ -97,31 +97,28 @@ const Index = () => {
             {/* Travel Context - elegant single line */}
             <TravelContext />
 
-            {/* Current Chapter - softened */}
+            {/* Recent Journeys - tinted surface */}
+            <section className="max-w-2xl mx-auto">
+              <RecentJourneys scope={dashboardScope} />
+            </section>
+
+            {/* Your Places - compact grid */}
+            <section className="places-surface">
+              <h2 className="section-heading">
+                Your Places
+              </h2>
+              <PlacesGrid />
+            </section>
+
+            {/* Current Chapter - softened, at end */}
             <CurrentChapterCard />
-
-            {/* Collections - lower on page */}
-            <div className="grid lg:grid-cols-3 gap-12 pt-8">
-              {/* Visited Countries */}
-              <section className="lg:col-span-2 content-surface p-6 space-y-5">
-                <h2 className="section-heading">
-                  Visited Countries
-                </h2>
-                <BadgeGrid />
-              </section>
-
-              {/* Recent Trips - de-emphasized */}
-              <section className="lg:col-span-1">
-                <TimelinePreview scope={dashboardScope} />
-              </section>
-            </div>
           </div>
         )}
       </main>
 
       {/* Footer - barely there */}
-      <footer className="border-t border-border/20 py-12 mt-24">
-        <div className="container text-center text-xs text-muted-foreground/40">
+      <footer className="border-t border-border/20 py-12 mt-16">
+        <div className="container text-center text-xs" style={{ color: 'hsl(215 15% 60%)' }}>
           <p>Waymark</p>
         </div>
       </footer>
