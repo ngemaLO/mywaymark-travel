@@ -97,17 +97,22 @@ const Index = () => {
             {/* Travel Context - elegant single line */}
             <TravelContext />
 
-            {/* Recent Journeys - tinted surface */}
-            <section className="max-w-2xl mx-auto">
-              <RecentJourneys scope={dashboardScope} />
-            </section>
-
-            {/* Your Places - compact grid */}
+            {/* Journeys & Places - unified card */}
             <section className="max-w-2xl mx-auto journey-surface">
-              <h2 className="section-heading-alt">
-                Your Places
-              </h2>
-              <PlacesGrid />
+              {/* Recent Journeys */}
+              <div className="mb-6">
+                <h3 className="section-heading-alt">Recent Journeys</h3>
+                <RecentJourneys scope={dashboardScope} />
+              </div>
+              
+              {/* Divider */}
+              <div className="border-t border-border/20 my-6" />
+              
+              {/* Your Places */}
+              <div>
+                <h3 className="section-heading-alt">Your Places</h3>
+                <PlacesGrid />
+              </div>
             </section>
 
             {/* Current Chapter - softened, at end */}

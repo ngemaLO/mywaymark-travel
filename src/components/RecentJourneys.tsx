@@ -94,11 +94,7 @@ export function RecentJourneys({ scope = 'all' }: RecentJourneysProps) {
   }
 
   return (
-    <div className="journey-surface">
-      <h3 className="section-heading-alt">
-        Recent Journeys
-      </h3>
-      
+    <div>
       <div className="space-y-0">
         {visits.map((visit, index) => {
           const country = getCountryByIso(visit.country_iso2);
@@ -108,7 +104,7 @@ export function RecentJourneys({ scope = 'all' }: RecentJourneysProps) {
             <button
               key={visit.id}
               onClick={() => navigate(`/country/${visit.country_iso2}`)}
-              className="w-full flex items-center gap-4 py-3 transition-colors text-left group hover:bg-white/40 dark:hover:bg-white/5 -mx-4 px-4 rounded-lg"
+              className="w-full flex items-center gap-4 py-3 transition-colors text-left group hover:bg-white/40 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg"
             >
               {/* Timeline indicator */}
               <div className="flex flex-col items-center">
