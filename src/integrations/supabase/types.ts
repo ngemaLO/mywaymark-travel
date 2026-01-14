@@ -452,7 +452,9 @@ export type Database = {
           status: string
           trip_id: string
           updated_at: string
+          user_a_confirmed: boolean
           user_a_id: string
+          user_b_confirmed: boolean
           user_b_id: string
         }
         Insert: {
@@ -462,7 +464,9 @@ export type Database = {
           status?: string
           trip_id: string
           updated_at?: string
+          user_a_confirmed?: boolean
           user_a_id: string
+          user_b_confirmed?: boolean
           user_b_id: string
         }
         Update: {
@@ -472,7 +476,9 @@ export type Database = {
           status?: string
           trip_id?: string
           updated_at?: string
+          user_a_confirmed?: boolean
           user_a_id?: string
+          user_b_confirmed?: boolean
           user_b_id?: string
         }
         Relationships: [

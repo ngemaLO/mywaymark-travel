@@ -2,32 +2,27 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MapPin, Calendar, Loader2, UserPlus } from 'lucide-react';
-import { useCreateConnectionRequest } from '@/hooks/useTripConnections';
+import { MapPin, Calendar, Loader2, UserPlus, Clock, Sparkles } from 'lucide-react';
+import { useCreateConnectionRequest, CodeLookupResult } from '@/hooks/useTripConnections';
+import { useIsPremium } from '@/hooks/usePremium';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
+import { UpgradePrompt } from './UpgradePrompt';
 
 interface ConnectionPreviewProps {
-  codeData: {
-    user_id: string;
-    trip_id: string;
-    trips: {
-      id: string;
-      start_date: string;
-      end_date: string | null;
-      title: string | null;
-    };
-  };
+  codeData: CodeLookupResult;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
 export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionPreviewProps) {
   const { user } = useAuth();
+  const { isPremium } = useIsPremium();
   const [userProfile, setUserProfile] = useState<{ display_name: string | null } | null>(null);
   const [tripLocation, setTripLocation] = useState<string | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const createConnection = useCreateConnectionRequest();
 
   useEffect(() => {
@@ -61,6 +56,10 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
   }, [codeData]);
 
   const handleConnect = async () => {
+    if (!isPremium) {
+      setShowUpgrade(true);
+      return;
+    }
     await createConnection.mutateAsync({
       tripId: codeData.trip_id,
       otherUserId: codeData.user_id,
@@ -76,6 +75,26 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
     ? `${format(new Date(codeData.trips.start_date), 'MMM d')} – ${format(new Date(codeData.trips.end_date), 'MMM d, yyyy')}`
     : `${format(new Date(codeData.trips.start_date), 'MMM d, yyyy')} – Ongoing`;
 
+  // Show expired message
+  if (codeData.isExpired) {
+    return (
+      <Card className="border-border/40">
+        <CardContent className="p-6 text-center space-y-4">
+          <div className="w-14 h-14 mx-auto rounded-full bg-muted flex items-center justify-center">
+            <Clock className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="font-semibold">This QR Code Has Expired</h3>
+            <p className="text-sm text-muted-foreground">
+              The trip has ended, so this connection code is no longer valid.
+            </p>
+          </div>
+          <Button onClick={onCancel}>Go Back</Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (isSameUser) {
     return (
       <Card className="border-border/40">
@@ -85,6 +104,10 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
         </CardContent>
       </Card>
     );
+  }
+
+  if (showUpgrade) {
+    return <UpgradePrompt feature="Connecting with travelers" onClose={() => setShowUpgrade(false)} />;
   }
 
   return (
@@ -121,17 +144,18 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
         <div className="space-y-2">
           <Button 
             onClick={handleConnect} 
-            className="w-full"
+            className="w-full gap-2"
             disabled={createConnection.isPending}
           >
             {createConnection.isPending ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Connecting...
               </>
             ) : (
               <>
-                <UserPlus className="w-4 h-4 mr-2" />
+                {!isPremium && <Sparkles className="w-4 h-4" />}
+                <UserPlus className="w-4 h-4" />
                 Connect for this trip
               </>
             )}
@@ -142,7 +166,10 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
         </div>
 
         <p className="text-xs text-center text-muted-foreground">
-          You'll be able to message each other during this trip
+          {isPremium 
+            ? "Both of you must confirm to start messaging"
+            : "Requires Waymark Plus to connect"
+          }
         </p>
       </CardContent>
     </Card>
