@@ -97,19 +97,16 @@ const Index = () => {
             {/* Travel Context - elegant single line */}
             <TravelContext />
 
-            {/* Journeys & Places - unified card */}
-            <section className="max-w-2xl mx-auto journey-surface">
-              {/* Recent Journeys */}
-              <div className="mb-6">
+            {/* Journeys & Places - stacked cards */}
+            <section className="max-w-2xl mx-auto">
+              {/* Recent Journeys - rounded top only */}
+              <div className="journey-surface-top p-5">
                 <h3 className="section-heading-alt">Recent Journeys</h3>
                 <RecentJourneys scope={dashboardScope} />
               </div>
               
-              {/* Divider */}
-              <div className="border-t border-border/20 my-6" />
-              
-              {/* Your Places */}
-              <div>
+              {/* Your Places - rounded bottom only */}
+              <div className="journey-surface-bottom p-5 border-t border-border/20">
                 <h3 className="section-heading-alt">Your Places</h3>
                 <PlacesGrid />
               </div>

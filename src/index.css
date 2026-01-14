@@ -362,6 +362,32 @@
     border-color: hsl(185 15% 20%);
   }
 
+  /* Journey surface - top section (rounded top only) */
+  .journey-surface-top {
+    @apply rounded-t-xl;
+    background: hsl(185 30% 97%);
+    border: 1px solid hsl(185 20% 90%);
+    border-bottom: none;
+  }
+
+  .dark .journey-surface-top {
+    background: hsl(185 20% 12%);
+    border-color: hsl(185 15% 20%);
+  }
+
+  /* Journey surface - bottom section (rounded bottom only) */
+  .journey-surface-bottom {
+    @apply rounded-b-xl;
+    background: hsl(185 30% 97%);
+    border: 1px solid hsl(185 20% 90%);
+    border-top: none;
+  }
+
+  .dark .journey-surface-bottom {
+    background: hsl(185 20% 12%);
+    border-color: hsl(185 15% 20%);
+  }
+
   /* Places surface - off-white floating card */
   .places-surface {
     @apply rounded-xl p-6;
