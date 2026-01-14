@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Calendar, MapPin, Plane, Settings } from 'lucide-react';
+import { Calendar, MapPin, Plane, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { useCurrentChapter, useChapterTrips, useChapterCountries } from '@/hooks/useChapters';
 import { getCountryByIso } from '@/data/countries';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 
 export function CurrentChapterCard() {
   const { currentChapter, isLoading } = useCurrentChapter();
@@ -41,59 +40,56 @@ export function CurrentChapterCard() {
 
   return (
     <section className="opacity-0 animate-fade-in" style={{ animationDelay: '200ms' }}>
-      <div className="card-elevated p-5 space-y-4">
+      <div className="content-surface p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-primary/70" />
-            <h3 className="section-heading">
-              Current Chapter
-            </h3>
-          </div>
+          <h3 className="section-heading mb-0 pb-0 border-0">
+            Current Chapter
+          </h3>
           <Link to="/chapters">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground/60 text-xs">
+            <button className="ghost-pill">
               <Settings className="w-3 h-3" />
               Manage
-            </Button>
+            </button>
           </Link>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 pt-2">
           <h4 className="text-base font-display text-foreground">
             {currentChapter.title}
           </h4>
           
-          <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'hsl(210 15% 50%)' }}>
             <Calendar className="w-3.5 h-3.5" />
             <span>{dateRange}</span>
           </div>
 
           {homeCountry && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground/70">
+            <div className="flex items-center gap-2 text-sm" style={{ color: 'hsl(210 15% 50%)' }}>
               <MapPin className="w-3.5 h-3.5" />
               <span>Based in {homeCountry.name}</span>
             </div>
           )}
 
           {currentChapter.description && (
-            <p className="text-sm text-muted-foreground/60 line-clamp-2">
+            <p className="text-sm line-clamp-2" style={{ color: 'hsl(210 15% 55%)' }}>
               {currentChapter.description}
             </p>
           )}
         </div>
 
         {/* Quick Stats - softer */}
-        <div className="flex items-center gap-6 pt-3 border-t border-border/30">
+        <div className="flex items-center gap-6 pt-3 border-t border-border/20">
           <div className="flex items-center gap-2">
-            <Plane className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="text-sm text-muted-foreground/70">
-              <span className="text-foreground/70">{chapterTrips.length}</span>
+            <Plane className="w-3.5 h-3.5" style={{ color: 'hsl(210 15% 60%)' }} />
+            <span className="text-sm" style={{ color: 'hsl(210 15% 50%)' }}>
+              <span className="text-foreground/80">{chapterTrips.length}</span>
               {' '}trip{chapterTrips.length !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="text-sm text-muted-foreground/70">
-              <span className="text-foreground/70">{countries.length}</span>
+            <MapPin className="w-3.5 h-3.5" style={{ color: 'hsl(210 15% 60%)' }} />
+            <span className="text-sm" style={{ color: 'hsl(210 15% 50%)' }}>
+              <span className="text-foreground/80">{countries.length}</span>
               {' '}countr{countries.length !== 1 ? 'ies' : 'y'}
             </span>
           </div>

@@ -79,13 +79,14 @@ export function OnThisDay() {
 
   return (
     <section className="flex justify-center">
-      <p className="text-sm text-muted-foreground/50 italic flex items-center gap-2">
-        <Sparkles className="w-3 h-3 text-primary/40" />
+      <p className="text-sm italic flex items-center gap-2" style={{ color: 'hsl(210 15% 55%)' }}>
+        <Sparkles className="w-3 h-3" style={{ color: 'hsl(185 45% 45% / 0.5)' }} />
         <span>
           On this day in {memoryYear}, you were in{' '}
           <Link 
             to={`/country/${country.iso2}`} 
-            className="text-foreground/60 hover:text-foreground hover:underline underline-offset-2 not-italic"
+            className="hover:underline underline-offset-2 not-italic"
+            style={{ color: 'hsl(210 15% 40%)' }}
           >
             {locationText}
           </Link>

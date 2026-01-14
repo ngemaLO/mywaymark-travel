@@ -1,8 +1,7 @@
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { ArrowRight, Loader2, BookOpen } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,7 +125,7 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="content-surface p-5 space-y-4">
       <h3 className="section-heading">
         Recent Trips
       </h3>
@@ -140,16 +139,16 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
             <button
               key={visit.id}
               onClick={() => navigate(`/country/${visit.country_iso2}`)}
-              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors text-left group"
+              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/40 transition-colors text-left group"
             >
-              <div className="w-7 h-7 rounded bg-muted/50 text-muted-foreground/70 flex items-center justify-center font-medium text-xs shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <div className="w-7 h-7 rounded bg-muted/60 text-muted-foreground/80 flex items-center justify-center font-medium text-xs shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 {country.iso2}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground/80 truncate">
+                <p className="text-sm text-foreground/85 truncate">
                   {country.name}
                 </p>
-                <p className="text-xs text-muted-foreground/50">
+                <p className="text-xs text-muted-foreground/60">
                   {format(new Date(visit.arrival_date), 'MMM yyyy')}
                 </p>
               </div>
@@ -158,10 +157,8 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
         })}
       </div>
 
-      <Button 
-        variant="ghost" 
-        size="sm"
-        className="w-full text-muted-foreground/60 hover:text-muted-foreground text-xs"
+      <button 
+        className="ghost-pill w-full justify-center mt-2"
         onClick={() => {
           const params = scope !== 'all' && effectiveChapterId 
             ? `?chapter=${scope === 'current' ? 'current' : effectiveChapterId}` 
@@ -170,8 +167,8 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
         }}
       >
         View Full Timeline
-        <ArrowRight className="w-3 h-3 ml-1.5" />
-      </Button>
+        <ArrowRight className="w-3 h-3" />
+      </button>
     </div>
   );
 }
