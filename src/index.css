@@ -153,6 +153,38 @@
     font-family: 'Instrument Sans', system-ui, sans-serif;
   }
 
+  /* Subtle cartographic grid background - only visible on large empty surfaces */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.025;
+    background-image: 
+      /* Latitude lines - horizontal */
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 79px,
+        hsl(var(--map-grid)) 79px,
+        hsl(var(--map-grid)) 80px
+      ),
+      /* Longitude lines - vertical */
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 79px,
+        hsl(var(--map-grid)) 79px,
+        hsl(var(--map-grid)) 80px
+      );
+    background-size: 80px 80px;
+  }
+
+  .dark body::before {
+    opacity: 0.03;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Crimson Pro', Georgia, serif;
     @apply font-semibold tracking-tight;
