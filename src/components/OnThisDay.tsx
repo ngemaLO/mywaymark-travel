@@ -82,20 +82,16 @@ export function OnThisDay() {
   const timePhrase = yearsAgo === 1 ? 'A year ago today' : `${yearsAgo} years ago today`;
 
   return (
-    <section className="flex justify-center px-4">
-      <div className="memory-card">
+    <section className="memory-moment">
+      <div className="memory-card quiet">
         <div className="memory-card-accent" />
         <div className="memory-card-content">
-          <Sparkles className="w-4 h-4 text-amber-500/70 flex-shrink-0" />
+          <Sparkles className="w-4 h-4 text-amber-500/50 flex-shrink-0" />
           <p className="memory-card-text">
             {timePhrase}, you woke up in{' '}
-            <Link 
-              to={`/country/${country.iso2}`} 
-              className="memory-card-link"
-            >
+            <span className="font-medium text-foreground/70">
               {locationText}
-            </Link>
-            {' '}{country.iso2 === 'BR' ? '🇧🇷' : ''}
+            </span>
           </p>
         </div>
       </div>
