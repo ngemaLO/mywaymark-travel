@@ -6,6 +6,7 @@ import { OnThisDay } from '@/components/OnThisDay';
 import { BadgeGrid } from '@/components/BadgeGrid';
 import { TimelinePreview } from '@/components/TimelinePreview';
 import { CurrentChapterCard } from '@/components/CurrentChapterCard';
+import { CurrentTripCard } from '@/components/CurrentTripCard';
 import { DashboardScopeSelector, type DashboardScopeValue } from '@/components/DashboardScopeSelector';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -82,6 +83,9 @@ const Index = () => {
             <section className="py-2">
               <StatsRow />
             </section>
+
+            {/* Current Trip - Near the top */}
+            <CurrentTripCard />
 
             {/* Travel Context - Elegant single line */}
             <TravelContext />
