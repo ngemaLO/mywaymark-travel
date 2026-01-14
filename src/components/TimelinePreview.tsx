@@ -127,11 +127,11 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+      <h3 className="section-heading">
         Recent Trips
       </h3>
       
-      <div className="space-y-2">
+      <div className="space-y-1">
         {visits.map((visit) => {
           const country = getCountryByIso(visit.country_iso2);
           if (!country) return null;
@@ -140,16 +140,16 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
             <button
               key={visit.id}
               onClick={() => navigate(`/country/${visit.country_iso2}`)}
-              className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors text-left group"
+              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30 transition-colors text-left group"
             >
-              <div className="w-8 h-8 rounded-md bg-muted text-muted-foreground flex items-center justify-center font-medium text-xs shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+              <div className="w-7 h-7 rounded bg-muted/50 text-muted-foreground/70 flex items-center justify-center font-medium text-xs shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                 {country.iso2}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground text-sm truncate">
+                <p className="text-sm text-foreground/80 truncate">
                   {country.name}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground/50">
                   {format(new Date(visit.arrival_date), 'MMM yyyy')}
                 </p>
               </div>
@@ -161,7 +161,7 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
       <Button 
         variant="ghost" 
         size="sm"
-        className="w-full text-muted-foreground hover:text-foreground text-xs"
+        className="w-full text-muted-foreground/60 hover:text-muted-foreground text-xs"
         onClick={() => {
           const params = scope !== 'all' && effectiveChapterId 
             ? `?chapter=${scope === 'current' ? 'current' : effectiveChapterId}` 

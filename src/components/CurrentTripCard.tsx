@@ -23,50 +23,26 @@ export function CurrentTripCard() {
     return null;
   }
 
-  // Show "At Home" state
+  // Show "At Home" state - very subtle
   if (travelState.type === 'at_home') {
     const country = travelState.homeBaseCountry 
       ? getCountryByIso(travelState.homeBaseCountry)
       : null;
 
     return (
-      <section className="py-4">
-        <div className="relative overflow-hidden rounded-xl border border-muted bg-gradient-to-br from-muted/30 via-background to-muted/30">
-          <div className="relative p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Home className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    At Home
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-xl font-display font-semibold text-foreground">
-                    {country?.name || 'Home'}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    You're currently at your home base.
-                  </p>
-                </div>
-              </div>
-
-              {country && (
-                <div 
-                  className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-bold text-white shrink-0 opacity-60"
-                  style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--muted))' }}
-                >
-                  {country.iso2}
-                </div>
-              )}
-            </div>
-          </div>
+      <section className="flex justify-center">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground/60">
+          <Home className="w-3.5 h-3.5" />
+          <span>
+            At home in{' '}
+            <span className="text-foreground/70">{country?.name || 'your home base'}</span>
+          </span>
         </div>
       </section>
     );
   }
 
-  // Show "Travelling" state
+  // Show "Travelling" state - prominent but calm
   const currentTrip = travelState.currentTrip!;
   const country = getCountryByIso(currentTrip.country_iso2);
   if (!country) return null;
@@ -76,78 +52,74 @@ export function CurrentTripCard() {
   const daysAway = Math.floor((today.getTime() - arrivalDate.getTime()) / (1000 * 60 * 60 * 24));
 
   return (
-    <section className="py-4">
-      <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-primary/5">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        
-        <div className="relative p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-3">
-              {/* Header */}
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                <span className="text-xs font-medium text-primary uppercase tracking-wide">
-                  Currently Traveling
-                </span>
-              </div>
-
-              {/* Country Info */}
-              <div className="space-y-1">
-                <h3 className="text-xl font-display font-semibold text-foreground">
-                  {country.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Since {format(arrivalDate, 'MMM d, yyyy')}
-                  {daysAway > 0 && (
-                    <span className="text-muted-foreground/70"> · {daysAway} day{daysAway !== 1 ? 's' : ''}</span>
-                  )}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => navigate(`/country/${currentTrip.country_iso2}`)}
-                  className="gap-1.5"
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  View Trip
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setMeetModalOpen(true)}
-                  className="gap-1.5"
-                >
-                  <Users className="w-3.5 h-3.5" />
-                  Meet in Person
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => endTripMutation.mutate(currentTrip.id)}
-                  disabled={endTripMutation.isPending}
-                  className="gap-1.5 text-muted-foreground"
-                >
-                  {endTripMutation.isPending ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Check className="w-3.5 h-3.5" />
-                  )}
-                  End Trip
-                </Button>
-              </div>
+    <section>
+      <div className="card-elevated p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-3">
+            {/* Header - subtle indicator */}
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+              <span className="text-xs text-muted-foreground/70 uppercase tracking-wider">
+                Currently in
+              </span>
             </div>
 
-            {/* Country Badge */}
-            <div 
-              className="w-14 h-14 rounded-lg flex items-center justify-center text-xl font-bold text-white shrink-0"
-              style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--primary))' }}
-            >
-              {country.iso2}
+            {/* Country Info */}
+            <div className="space-y-1">
+              <h3 className="text-lg font-display text-foreground">
+                {country.name}
+              </h3>
+              <p className="text-sm text-muted-foreground/70">
+                Since {format(arrivalDate, 'MMM d')}
+                {daysAway > 0 && (
+                  <span> · {daysAway} day{daysAway !== 1 ? 's' : ''}</span>
+                )}
+              </p>
             </div>
+
+            {/* Actions - restrained */}
+            <div className="flex flex-wrap items-center gap-2 pt-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate(`/country/${currentTrip.country_iso2}`)}
+                className="gap-1.5"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                View Trip
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMeetModalOpen(true)}
+                className="gap-1.5 text-muted-foreground"
+              >
+                <Users className="w-3.5 h-3.5" />
+                Meet Someone
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => endTripMutation.mutate(currentTrip.id)}
+                disabled={endTripMutation.isPending}
+                className="gap-1.5 text-muted-foreground/60"
+              >
+                {endTripMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+                End Trip
+              </Button>
+            </div>
+          </div>
+
+          {/* Country Badge - softer */}
+          <div 
+            className="w-12 h-12 rounded-lg flex items-center justify-center text-lg font-semibold text-white/90 shrink-0"
+            style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--primary))' }}
+          >
+            {country.iso2}
           </div>
         </div>
       </div>

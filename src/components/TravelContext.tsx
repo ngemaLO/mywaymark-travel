@@ -28,7 +28,7 @@ export function TravelContext() {
 
   if (firstYear) {
     parts.push(
-      <span key="since" className="text-muted-foreground">
+      <span key="since">
         Traveling since {firstYear}
       </span>
     );
@@ -36,11 +36,11 @@ export function TravelContext() {
 
   if (firstCountry) {
     parts.push(
-      <span key="first" className="text-muted-foreground">
+      <span key="first">
         First stop:{' '}
         <Link 
           to={`/country/${firstCountry.iso2}`} 
-          className="text-foreground hover:underline underline-offset-2"
+          className="text-foreground/60 hover:text-foreground hover:underline underline-offset-2"
         >
           {firstCountry.name}
         </Link>
@@ -50,11 +50,11 @@ export function TravelContext() {
 
   if (homeCountry) {
     parts.push(
-      <span key="home" className="text-muted-foreground">
+      <span key="home">
         Home base:{' '}
         <Link 
           to={`/country/${homeCountry.iso2}`} 
-          className="text-foreground hover:underline underline-offset-2"
+          className="text-foreground/60 hover:text-foreground hover:underline underline-offset-2"
         >
           {homeCountry.name}
         </Link>
@@ -66,12 +66,12 @@ export function TravelContext() {
 
   return (
     <section className="flex justify-center">
-      <p className="text-sm text-center">
+      <p className="text-sm text-center text-muted-foreground/50">
         {parts.map((part, i) => (
           <span key={i}>
             {part}
             {i < parts.length - 1 && (
-              <span className="mx-2 text-muted-foreground/50">•</span>
+              <span className="mx-2 text-muted-foreground/30">·</span>
             )}
           </span>
         ))}

@@ -78,14 +78,14 @@ export function OnThisDay() {
   const locationText = cityName ? `${cityName}, ${country.name}` : country.name;
 
   return (
-    <section className="flex justify-center py-2">
-      <p className="text-sm text-muted-foreground/80 italic flex items-center gap-2">
-        <Sparkles className="w-3.5 h-3.5 text-primary/60" />
+    <section className="flex justify-center">
+      <p className="text-sm text-muted-foreground/50 italic flex items-center gap-2">
+        <Sparkles className="w-3 h-3 text-primary/40" />
         <span>
           On this day in {memoryYear}, you were in{' '}
           <Link 
             to={`/country/${country.iso2}`} 
-            className="text-foreground/80 hover:text-foreground hover:underline underline-offset-2 not-italic"
+            className="text-foreground/60 hover:text-foreground hover:underline underline-offset-2 not-italic"
           >
             {locationText}
           </Link>
