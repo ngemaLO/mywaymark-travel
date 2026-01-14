@@ -103,8 +103,8 @@ const Index = () => {
             </section>
 
             {/* Your Places - compact grid */}
-            <section className="places-surface">
-              <h2 className="section-heading">
+            <section className="max-w-2xl mx-auto journey-surface">
+              <h2 className="section-heading-alt">
                 Your Places
               </h2>
               <PlacesGrid />
