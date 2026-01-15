@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { useChapters, useDeleteChapter, FREE_CHAPTER_LIMIT } from '@/hooks/useChapters';
 import { CreateChapterModal } from '@/components/CreateChapterModal';
 import { EditChapterModal } from '@/components/EditChapterModal';
+import { ManageChapterTripsModal } from '@/components/ManageChapterTripsModal';
 import { ChapterCard } from '@/components/ChapterCard';
 import { BookOpen, Plus, Loader2 } from 'lucide-react';
 import type { Chapter } from '@/hooks/useChapters';
@@ -28,6 +29,7 @@ export default function Chapters() {
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
+  const [managingTripsChapter, setManagingTripsChapter] = useState<Chapter | null>(null);
   const [deletingChapter, setDeletingChapter] = useState<Chapter | null>(null);
 
   const canCreateMore = chapters.length < FREE_CHAPTER_LIMIT;
@@ -119,6 +121,7 @@ export default function Chapters() {
                 chapter={chapter}
                 onEdit={() => setEditingChapter(chapter)}
                 onDelete={() => setDeletingChapter(chapter)}
+                onManageTrips={() => setManagingTripsChapter(chapter)}
               />
             ))}
           </div>
@@ -131,6 +134,12 @@ export default function Chapters() {
         chapter={editingChapter}
         open={!!editingChapter}
         onOpenChange={(open) => !open && setEditingChapter(null)}
+      />
+
+      <ManageChapterTripsModal
+        chapter={managingTripsChapter}
+        open={!!managingTripsChapter}
+        onOpenChange={(open) => !open && setManagingTripsChapter(null)}
       />
 
       <AlertDialog open={!!deletingChapter} onOpenChange={(open) => !open && setDeletingChapter(null)}>

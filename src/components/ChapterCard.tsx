@@ -1,11 +1,12 @@
 import { format } from 'date-fns';
-import { Calendar, MapPin, Plane, Edit2, Trash2, MoreVertical } from 'lucide-react';
+import { Calendar, MapPin, Plane, Edit2, Trash2, MoreVertical, ListPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useChapterTrips, useChapterCountries, type Chapter } from '@/hooks/useChapters';
 import { getCountryByIso } from '@/data/countries';
@@ -15,9 +16,10 @@ interface ChapterCardProps {
   chapter: Chapter;
   onEdit: () => void;
   onDelete: () => void;
+  onManageTrips: () => void;
 }
 
-export function ChapterCard({ chapter, onEdit, onDelete }: ChapterCardProps) {
+export function ChapterCard({ chapter, onEdit, onDelete, onManageTrips }: ChapterCardProps) {
   const { data: chapterTrips = [] } = useChapterTrips(chapter.id);
   const { data: countries = [] } = useChapterCountries(chapter.id);
 
@@ -72,8 +74,13 @@ export function ChapterCard({ chapter, onEdit, onDelete }: ChapterCardProps) {
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>
               <Edit2 className="w-4 h-4 mr-2" />
-              Edit
+              Edit Details
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={onManageTrips}>
+              <ListPlus className="w-4 h-4 mr-2" />
+              Manage Trips
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onDelete} className="text-destructive">
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
