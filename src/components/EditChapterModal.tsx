@@ -61,7 +61,7 @@ export function EditChapterModal({ chapter, open, onOpenChange }: EditChapterMod
       setStartDate(chapter.start_date);
       setEndDate(chapter.end_date || '');
       setIsOngoing(!chapter.end_date);
-      setHomeBase(chapter.home_base_country_iso2 || '');
+      setHomeBase(chapter.home_base_country_iso2 || 'none');
       setDescription(chapter.description || '');
     }
   }, [chapter]);
@@ -74,7 +74,7 @@ export function EditChapterModal({ chapter, open, onOpenChange }: EditChapterMod
       title,
       start_date: startDate,
       end_date: isOngoing ? null : endDate || null,
-      home_base_country_iso2: homeBase || null,
+      home_base_country_iso2: homeBase === 'none' ? null : homeBase || null,
       description: description || null,
     });
 
@@ -163,7 +163,7 @@ export function EditChapterModal({ chapter, open, onOpenChange }: EditChapterMod
                 </SelectTrigger>
                 <SelectContent>
                   <ScrollArea className="h-[200px]">
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {countries.map(country => (
                       <SelectItem key={country.iso2} value={country.iso2}>
                         {country.name}
