@@ -1,5 +1,4 @@
-import { BookOpen, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,9 +41,8 @@ export function ChapterFilter({ value, onChange }: ChapterFilterProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="chapter-filter-trigger">
-          <BookOpen className="w-3.5 h-3.5" />
-          <span className="truncate max-w-28">{getDisplayLabel()}</span>
-          <ChevronDown className="w-3 h-3" />
+          <span className="truncate max-w-32">{getDisplayLabel()}</span>
+          <ChevronDown className="w-3 h-3 opacity-50" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

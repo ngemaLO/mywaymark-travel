@@ -2,144 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&display=swap');
 
 @layer base {
   :root {
-    /* Waymark Color Palette - Ocean Explorer Theme */
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    /* Waymark Color Palette - Muted, editorial */
+    --background: 40 20% 98%;
+    --foreground: 30 10% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 30 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 30 10% 15%;
 
     /* Deep teal - exploration, depth */
-    --primary: 185 65% 28%;
+    --primary: 185 45% 32%;
     --primary-foreground: 0 0% 100%;
 
-    /* Warm sand - warmth, discovery */
-    --secondary: 38 45% 92%;
-    --secondary-foreground: 38 50% 25%;
+    /* Warm cream */
+    --secondary: 40 30% 94%;
+    --secondary-foreground: 30 20% 25%;
 
-    /* Soft sage for muted elements */
-    --muted: 200 15% 94%;
-    --muted-foreground: 215 15% 45%;
+    /* Soft grey for muted elements */
+    --muted: 40 10% 92%;
+    --muted-foreground: 30 8% 45%;
 
-    /* Amber accent - highlights, achievements */
-    --accent: 38 85% 55%;
+    /* Amber accent - memory, warmth */
+    --accent: 38 70% 50%;
     --accent-foreground: 38 90% 15%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%;
-    --input: 210 20% 90%;
-    --ring: 185 65% 28%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 185 45% 32%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Custom Waymark tokens */
-    --ocean: 185 65% 28%;
-    --ocean-light: 185 55% 45%;
-    --ocean-dark: 185 70% 20%;
-    --amber: 38 85% 55%;
-    --amber-light: 38 80% 70%;
-    --amber-dark: 38 90% 40%;
-    --sage: 145 25% 72%;
-    --sage-dark: 145 30% 35%;
-    --slate: 215 20% 65%;
-    --slate-light: 215 15% 85%;
+    /* Custom tokens */
+    --ocean: 185 45% 32%;
+    --ocean-light: 185 35% 50%;
+    --amber: 38 70% 50%;
+    --amber-light: 38 60% 70%;
 
-    /* Badge states */
-    --badge-locked: 215 15% 75%;
-    --badge-declared: 38 85% 55%;
-    --badge-verified: 145 55% 45%;
-
-    /* Map colors - archival, calm aesthetic */
-    --map-bg: 210 25% 88%;
-    --map-land: 210 18% 78%;
-    --map-land-hover: 210 20% 70%;
-    --map-visited: 185 55% 38%;
-    --map-visited-hover: 185 60% 32%;
-    --map-grid: 215 20% 60%;
-
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(185 65% 28%) 0%, hsl(185 70% 20%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
-    --gradient-badge: linear-gradient(145deg, hsl(38 85% 55%) 0%, hsl(38 90% 40%) 100%);
+    /* Map colors */
+    --map-bg: 40 15% 90%;
+    --map-land: 40 10% 82%;
+    --map-land-hover: 40 12% 75%;
+    --map-visited: 185 40% 42%;
+    --map-visited-hover: 185 45% 35%;
+    --map-grid: 40 10% 70%;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.08), 0 2px 4px -2px hsl(215 25% 15% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.05);
-    --shadow-glow: 0 0 20px hsl(185 65% 28% / 0.15);
+    --shadow-sm: 0 1px 2px 0 hsl(30 10% 15% / 0.04);
+    --shadow-md: 0 4px 8px -2px hsl(30 10% 15% / 0.06);
 
     /* Sidebar */
-    --sidebar-background: 210 20% 98%;
-    --sidebar-foreground: 215 25% 15%;
-    --sidebar-primary: 185 65% 28%;
+    --sidebar-background: 40 20% 98%;
+    --sidebar-foreground: 30 10% 15%;
+    --sidebar-primary: 185 45% 32%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 38 45% 92%;
-    --sidebar-accent-foreground: 38 50% 25%;
-    --sidebar-border: 210 20% 90%;
-    --sidebar-ring: 185 65% 28%;
+    --sidebar-accent: 40 30% 94%;
+    --sidebar-accent-foreground: 30 20% 25%;
+    --sidebar-border: 40 15% 88%;
+    --sidebar-ring: 185 45% 32%;
   }
 
   .dark {
-    --background: 220 25% 10%;
-    --foreground: 210 20% 95%;
+    --background: 30 15% 8%;
+    --foreground: 40 15% 90%;
 
-    --card: 220 25% 13%;
-    --card-foreground: 210 20% 95%;
+    --card: 30 15% 10%;
+    --card-foreground: 40 15% 90%;
 
-    --popover: 220 25% 13%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 30 15% 10%;
+    --popover-foreground: 40 15% 90%;
 
-    --primary: 185 55% 50%;
-    --primary-foreground: 220 25% 10%;
+    --primary: 185 40% 55%;
+    --primary-foreground: 30 15% 8%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 30 12% 14%;
+    --secondary-foreground: 40 15% 85%;
 
-    --muted: 220 20% 18%;
-    --muted-foreground: 215 15% 60%;
+    --muted: 30 10% 15%;
+    --muted-foreground: 40 10% 55%;
 
-    --accent: 38 85% 55%;
+    --accent: 38 70% 55%;
     --accent-foreground: 38 90% 15%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 20%;
-    --input: 220 20% 20%;
-    --ring: 185 55% 50%;
+    --border: 30 10% 18%;
+    --input: 30 10% 18%;
+    --ring: 185 40% 55%;
 
-    --ocean: 185 55% 50%;
-    --ocean-light: 185 45% 60%;
-    --ocean-dark: 185 60% 35%;
+    --ocean: 185 40% 55%;
+    --ocean-light: 185 35% 65%;
 
-    --badge-locked: 220 15% 40%;
-    --badge-declared: 38 85% 55%;
-    --badge-verified: 145 50% 50%;
+    --map-bg: 30 15% 12%;
+    --map-land: 30 12% 22%;
+    --map-land-hover: 30 10% 28%;
+    --map-visited: 185 35% 48%;
+    --map-visited-hover: 185 40% 55%;
+    --map-grid: 30 8% 25%;
 
-    --map-bg: 220 25% 15%;
-    --map-land: 220 20% 28%;
-    --map-land-hover: 220 18% 35%;
-    --map-visited: 185 50% 42%;
-    --map-visited-hover: 185 55% 50%;
-    --map-grid: 220 15% 35%;
-
-    --sidebar-background: 220 25% 10%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 185 55% 50%;
-    --sidebar-primary-foreground: 220 25% 10%;
-    --sidebar-accent: 220 20% 18%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 220 20% 20%;
-    --sidebar-ring: 185 55% 50%;
+    --sidebar-background: 30 15% 8%;
+    --sidebar-foreground: 40 15% 90%;
+    --sidebar-primary: 185 40% 55%;
+    --sidebar-primary-foreground: 30 15% 8%;
+    --sidebar-accent: 30 12% 14%;
+    --sidebar-accent-foreground: 40 15% 85%;
+    --sidebar-border: 30 10% 18%;
+    --sidebar-ring: 185 40% 55%;
   }
 }
 
@@ -150,76 +127,327 @@
 
   body {
     @apply text-foreground antialiased;
-    font-family: 'Instrument Sans', system-ui, sans-serif;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.7;
     background-color: hsl(var(--background));
-  }
-
-  /* Subtle grid overlay - visible only behind map area */
-  .grid-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 500px;
-    pointer-events: none;
-    z-index: 0;
-    background-image: 
-      /* Latitude lines - horizontal */
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 138px,
-        hsl(185 45% 45% / 0.06) 138px,
-        hsl(185 45% 45% / 0.06) 140px
-      ),
-      /* Longitude lines - vertical */
-      repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 138px,
-        hsl(185 45% 45% / 0.06) 138px,
-        hsl(185 45% 45% / 0.06) 140px
-      );
-    background-size: 140px 140px;
-    /* Fade out quickly after map area */
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 40%, transparent 75%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 40%, transparent 75%);
-  }
-
-  .dark .grid-overlay {
-    background-image: 
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 138px,
-        hsl(185 50% 50% / 0.05) 138px,
-        hsl(185 50% 50% / 0.05) 140px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        transparent,
-        transparent 138px,
-        hsl(185 50% 50% / 0.05) 138px,
-        hsl(185 50% 50% / 0.05) 140px
-      );
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Crimson Pro', Georgia, serif;
-    @apply font-semibold;
+    font-weight: 500;
     letter-spacing: -0.01em;
-  }
-
-  h1 {
     line-height: 1.3;
-  }
-
-  h2, h3, h4 {
-    line-height: 1.35;
   }
 }
 
+/* ============================================
+   JOURNAL PAGE LAYOUT
+   ============================================ */
+
 @layer components {
+  /* The main page — centered, generous margins, like a book page */
+  .journal-page {
+    @apply max-w-2xl mx-auto px-6 py-12;
+  }
+
+  @media (min-width: 768px) {
+    .journal-page {
+      @apply px-8 py-16;
+    }
+  }
+
+  /* ============================================
+     JOURNAL ENTRIES — Primary content blocks
+     ============================================ */
+
+  .journal-entry {
+    @apply mb-16;
+  }
+
+  .journal-entry--welcome {
+    @apply text-center py-20;
+  }
+
+  /* Date — margin note style, small and muted */
+  .journal-date {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs uppercase tracking-widest mb-3;
+    color: hsl(var(--muted-foreground));
+    letter-spacing: 0.12em;
+  }
+
+  /* Title — like a chapter heading */
+  .journal-title {
+    @apply text-3xl mb-4;
+    color: hsl(var(--foreground));
+  }
+
+  @media (min-width: 768px) {
+    .journal-title {
+      @apply text-4xl;
+    }
+  }
+
+  .journal-title--location {
+    color: hsl(var(--primary));
+  }
+
+  /* Body text */
+  .journal-body {
+    @apply text-lg leading-relaxed mb-6;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  .journal-body--muted {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  /* Actions — like annotations in margin */
+  .journal-actions {
+    @apply flex flex-wrap items-center gap-2;
+  }
+
+  .journal-action {
+    @apply mt-8;
+  }
+
+  /* Links — understated, inline */
+  .journal-link {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply inline-flex items-center gap-1.5 text-sm font-medium transition-colors;
+    color: hsl(var(--primary));
+  }
+
+  .journal-link:hover {
+    color: hsl(var(--primary) / 0.7);
+  }
+
+  .journal-link--secondary {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .journal-link--secondary:hover {
+    color: hsl(var(--foreground));
+  }
+
+  .journal-link--tertiary {
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  .journal-link--tertiary:hover {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .journal-separator {
+    @apply text-xs;
+    color: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  /* ============================================
+     JOURNAL SECTIONS — Secondary content
+     ============================================ */
+
+  .journal-section {
+    @apply mb-14;
+  }
+
+  .journal-section--archive {
+    @apply mb-16;
+  }
+
+  .journal-section--prompt {
+    @apply py-6;
+  }
+
+  .journal-section-header {
+    @apply flex items-baseline justify-between gap-4 mb-4;
+  }
+
+  .journal-section-title {
+    @apply text-xl mb-2;
+    color: hsl(var(--foreground));
+  }
+
+  .journal-section-subtitle {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  /* Prompt text */
+  .journal-prompt-text {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  /* ============================================
+     JOURNAL LIST — Recent journeys, simple list
+     ============================================ */
+
+  .journal-list {
+    @apply space-y-0 mb-4;
+  }
+
+  .journal-list-item {
+    @apply w-full flex items-baseline justify-between py-2.5 transition-colors text-left;
+    border-bottom: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .journal-list-item:hover {
+    background: hsl(var(--muted) / 0.3);
+    margin-inline: -0.75rem;
+    padding-inline: 0.75rem;
+  }
+
+  .journal-list-place {
+    @apply text-base;
+    color: hsl(var(--foreground));
+  }
+
+  .journal-list-date {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .journal-more {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply inline-block text-sm mt-2 transition-colors;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .journal-more:hover {
+    color: hsl(var(--primary));
+  }
+
+  /* ============================================
+     CHAPTER DISPLAY
+     ============================================ */
+
+  .journal-chapter-label {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs uppercase tracking-widest mb-2;
+    color: hsl(var(--muted-foreground));
+    letter-spacing: 0.1em;
+  }
+
+  .journal-chapter-title {
+    @apply text-xl mb-2;
+    color: hsl(var(--foreground));
+  }
+
+  .journal-chapter-meta {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-sm mb-3;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .journal-chapter-description {
+    @apply text-base leading-relaxed mb-3;
+    color: hsl(var(--foreground) / 0.7);
+  }
+
+  /* ============================================
+     ARCHIVE SECTION — Map and links
+     ============================================ */
+
+  .journal-map {
+    @apply rounded-xl overflow-hidden mb-4;
+    background: hsl(var(--map-bg));
+    box-shadow: 
+      inset 0 0 40px 0 hsl(var(--foreground) / 0.02),
+      0 2px 12px -4px hsl(var(--foreground) / 0.06);
+  }
+
+  .dark .journal-map {
+    box-shadow: 
+      inset 0 0 40px 0 hsl(0 0% 0% / 0.15),
+      0 2px 12px -4px hsl(0 0% 0% / 0.2);
+  }
+
+  .archive-links {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply flex flex-wrap items-center gap-2 text-sm;
+  }
+
+  .archive-link {
+    color: hsl(var(--muted-foreground));
+    @apply transition-colors;
+  }
+
+  .archive-link:hover {
+    color: hsl(var(--primary));
+  }
+
+  .archive-separator {
+    color: hsl(var(--muted-foreground) / 0.3);
+  }
+
+  /* ============================================
+     MEMORY — Quiet reflection at the end
+     ============================================ */
+
+  .journal-memory {
+    @apply py-10 text-center;
+    border-top: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .journal-memory-text {
+    @apply text-base;
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  .journal-memory-text em {
+    font-style: normal;
+    color: hsl(var(--foreground));
+  }
+
+  /* ============================================
+     COLOPHON — Footer
+     ============================================ */
+
+  .journal-colophon {
+    @apply text-center py-12;
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+  }
+
+  .journal-colophon p {
+    @apply text-xs uppercase tracking-widest;
+    color: hsl(var(--muted-foreground) / 0.4);
+    letter-spacing: 0.15em;
+  }
+
+  /* ============================================
+     CHAPTER FILTER — Minimal dropdown trigger
+     ============================================ */
+
+  .chapter-filter-trigger {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply inline-flex items-center gap-1 text-xs transition-colors cursor-pointer;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .chapter-filter-trigger:hover {
+    color: hsl(var(--foreground));
+  }
+
+  /* ============================================
+     MAP CONTAINER — Archival, grounded
+     ============================================ */
+
+  .map-container {
+    @apply relative w-full aspect-[2/1] overflow-hidden;
+    background: hsl(var(--map-bg));
+  }
+
+  /* ============================================
+     LEGACY COMPONENTS — kept for compatibility
+     ============================================ */
+
   .card-elevated {
     @apply bg-card rounded-xl border border-border/30;
     box-shadow: var(--shadow-sm);
@@ -229,19 +457,43 @@
     @apply bg-card/80 backdrop-blur-sm rounded-xl border border-border/20;
   }
 
-  /* Content surface - soft, breathable background for text sections */
   .content-surface {
-    @apply relative rounded-xl;
+    @apply relative rounded-xl p-5;
     background: hsl(var(--card) / 0.6);
     border: 1px solid hsl(var(--border) / 0.15);
-    backdrop-filter: blur(8px);
   }
 
-  .dark .content-surface {
-    background: hsl(var(--card) / 0.4);
-    border-color: hsl(var(--border) / 0.1);
+  .section-heading {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs font-medium uppercase tracking-wider pb-2 mb-4;
+    letter-spacing: 0.1em;
+    color: hsl(var(--muted-foreground));
+    border-bottom: 1px solid hsl(var(--border) / 0.3);
   }
 
+  .ghost-pill {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200;
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted) / 0.3);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .ghost-pill:hover {
+    background: hsl(var(--muted) / 0.5);
+    border-color: hsl(var(--border) / 0.4);
+  }
+
+  /* Timeline styles */
+  .timeline-item {
+    @apply relative pl-8 pb-6 border-l border-border/50 last:border-transparent;
+  }
+
+  .timeline-dot {
+    @apply absolute left-0 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-primary/80 border-2 border-background;
+  }
+
+  /* Badge styles */
   .badge-country {
     @apply relative flex items-center justify-center rounded-lg overflow-hidden transition-all duration-300;
   }
@@ -251,509 +503,42 @@
   }
 
   .badge-declared {
-    background: var(--gradient-badge);
+    background: linear-gradient(145deg, hsl(var(--accent)) 0%, hsl(38 80% 42%) 100%);
     @apply text-accent-foreground;
   }
 
   .badge-verified {
-    @apply bg-sage-dark text-white;
-    background-color: hsl(var(--badge-verified));
+    background-color: hsl(145 50% 42%);
+    @apply text-white;
   }
 
-  .stat-card {
-    @apply flex flex-col items-center justify-center p-4 rounded-xl bg-card border border-border/30 transition-all duration-200;
-  }
-
-  /* Map hero container - feels like a physical object */
-  .map-container {
-    @apply relative w-full aspect-[2/1] rounded-2xl overflow-hidden;
-    background: linear-gradient(180deg, hsl(var(--map-bg)) 0%, hsl(var(--map-bg) / 0.95) 100%);
-    box-shadow: 
-      inset 0 0 40px 0 hsl(var(--foreground) / 0.03),
-      0 4px 24px -4px hsl(var(--foreground) / 0.08),
-      0 8px 40px -8px hsl(var(--foreground) / 0.06);
-  }
-
-  .dark .map-container {
-    box-shadow: 
-      inset 0 0 40px 0 hsl(0 0% 0% / 0.15),
-      0 4px 24px -4px hsl(0 0% 0% / 0.3),
-      0 8px 40px -8px hsl(0 0% 0% / 0.2);
-  }
-
-  .timeline-item {
-    @apply relative pl-8 pb-6 border-l border-border/50 last:border-transparent;
-  }
-
-  .timeline-dot {
-    @apply absolute left-0 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-primary/80 border-2 border-background;
-  }
-
-  /* Section heading - editorial, with subtle underline */
-  .section-heading {
-    @apply text-xs font-medium uppercase tracking-wider pb-2 mb-4;
-    font-family: 'Instrument Sans', system-ui, sans-serif;
-    letter-spacing: 0.1em;
-    color: hsl(215 20% 45%);
-    border-bottom: 1px solid hsl(var(--border) / 0.3);
-  }
-
-  .dark .section-heading {
-    color: hsl(210 15% 55%);
-  }
-
-  /* Alternative section heading without border */
-  .section-heading-alt {
-    @apply text-xs font-medium uppercase tracking-wider mb-4;
-    font-family: 'Instrument Sans', system-ui, sans-serif;
-    letter-spacing: 0.1em;
-    color: hsl(215 20% 45%);
-  }
-
-  .dark .section-heading-alt {
-    color: hsl(210 15% 55%);
-  }
-
-  /* Ghost pill button for secondary actions */
-  .ghost-pill {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200;
-    color: hsl(215 20% 40%);
-    background: hsl(var(--muted) / 0.3);
-    border: 1px solid hsl(var(--border) / 0.2);
-  }
-
-  .ghost-pill:hover {
-    background: hsl(var(--muted) / 0.5);
-    border-color: hsl(var(--border) / 0.4);
-    box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.08);
-  }
-
-  .dark .ghost-pill {
-    color: hsl(210 15% 60%);
-    background: hsl(var(--muted) / 0.15);
-  }
-
-  .dark .ghost-pill:hover {
-    background: hsl(var(--muted) / 0.25);
-  }
-
-  /* Place badge - compact country tiles */
-  .place-badge {
-    box-shadow: 
-      0 1px 3px 0 hsl(var(--foreground) / 0.08),
-      0 1px 2px -1px hsl(var(--foreground) / 0.08);
-    border: 1px solid hsl(0 0% 100% / 0.15);
-  }
-
-  .place-badge:hover {
-    box-shadow: 
-      0 4px 6px -1px hsl(var(--foreground) / 0.1),
-      0 2px 4px -2px hsl(var(--foreground) / 0.1);
-  }
-
-  /* Journey surface - subtle tinted background */
-  .journey-surface {
-    @apply rounded-xl p-5;
-    background: hsl(185 30% 97%);
-    border: 1px solid hsl(185 20% 90%);
-  }
-
-  .dark .journey-surface {
-    background: hsl(185 20% 12%);
-    border-color: hsl(185 15% 20%);
-  }
-
-  /* Journey surface - top section (rounded top only) */
-  .journey-surface-top {
-    @apply rounded-t-xl;
-    background: hsl(185 30% 97%);
-    border: 1px solid hsl(185 20% 90%);
-    border-bottom: none;
-  }
-
-  .dark .journey-surface-top {
-    background: hsl(185 20% 12%);
-    border-color: hsl(185 15% 20%);
-  }
-
-  /* Journey surface - bottom section (rounded bottom only) */
-  .journey-surface-bottom {
-    @apply rounded-b-xl;
-    background: hsl(185 30% 97%);
-    border: 1px solid hsl(185 20% 90%);
-    border-top: none;
-  }
-
-  .dark .journey-surface-bottom {
-    background: hsl(185 20% 12%);
-    border-color: hsl(185 15% 20%);
-  }
-
-  /* Places surface - off-white floating card */
-  .places-surface {
-    @apply rounded-xl p-6;
-    background: hsl(210 20% 98.5%);
-    border: 1px solid hsl(var(--border) / 0.2);
-    box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.04);
-  }
-
-  .dark .places-surface {
-    background: hsl(220 25% 12%);
-    border-color: hsl(var(--border) / 0.15);
-  }
-
-  /* Travel Summary Bar - anchored, editorial */
-  .travel-summary-bar {
-    @apply inline-flex items-center gap-1 px-4 py-2.5 rounded-full;
-    background: hsl(210 20% 94%);
-    border: 1px solid hsl(210 15% 88%);
-    box-shadow: 0 1px 3px hsl(215 25% 15% / 0.04);
-  }
-
-  .dark .travel-summary-bar {
-    background: hsl(220 20% 14%);
-    border-color: hsl(220 15% 22%);
-  }
-
-  .travel-summary-segment {
-    @apply flex items-center gap-1.5 text-xs;
-    color: hsl(215 15% 45%);
-  }
-
-  .travel-summary-segment + .travel-summary-segment::before {
-    content: '';
-    @apply w-px h-3 mx-2;
-    background: hsl(210 15% 80%);
-  }
-
-  .dark .travel-summary-segment + .travel-summary-segment::before {
-    background: hsl(220 15% 30%);
-  }
-
-  .dark .travel-summary-segment {
-    color: hsl(210 15% 60%);
-  }
-
-  .travel-summary-icon {
-    @apply flex-shrink-0;
-    color: hsl(185 45% 40%);
-  }
-
-  .dark .travel-summary-icon {
-    color: hsl(185 45% 55%);
-  }
-
-  .travel-summary-segment a {
-    color: hsl(215 20% 35%);
-  }
-
-  .dark .travel-summary-segment a {
-    color: hsl(210 15% 75%);
-  }
-
-  /* Legacy Memory Card styles - kept for compatibility */
-  .memory-card {
-    @apply relative max-w-md w-full rounded-xl overflow-hidden;
-    background: hsl(0 0% 100%);
-    border: 1px solid hsl(38 60% 85%);
-  }
-
-  .dark .memory-card {
-    background: hsl(220 25% 13%);
-    border-color: hsl(38 40% 25%);
-  }
-
-  .memory-card-accent {
-    @apply absolute top-0 left-0 right-0 h-0.5;
-    background: linear-gradient(90deg, hsl(38 80% 60%) 0%, hsl(38 70% 70%) 100%);
-  }
-
-  .memory-card-content {
-    @apply flex items-start gap-3 px-4 py-3;
-  }
-
-  .memory-card-text {
-    @apply text-sm leading-relaxed;
-    font-family: 'Crimson Pro', Georgia, serif;
-    font-style: italic;
-    font-weight: 400;
-    color: hsl(215 20% 40%);
-  }
-
-  .dark .memory-card-text {
-    color: hsl(210 15% 65%);
-  }
-
-  /* Memory Section - Enhanced */
-  .memory-section {
-    @apply flex justify-center px-4;
-  }
-
-  .memory-card-enhanced {
-    @apply relative max-w-lg w-full rounded-xl overflow-hidden px-5 py-4;
-    background: linear-gradient(135deg, hsl(38 70% 97%) 0%, hsl(38 50% 95%) 100%);
-    border: 1px solid hsl(38 50% 88%);
-    box-shadow: 
-      0 2px 12px -3px hsl(38 60% 50% / 0.12),
-      inset 0 1px 0 hsl(0 0% 100% / 0.8);
-  }
-
-  .dark .memory-card-enhanced {
-    background: linear-gradient(135deg, hsl(38 30% 14%) 0%, hsl(38 25% 12%) 100%);
-    border-color: hsl(38 30% 22%);
-    box-shadow: 
-      0 2px 12px -3px hsl(0 0% 0% / 0.3),
-      inset 0 1px 0 hsl(38 30% 20% / 0.5);
-  }
-
-  .memory-glow {
-    @apply absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-30;
-    background: radial-gradient(circle, hsl(38 80% 60%) 0%, transparent 70%);
-  }
-
-  .dark .memory-glow {
-    opacity: 0.15;
-  }
-
-  .memory-content {
-    @apply relative flex items-start gap-3;
-  }
-
-  .memory-icon {
-    @apply w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0;
-    background: hsl(38 70% 90%);
-    color: hsl(38 70% 45%);
-  }
-
-  .dark .memory-icon {
-    background: hsl(38 40% 20%);
-    color: hsl(38 60% 55%);
-  }
-
-  .memory-text-container {
-    @apply space-y-0.5;
-  }
-
-  .memory-label {
-    @apply text-[10px] uppercase tracking-wider font-medium;
-    color: hsl(38 50% 55%);
-  }
-
-  .dark .memory-label {
-    color: hsl(38 40% 50%);
-  }
-
-  .memory-phrase {
-    @apply text-sm leading-relaxed;
-    font-family: 'Crimson Pro', Georgia, serif;
-    font-style: italic;
-    color: hsl(215 25% 35%);
-  }
-
-  .dark .memory-phrase {
-    color: hsl(210 15% 70%);
-  }
-
-  .memory-location {
-    @apply font-semibold not-italic;
-    color: hsl(215 30% 25%);
-  }
-
-  .dark .memory-location {
-    color: hsl(210 20% 85%);
-  }
-
-  /* Dashboard Flow */
-  .dashboard-flow {
-    @apply space-y-8;
-  }
-
-  /* Narrative Section Spacing */
+  /* Narrative section - legacy */
   .narrative-section {
-    @apply max-w-xl mx-auto;
+    @apply max-w-xl mx-auto mb-8;
   }
 
-  /* Section heading - narrative style */
   .section-heading-narrative {
-    @apply text-xs font-medium uppercase tracking-wider;
     font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs font-medium uppercase tracking-wider;
     letter-spacing: 0.08em;
-    color: hsl(215 20% 50%);
+    color: hsl(var(--muted-foreground));
   }
 
-  .dark .section-heading-narrative {
-    color: hsl(210 15% 55%);
-  }
-
-  /* Recent Journeys Section */
-  .recent-journeys-section {
-    @apply max-w-xl mx-auto;
-  }
-
-  .recent-journeys-header {
-    @apply mb-4;
-  }
-
-  .recent-journeys-timeline {
-    @apply space-y-0;
-  }
-
-  .recent-journey-item {
-    @apply w-full flex items-start gap-4 py-3 transition-colors text-left;
-  }
-
-  .journey-timeline-indicator {
-    @apply flex flex-col items-center pt-1.5;
-  }
-
-  .journey-dot {
-    @apply w-2.5 h-2.5 rounded-full flex-shrink-0;
-    box-shadow: 0 0 0 3px hsl(var(--background));
-  }
-
-  .journey-line {
-    @apply w-px flex-1 min-h-[28px] mt-1.5;
-    background: hsl(var(--border) / 0.4);
-  }
-
-  .journey-content {
-    @apply flex-1 min-w-0;
-  }
-
-  .journey-country {
-    @apply text-sm font-medium text-foreground;
-  }
-
-  .journey-date {
-    @apply text-xs mt-0.5;
-    color: hsl(215 15% 55%);
-  }
-
-  .view-timeline-link {
-    @apply inline-flex items-center gap-1.5 mt-4 text-xs font-medium transition-colors;
-    color: hsl(215 20% 45%);
-  }
-
-  .view-timeline-link:hover {
-    color: hsl(var(--primary));
-  }
-
-  .dark .view-timeline-link {
-    color: hsl(210 15% 60%);
-  }
-
-  /* Current State Card - prominent, first thing you see */
+  /* Current state card - legacy */
   .current-state-card {
     @apply rounded-xl p-5;
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border) / 0.3);
-    box-shadow: 
-      0 2px 8px -2px hsl(var(--foreground) / 0.06),
-      0 4px 16px -4px hsl(var(--foreground) / 0.04);
-  }
-
-  .current-state-card.travelling {
-    border-color: hsl(185 40% 80%);
-    box-shadow: 
-      0 2px 12px -2px hsl(185 50% 40% / 0.1),
-      0 4px 20px -4px hsl(185 50% 40% / 0.08);
-  }
-
-  .dark .current-state-card.travelling {
-    border-color: hsl(185 30% 25%);
-    box-shadow: 
-      0 2px 12px -2px hsl(185 50% 50% / 0.15),
-      0 4px 20px -4px hsl(0 0% 0% / 0.2);
+    box-shadow: var(--shadow-md);
   }
 
   .current-state-icon {
     @apply w-10 h-10 rounded-full flex items-center justify-center;
     background: hsl(var(--muted));
-    color: hsl(215 20% 50%);
+    color: hsl(var(--muted-foreground));
   }
 
-  .current-state-icon.travelling {
-    background: hsl(185 50% 92%);
-    color: hsl(185 60% 35%);
-  }
-
-  .dark .current-state-icon.travelling {
-    background: hsl(185 40% 18%);
-    color: hsl(185 50% 55%);
-  }
-
-  /* Chapter Prompt Card */
-  .chapter-prompt-card {
-    @apply rounded-xl p-5;
-    background: hsl(var(--card) / 0.5);
-    border: 1px dashed hsl(var(--border) / 0.4);
-  }
-
-  .dark .chapter-prompt-card {
-    background: hsl(var(--card) / 0.3);
-    border-color: hsl(var(--border) / 0.3);
-  }
-
-  .chapter-prompt-icon {
-    @apply w-10 h-10 rounded-full flex items-center justify-center;
-    background: hsl(var(--muted) / 0.5);
-    color: hsl(215 20% 55%);
-  }
-
-  /* Archive Map Section */
-  .archive-map-section {
-    @apply max-w-3xl mx-auto space-y-4;
-  }
-
-  .archive-map-header {
-    @apply flex items-center justify-between gap-4 px-1;
-  }
-
-  .archive-map-title {
-    @apply space-y-0.5;
-  }
-
-  .archive-subtitle {
-    @apply text-xs;
-    color: hsl(215 15% 55%);
-  }
-
-  .dark .archive-subtitle {
-    color: hsl(210 15% 50%);
-  }
-
-  .archive-map-container {
-    @apply rounded-2xl overflow-hidden;
-    background: hsl(210 20% 92%);
-    box-shadow: 
-      inset 0 0 30px 0 hsl(var(--foreground) / 0.02),
-      0 4px 20px -4px hsl(var(--foreground) / 0.08);
-  }
-
-  .dark .archive-map-container {
-    background: hsl(220 25% 14%);
-    box-shadow: 
-      inset 0 0 30px 0 hsl(0 0% 0% / 0.15),
-      0 4px 20px -4px hsl(0 0% 0% / 0.3);
-  }
-
-  /* Section heading - archive style */
-  .section-heading-archive {
-    @apply text-xs font-medium uppercase tracking-wider;
-    font-family: 'Instrument Sans', system-ui, sans-serif;
-    letter-spacing: 0.08em;
-    color: hsl(215 20% 55%);
-  }
-
-  .dark .section-heading-archive {
-    color: hsl(210 15% 50%);
-  }
-
-  /* Archive Entry Points */
-  .archive-entries-section {
-    @apply max-w-xl mx-auto;
-  }
-
+  /* Archive entry grid - legacy */
   .archive-entry-grid {
     @apply grid gap-3;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -762,12 +547,6 @@
   @media (max-width: 480px) {
     .archive-entry-grid {
       grid-template-columns: 1fr;
-    }
-  }
-
-  @media (min-width: 481px) and (max-width: 640px) {
-    .archive-entry-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
@@ -780,73 +559,19 @@
   .archive-entry-card:hover {
     background: hsl(var(--card));
     border-color: hsl(var(--border) / 0.4);
-    box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.06);
-  }
-
-  .dark .archive-entry-card {
-    background: hsl(var(--card) / 0.4);
-  }
-
-  .dark .archive-entry-card:hover {
-    background: hsl(var(--card) / 0.6);
   }
 
   .archive-entry-icon {
     @apply w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0;
     background: hsl(var(--muted) / 0.5);
-    color: hsl(215 20% 50%);
-  }
-
-  .dark .archive-entry-icon {
-    background: hsl(var(--muted) / 0.3);
-    color: hsl(210 15% 60%);
-  }
-
-  /* Chapter Filter Trigger - subtle pill */
-  .chapter-filter-trigger {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer;
-    color: hsl(215 20% 45%);
-    background: hsl(var(--muted) / 0.3);
-    border: 1px solid hsl(var(--border) / 0.2);
-  }
-
-  .chapter-filter-trigger:hover {
-    background: hsl(var(--muted) / 0.5);
-    border-color: hsl(var(--border) / 0.4);
-  }
-
-  .dark .chapter-filter-trigger {
-    color: hsl(210 15% 60%);
-    background: hsl(var(--muted) / 0.15);
-  }
-
-  .dark .chapter-filter-trigger:hover {
-    background: hsl(var(--muted) / 0.25);
+    color: hsl(var(--muted-foreground));
   }
 }
 
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: var(--gradient-hero);
-  }
-
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  .animate-pulse-soft {
-    animation: pulse-soft 3s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-
-  @keyframes pulse-soft {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(185 50% 22%) 100%);
   }
 
   .scrollbar-hide {
