@@ -547,6 +547,16 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
 
   return (
     <div className="flex flex-col">
+      {/* Header row above map */}
+      <div className="flex items-center justify-end pb-2">
+        <span className="text-sm font-medium text-foreground">
+          {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
+          {mapScope === 'chapter' && selectedChapter && (
+            <span className="text-muted-foreground ml-1">in chapter</span>
+          )}
+        </span>
+      </div>
+
       <div className="map-container group">
         {/* Subtle grid pattern - atmospheric, tertiary */}
         <div 
@@ -634,15 +644,6 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
           </div>
         )}
 
-        {/* Visited count badge */}
-        <div className="absolute top-3 right-3 z-20 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-border/50 shadow-sm">
-          <span className="text-sm font-medium text-foreground">
-            {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
-            {mapScope === 'chapter' && selectedChapter && (
-              <span className="text-muted-foreground ml-1">in chapter</span>
-            )}
-          </span>
-        </div>
 
         <svg
           viewBox="0 0 800 480"
