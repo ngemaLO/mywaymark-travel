@@ -81,18 +81,31 @@ export function OnThisDay() {
   const yearsAgo = currentYear - memoryYear;
   const timePhrase = yearsAgo === 1 ? 'A year ago today' : `${yearsAgo} years ago today`;
 
+  // Generate evocative phrases
+  const phrases = [
+    `${timePhrase}, you woke up in`,
+    `${timePhrase}, you were exploring`,
+    `${timePhrase}, you found yourself in`,
+  ];
+  const randomPhrase = phrases[Math.floor(memoryYear % phrases.length)];
+
   return (
-    <section className="memory-moment">
-      <div className="memory-card quiet">
-        <div className="memory-card-accent" />
-        <div className="memory-card-content">
-          <Sparkles className="w-4 h-4 text-amber-500/50 flex-shrink-0" />
-          <p className="memory-card-text">
-            {timePhrase}, you woke up in{' '}
-            <span className="font-medium text-foreground/70">
-              {locationText}
-            </span>
-          </p>
+    <section className="memory-section">
+      <div className="memory-card-enhanced">
+        <div className="memory-glow" />
+        <div className="memory-content">
+          <div className="memory-icon">
+            <Sparkles className="w-4 h-4" />
+          </div>
+          <div className="memory-text-container">
+            <p className="memory-label">A moment in time</p>
+            <p className="memory-phrase">
+              {randomPhrase}{' '}
+              <span className="memory-location">
+                {locationText}
+              </span>
+            </p>
+          </div>
         </div>
       </div>
     </section>

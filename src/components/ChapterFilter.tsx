@@ -34,14 +34,18 @@ export function ChapterFilter({ value, onChange }: ChapterFilterProps) {
     return chapter?.title || 'Select Chapter';
   };
 
+  if (chapters.length === 0) {
+    return null;
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <BookOpen className="w-4 h-4" />
-          <span className="truncate max-w-32">{getDisplayLabel()}</span>
-          <ChevronDown className="w-4 h-4 ml-1" />
-        </Button>
+        <button className="chapter-filter-trigger">
+          <BookOpen className="w-3.5 h-3.5" />
+          <span className="truncate max-w-28">{getDisplayLabel()}</span>
+          <ChevronDown className="w-3 h-3" />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuItem onClick={() => onChange('all')}>
