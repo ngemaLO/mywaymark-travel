@@ -547,12 +547,12 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
 
   return (
     <div className="flex flex-col px-4">
-      {/* Header row above map - journal annotation style */}
-      <div className="flex items-center justify-end pb-3">
-        <span className="text-sm italic text-muted-foreground/70 font-serif tracking-wide">
-          {displayedVisitedIsos.length} {displayedVisitedIsos.length !== 1 ? 'countries' : 'country'}
+      {/* Header row above map */}
+      <div className="flex items-center justify-end pb-2 pr-2">
+        <span className="text-xs text-muted-foreground">
+          {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
           {mapScope === 'chapter' && selectedChapter && (
-            <span className="ml-1">in this chapter</span>
+            <span className="ml-1">in chapter</span>
           )}
         </span>
       </div>
@@ -781,31 +781,31 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
         )}
       </div>
 
-      {/* Legend - journal annotation style, subtle and secondary */}
-      <div className="flex items-center justify-center gap-6 pt-4 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'hsl(var(--map-visited))' }} />
-          <span className="text-xs italic text-muted-foreground/60 font-serif">
-            {mapScope === 'chapter' ? 'visited' : 'visited'}
+      {/* Legend - positioned below the map, outside the overflow container */}
+      <div className="flex items-center justify-center gap-4 text-xs pt-3 font-sans">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-visited))' }} />
+          <span className="text-muted-foreground">
+            {mapScope === 'chapter' ? 'Visited (this chapter)' : 'Visited'}
           </span>
         </div>
         {mapScope === 'chapter' && (
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'hsl(var(--map-land) / 0.6)' }} />
-            <span className="text-xs italic text-muted-foreground/60 font-serif">other trips</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-land) / 0.6)' }} />
+            <span className="text-muted-foreground">Other visits</span>
           </div>
         )}
         {homeBase && (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-background border border-foreground/40 flex items-center justify-center">
-              <Home className="w-2 h-2 text-foreground/60" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded-full bg-background border-2 border-foreground flex items-center justify-center">
+              <Home className="w-2.5 h-2.5 text-foreground" />
             </div>
-            <span className="text-xs italic text-muted-foreground/60 font-serif">home</span>
+            <span className="text-muted-foreground">Home base</span>
           </div>
         )}
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'hsl(var(--map-land))' }} />
-          <span className="text-xs italic text-muted-foreground/60 font-serif">not yet</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-land))' }} />
+          <span className="text-muted-foreground">Not visited</span>
         </div>
       </div>
     </div>
