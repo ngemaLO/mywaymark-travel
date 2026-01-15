@@ -451,42 +451,21 @@
     color: hsl(210 15% 75%);
   }
 
-  /* Memory Card - reflective, premium */
+  /* Legacy Memory Card styles - kept for compatibility */
   .memory-card {
     @apply relative max-w-md w-full rounded-xl overflow-hidden;
     background: hsl(0 0% 100%);
     border: 1px solid hsl(38 60% 85%);
-    box-shadow: 
-      0 2px 8px -2px hsl(38 50% 50% / 0.08),
-      0 0 0 1px hsl(38 60% 90% / 0.5);
   }
 
   .dark .memory-card {
     background: hsl(220 25% 13%);
     border-color: hsl(38 40% 25%);
-    box-shadow: 
-      0 2px 8px -2px hsl(0 0% 0% / 0.2),
-      0 0 0 1px hsl(38 40% 20% / 0.3);
-  }
-
-  /* Quiet memory card - at the end of the flow */
-  .memory-card.quiet {
-    border-color: hsl(38 40% 88%);
-    box-shadow: 0 1px 4px -1px hsl(38 50% 50% / 0.06);
-  }
-
-  .dark .memory-card.quiet {
-    border-color: hsl(38 30% 20%);
-    box-shadow: 0 1px 4px -1px hsl(0 0% 0% / 0.15);
   }
 
   .memory-card-accent {
     @apply absolute top-0 left-0 right-0 h-0.5;
     background: linear-gradient(90deg, hsl(38 80% 60%) 0%, hsl(38 70% 70%) 100%);
-  }
-
-  .memory-card.quiet .memory-card-accent {
-    opacity: 0.6;
   }
 
   .memory-card-content {
@@ -505,22 +484,88 @@
     color: hsl(210 15% 65%);
   }
 
-  .memory-card-link {
-    @apply font-medium not-italic;
-    color: hsl(215 25% 30%);
+  /* Memory Section - Enhanced */
+  .memory-section {
+    @apply flex justify-center px-4;
   }
 
-  .memory-card-link:hover {
-    @apply underline underline-offset-2;
+  .memory-card-enhanced {
+    @apply relative max-w-lg w-full rounded-xl overflow-hidden px-5 py-4;
+    background: linear-gradient(135deg, hsl(38 70% 97%) 0%, hsl(38 50% 95%) 100%);
+    border: 1px solid hsl(38 50% 88%);
+    box-shadow: 
+      0 2px 12px -3px hsl(38 60% 50% / 0.12),
+      inset 0 1px 0 hsl(0 0% 100% / 0.8);
   }
 
-  .dark .memory-card-link {
-    color: hsl(210 15% 80%);
+  .dark .memory-card-enhanced {
+    background: linear-gradient(135deg, hsl(38 30% 14%) 0%, hsl(38 25% 12%) 100%);
+    border-color: hsl(38 30% 22%);
+    box-shadow: 
+      0 2px 12px -3px hsl(0 0% 0% / 0.3),
+      inset 0 1px 0 hsl(38 30% 20% / 0.5);
   }
 
-  /* Memory moment - quiet section at bottom */
-  .memory-moment {
-    @apply flex justify-center px-4 pt-8;
+  .memory-glow {
+    @apply absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-30;
+    background: radial-gradient(circle, hsl(38 80% 60%) 0%, transparent 70%);
+  }
+
+  .dark .memory-glow {
+    opacity: 0.15;
+  }
+
+  .memory-content {
+    @apply relative flex items-start gap-3;
+  }
+
+  .memory-icon {
+    @apply w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0;
+    background: hsl(38 70% 90%);
+    color: hsl(38 70% 45%);
+  }
+
+  .dark .memory-icon {
+    background: hsl(38 40% 20%);
+    color: hsl(38 60% 55%);
+  }
+
+  .memory-text-container {
+    @apply space-y-0.5;
+  }
+
+  .memory-label {
+    @apply text-[10px] uppercase tracking-wider font-medium;
+    color: hsl(38 50% 55%);
+  }
+
+  .dark .memory-label {
+    color: hsl(38 40% 50%);
+  }
+
+  .memory-phrase {
+    @apply text-sm leading-relaxed;
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-style: italic;
+    color: hsl(215 25% 35%);
+  }
+
+  .dark .memory-phrase {
+    color: hsl(210 15% 70%);
+  }
+
+  .memory-location {
+    @apply font-semibold not-italic;
+    color: hsl(215 30% 25%);
+  }
+
+  .dark .memory-location {
+    color: hsl(210 20% 85%);
+  }
+
+  /* Dashboard Flow */
+  .dashboard-flow {
+    @apply space-y-8;
   }
 
   /* Narrative Section Spacing */
@@ -530,7 +575,7 @@
 
   /* Section heading - narrative style */
   .section-heading-narrative {
-    @apply text-xs font-medium uppercase tracking-wider mb-3;
+    @apply text-xs font-medium uppercase tracking-wider;
     font-family: 'Instrument Sans', system-ui, sans-serif;
     letter-spacing: 0.08em;
     color: hsl(215 20% 50%);
@@ -538,6 +583,63 @@
 
   .dark .section-heading-narrative {
     color: hsl(210 15% 55%);
+  }
+
+  /* Recent Journeys Section */
+  .recent-journeys-section {
+    @apply max-w-xl mx-auto;
+  }
+
+  .recent-journeys-header {
+    @apply mb-4;
+  }
+
+  .recent-journeys-timeline {
+    @apply space-y-0;
+  }
+
+  .recent-journey-item {
+    @apply w-full flex items-start gap-4 py-3 transition-colors text-left;
+  }
+
+  .journey-timeline-indicator {
+    @apply flex flex-col items-center pt-1.5;
+  }
+
+  .journey-dot {
+    @apply w-2.5 h-2.5 rounded-full flex-shrink-0;
+    box-shadow: 0 0 0 3px hsl(var(--background));
+  }
+
+  .journey-line {
+    @apply w-px flex-1 min-h-[28px] mt-1.5;
+    background: hsl(var(--border) / 0.4);
+  }
+
+  .journey-content {
+    @apply flex-1 min-w-0;
+  }
+
+  .journey-country {
+    @apply text-sm font-medium text-foreground;
+  }
+
+  .journey-date {
+    @apply text-xs mt-0.5;
+    color: hsl(215 15% 55%);
+  }
+
+  .view-timeline-link {
+    @apply inline-flex items-center gap-1.5 mt-4 text-xs font-medium transition-colors;
+    color: hsl(215 20% 45%);
+  }
+
+  .view-timeline-link:hover {
+    color: hsl(var(--primary));
+  }
+
+  .dark .view-timeline-link {
+    color: hsl(210 15% 60%);
   }
 
   /* Current State Card - prominent, first thing you see */
@@ -598,15 +700,44 @@
     color: hsl(215 20% 55%);
   }
 
-  /* Archive Section - accumulated history */
-  .archive-section {
-    @apply max-w-2xl mx-auto space-y-4;
+  /* Archive Map Section */
+  .archive-map-section {
+    @apply max-w-3xl mx-auto space-y-4;
   }
 
-  .archive-header {
-    @apply text-center space-y-1;
+  .archive-map-header {
+    @apply flex items-center justify-between gap-4 px-1;
   }
 
+  .archive-map-title {
+    @apply space-y-0.5;
+  }
+
+  .archive-subtitle {
+    @apply text-xs;
+    color: hsl(215 15% 55%);
+  }
+
+  .dark .archive-subtitle {
+    color: hsl(210 15% 50%);
+  }
+
+  .archive-map-container {
+    @apply rounded-2xl overflow-hidden;
+    background: hsl(210 20% 92%);
+    box-shadow: 
+      inset 0 0 30px 0 hsl(var(--foreground) / 0.02),
+      0 4px 20px -4px hsl(var(--foreground) / 0.08);
+  }
+
+  .dark .archive-map-container {
+    background: hsl(220 25% 14%);
+    box-shadow: 
+      inset 0 0 30px 0 hsl(0 0% 0% / 0.15),
+      0 4px 20px -4px hsl(0 0% 0% / 0.3);
+  }
+
+  /* Section heading - archive style */
   .section-heading-archive {
     @apply text-xs font-medium uppercase tracking-wider;
     font-family: 'Instrument Sans', system-ui, sans-serif;
@@ -618,8 +749,79 @@
     color: hsl(210 15% 50%);
   }
 
-  .archive-places {
-    @apply pt-4 border-t border-border/20;
+  /* Archive Entry Points */
+  .archive-entries-section {
+    @apply max-w-xl mx-auto;
+  }
+
+  .archive-entry-grid {
+    @apply grid gap-3;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 480px) {
+    .archive-entry-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (min-width: 481px) and (max-width: 640px) {
+    .archive-entry-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .archive-entry-card {
+    @apply block rounded-xl p-4 transition-all duration-200;
+    background: hsl(var(--card) / 0.7);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .archive-entry-card:hover {
+    background: hsl(var(--card));
+    border-color: hsl(var(--border) / 0.4);
+    box-shadow: 0 2px 8px -2px hsl(var(--foreground) / 0.06);
+  }
+
+  .dark .archive-entry-card {
+    background: hsl(var(--card) / 0.4);
+  }
+
+  .dark .archive-entry-card:hover {
+    background: hsl(var(--card) / 0.6);
+  }
+
+  .archive-entry-icon {
+    @apply w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0;
+    background: hsl(var(--muted) / 0.5);
+    color: hsl(215 20% 50%);
+  }
+
+  .dark .archive-entry-icon {
+    background: hsl(var(--muted) / 0.3);
+    color: hsl(210 15% 60%);
+  }
+
+  /* Chapter Filter Trigger - subtle pill */
+  .chapter-filter-trigger {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer;
+    color: hsl(215 20% 45%);
+    background: hsl(var(--muted) / 0.3);
+    border: 1px solid hsl(var(--border) / 0.2);
+  }
+
+  .chapter-filter-trigger:hover {
+    background: hsl(var(--muted) / 0.5);
+    border-color: hsl(var(--border) / 0.4);
+  }
+
+  .dark .chapter-filter-trigger {
+    color: hsl(210 15% 60%);
+    background: hsl(var(--muted) / 0.15);
+  }
+
+  .dark .chapter-filter-trigger:hover {
+    background: hsl(var(--muted) / 0.25);
   }
 }
 

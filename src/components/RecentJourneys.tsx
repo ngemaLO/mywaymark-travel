@@ -1,10 +1,11 @@
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
+import { ChevronRight } from 'lucide-react';
 
 interface Visit {
   id: string;
@@ -48,39 +49,52 @@ export function RecentJourneys() {
   }
 
   return (
-    <div className="space-y-1">
-      {visits.map((visit, index) => {
-        const country = getCountryByIso(visit.country_iso2);
-        if (!country) return null;
-        
-        return (
-          <button
-            key={visit.id}
-            onClick={() => navigate(`/country/${visit.country_iso2}`)}
-            className="w-full flex items-center gap-4 py-3 transition-colors text-left group hover:bg-white/40 dark:hover:bg-white/5 -mx-2 px-2 rounded-lg"
-          >
-            {/* Timeline indicator */}
-            <div className="flex flex-col items-center">
-              <div 
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--primary))' }}
-              />
-              {index < visits.length - 1 && (
-                <div className="w-px h-8 bg-border/40 mt-1" />
-              )}
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                {country.name}
-              </p>
-              <p className="text-xs" style={{ color: 'hsl(215 15% 55%)' }}>
-                {format(new Date(visit.arrival_date), 'MMM d, yyyy')}
-              </p>
-            </div>
-          </button>
-        );
-      })}
+    <div className="recent-journeys-section">
+      <div className="recent-journeys-header">
+        <h3 className="section-heading-narrative">Recent Journeys</h3>
+      </div>
+      
+      <div className="recent-journeys-timeline">
+        {visits.map((visit, index) => {
+          const country = getCountryByIso(visit.country_iso2);
+          if (!country) return null;
+          
+          return (
+            <button
+              key={visit.id}
+              onClick={() => navigate(`/country/${visit.country_iso2}`)}
+              className="recent-journey-item group"
+            >
+              {/* Timeline dot and line */}
+              <div className="journey-timeline-indicator">
+                <div 
+                  className="journey-dot"
+                  style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--primary))' }}
+                />
+                {index < visits.length - 1 && (
+                  <div className="journey-line" />
+                )}
+              </div>
+              
+              {/* Content */}
+              <div className="journey-content">
+                <p className="journey-country group-hover:text-primary transition-colors">
+                  {country.name}
+                </p>
+                <p className="journey-date">
+                  {format(new Date(visit.arrival_date), 'MMM d, yyyy')}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* View full timeline CTA */}
+      <Link to="/timeline" className="view-timeline-link group">
+        <span>View full timeline</span>
+        <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+      </Link>
     </div>
   );
 }
