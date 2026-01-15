@@ -234,11 +234,11 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
     'Tokelau': { parentIso2: 'NZ', parentName: 'New Zealand', territoryName: 'Tokelau', type: 'dependent territory' },
   }), []);
 
-  // Projection and path generator - adjusted for better global coverage
+  // Projection and path generator - adjusted to crop Antarctica
   const projection = useMemo(() => 
     geoNaturalEarth1()
-      .scale(150)
-      .translate([400, 220])
+      .scale(155)
+      .translate([400, 200])
   , []);
 
   const pathGenerator = useMemo(() => geoPath(projection), [projection]);
@@ -635,7 +635,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
       )}
 
       <svg
-        viewBox="0 0 800 480"
+        viewBox="0 0 800 400"
         className="w-full h-full relative z-10"
         preserveAspectRatio="xMidYMid meet"
       >
@@ -742,12 +742,12 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
         )}
       </svg>
 
-      {/* Legend - positioned in bottom-right to avoid land overlap */}
-      <div className="absolute bottom-4 right-4 flex items-center gap-4 text-xs bg-card/90 backdrop-blur-sm px-3 py-2 rounded-md border border-border/50 shadow-sm">
+      {/* Legend - positioned below the map */}
+      <div className="flex items-center justify-center gap-4 text-xs pt-3">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#0055A4] via-[#009C3B] to-[#BC002D]" />
           <span className="text-muted-foreground">
-            {mapScope === 'chapter' ? 'Visited (this chapter)' : 'Visited (all time)'}
+            {mapScope === 'chapter' ? 'Visited (this chapter)' : 'Visited'}
           </span>
         </div>
         {mapScope === 'chapter' && (
@@ -771,7 +771,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
       </div>
 
       {/* Visited count badge */}
-      <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-border/50 shadow-md">
+      <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-border/50 shadow-sm">
         <span className="text-sm font-medium text-foreground">
           {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
           {mapScope === 'chapter' && selectedChapter && (
