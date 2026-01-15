@@ -549,10 +549,10 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
     <div className="flex flex-col px-4">
       {/* Header row above map */}
       <div className="flex items-center justify-end pb-2 pr-2">
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-xs text-muted-foreground">
           {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
           {mapScope === 'chapter' && selectedChapter && (
-            <span className="text-muted-foreground ml-1">in chapter</span>
+            <span className="ml-1">in chapter</span>
           )}
         </span>
       </div>
