@@ -242,7 +242,7 @@ export default function CountryDetail() {
             <p className="text-muted-foreground">
               {country.continent}
               {!isHomeBase && visitCount > 0 && (
-                <> • {visitCount} visit{visitCount !== 1 ? 's' : ''}</>
+                <> • {visitCount} {visitCount !== 1 ? 'times' : 'time'}</>
               )}
               {isHomeBase && homeBase?.start_date && (
                 <> • Home since {new Date(homeBase.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</>
@@ -412,7 +412,7 @@ export default function CountryDetail() {
                     </div>
                   ) : !isAddingCity && (
                     <p className="text-sm text-muted-foreground italic">
-                      No cities added yet. Click "Add City" to track which cities you've visited in {country.name}.
+                      No cities added yet. Click "Add City" to remember which cities you've been to in {country.name}.
                     </p>
                   )}
                 </>

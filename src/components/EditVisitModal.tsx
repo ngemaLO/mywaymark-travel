@@ -70,7 +70,7 @@ export function EditVisitModal({ visit, open, onOpenChange }: EditVisitModalProp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Visit to {country?.name || 'Unknown'}</DialogTitle>
+          <DialogTitle>Edit Entry: {country?.name || 'Unknown'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

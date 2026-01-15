@@ -242,14 +242,14 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
     },
     onSuccess: () => {
       const countryName = countries.find(c => c.iso2 === selectedCountry)?.name || selectedCountry;
-      const visitCount = dateEntries.filter(isDateEntryValid).length;
-      toast.success(`Added ${visitCount} visit${visitCount > 1 ? 's' : ''} to ${countryName}!`);
+      const entryCount = dateEntries.filter(isDateEntryValid).length;
+      toast.success(`Added ${entryCount} entr${entryCount > 1 ? 'ies' : 'y'} to ${countryName}!`);
       queryClient.invalidateQueries({ queryKey: ['visits'] });
       queryClient.invalidateQueries({ queryKey: ['country-notes'] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to add trip');
+      toast.error(error.message || 'Failed to add entry');
     },
   });
 
@@ -277,10 +277,10 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" />
-            Add a Trip
+            Add an Entry
           </DialogTitle>
           <DialogDescription>
-            Record a country you've visited. Add multiple dates for repeat visits.
+            Record a place you've been. Add multiple dates for repeat entries.
           </DialogDescription>
         </DialogHeader>
 
@@ -362,7 +362,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
                   <div key={entry.id} className="p-3 rounded-lg border bg-muted/30 space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-muted-foreground">
-                        Visit {index + 1}
+                        Entry {index + 1}
                       </span>
                       {dateEntries.length > 1 && (
                         <Button
@@ -470,7 +470,7 @@ export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
                             htmlFor={`ongoing-${entry.id}`} 
                             className="text-sm text-muted-foreground cursor-pointer"
                           >
-                            This is my current trip (ongoing)
+                            I'm still here (ongoing)
                           </Label>
                         </div>
                         

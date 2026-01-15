@@ -66,7 +66,7 @@ export default function Settings() {
             Settings
           </h1>
           <p className="text-muted-foreground">
-            Manage your account, privacy, and data preferences.
+            Your account, privacy, and data preferences.
           </p>
         </section>
 
@@ -121,7 +121,7 @@ export default function Settings() {
           
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Track where you've lived. Home base periods won't count as trips in your travel stats.
+              Where you've lived. Home base periods are separate from your travel entries.
             </p>
 
             {/* Existing home bases list */}
@@ -380,7 +380,7 @@ export default function Settings() {
             <div className="space-y-3">
               <Label>Share Links</Label>
               <p className="text-sm text-muted-foreground">
-                Manage your active share links and their permissions.
+                Your active share links and their permissions.
               </p>
               <Button 
                 variant="outline" 
@@ -389,7 +389,7 @@ export default function Settings() {
                 onClick={() => navigate('/share-links')}
               >
                 <LinkIcon className="w-4 h-4" />
-                Manage Share Links
+                View Share Links
               </Button>
             </div>
           </div>
@@ -402,7 +402,7 @@ export default function Settings() {
               <Download className="w-5 h-5 text-primary" />
             </div>
             <h2 className="text-lg font-display font-semibold text-foreground">
-              Data Management
+              Your Data
             </h2>
           </div>
           

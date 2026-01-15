@@ -100,10 +100,10 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary" />
-              Add Trips to "{createdChapter.title}"
+              Entries for "{createdChapter.title}"
             </DialogTitle>
             <DialogDescription>
-              Select trips to include in this chapter. Suggested trips overlap with your chapter dates.
+              Entries during this chapter will appear here automatically.
             </DialogDescription>
           </DialogHeader>
 

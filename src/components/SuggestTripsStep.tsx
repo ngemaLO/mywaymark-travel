@@ -142,7 +142,7 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-medium text-foreground">
-                    Suggested Trips
+                    Entries during this time
                   </h4>
                   <div className="flex items-center gap-2">
                     <button
@@ -176,7 +176,7 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
                 </div>
                 <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5" />
-                  We found {suggestedTrips.length} trip{suggestedTrips.length !== 1 ? 's' : ''} that overlap{suggestedTrips.length === 1 ? 's' : ''} this chapter's dates.
+                  We found {suggestedTrips.length} entr{suggestedTrips.length !== 1 ? 'ies' : 'y'} during this chapter.
                 </p>
               </div>
               
@@ -188,7 +188,7 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
                     trip={trip}
                     checked={selectedSuggested.has(trip.id)}
                     onCheckedChange={() => toggleSuggested(trip.id)}
-                    subtext="Overlaps chapter date range"
+                    subtext="During this chapter"
                   />
                 ))}
               </div>
@@ -197,10 +197,10 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
             <div className="py-6 text-center space-y-2">
               <Calendar className="w-8 h-8 mx-auto text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">
-                No trips found that overlap with this chapter's dates.
+                No entries during this chapter yet.
               </p>
               <p className="text-xs text-muted-foreground">
-                You can manually add trips from outside the date range below.
+                Add entries for this time period and they'll appear here.
               </p>
             </div>
           )}
@@ -210,7 +210,7 @@ export function SuggestTripsStep({ chapter, onComplete }: SuggestTripsStepProps)
             <Collapsible open={showOther} onOpenChange={setShowOther}>
               <CollapsibleTrigger asChild>
                 <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full justify-between p-2 rounded-lg hover:bg-muted/50">
-                  <span>Add trips from outside date range ({otherTrips.length})</span>
+                  <span>Add entries from outside this time ({otherTrips.length})</span>
                   <ChevronDown className={cn(
                     "w-4 h-4 transition-transform",
                     showOther && "rotate-180"

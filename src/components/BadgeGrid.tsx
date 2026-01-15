@@ -72,15 +72,15 @@ export function BadgeGrid() {
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-display font-semibold text-foreground">
-              No trips yet
+              No entries yet
             </h3>
             <p className="text-muted-foreground max-w-sm mx-auto">
-              Start building your travel story by adding your first trip.
+              Start your journal by adding your first entry.
             </p>
           </div>
           <Button onClick={() => setAddTripOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />
-            Add Your First Trip
+            Add Your First Entry
           </Button>
         </div>
         <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />

@@ -58,7 +58,7 @@ export function MapHoverCard({ countryIso2, countryName, x, y }: MapHoverCardPro
           <h4 className="font-display font-semibold text-foreground">{countryName}</h4>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <Calendar className="w-3 h-3" />
-            {visitCount} visit{visitCount !== 1 ? "s" : ""}
+            {visitCount} {visitCount !== 1 ? "times" : "time"}
           </span>
         </div>
 
@@ -73,7 +73,7 @@ export function MapHoverCard({ countryIso2, countryName, x, y }: MapHoverCardPro
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                   <MapPin className="w-3 h-3" />
-                  Cities visited
+                  Cities
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {cities.slice(0, 6).map((city) => (

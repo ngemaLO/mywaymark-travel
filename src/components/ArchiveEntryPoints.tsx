@@ -67,7 +67,7 @@ export function ArchiveEntryPoints() {
         icon={<Globe className="w-4 h-4" />}
         title="Countries"
         count={countriesCount}
-        label={countriesCount === 1 ? 'visited' : 'visited'}
+        label={countriesCount === 1 ? 'country' : 'countries'}
         to="/timeline"
       />
       <ArchiveCard

@@ -76,7 +76,7 @@ export function CheckInModal({ open, onOpenChange }: CheckInModalProps) {
 
       setStep('success');
       
-      toast.success(`Checked in to ${location.countryName}!`, {
+      toast.success(`Added entry for ${location.countryName}!`, {
         description: location.city ? `Near ${location.city}` : undefined,
       });
 

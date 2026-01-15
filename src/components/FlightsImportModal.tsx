@@ -265,9 +265,9 @@ export function FlightsImportModal({ open, onOpenChange }: FlightsImportModalPro
             {/* Auto-create visits toggle */}
             <div className="flex items-center justify-between p-3 rounded-lg border">
               <div>
-                <Label className="font-medium">Auto-create country visits</Label>
+                <Label className="font-medium">Auto-add destination entries</Label>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Add destination countries to your visited countries list
+                  Add destination countries as entries
                 </p>
               </div>
               <Switch

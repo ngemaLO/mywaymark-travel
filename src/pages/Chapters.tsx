@@ -43,7 +43,7 @@ export default function Chapters() {
             Sign In Required
           </h1>
           <p className="text-muted-foreground mb-8">
-            Please sign in to manage your chapters.
+            Please sign in to view your chapters.
           </p>
           <Button onClick={() => navigate('/auth')}>
             Sign In
