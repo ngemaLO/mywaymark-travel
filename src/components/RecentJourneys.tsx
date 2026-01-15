@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
-import { ChevronRight } from 'lucide-react';
 
 interface Visit {
   id: string;
@@ -49,52 +48,33 @@ export function RecentJourneys() {
   }
 
   return (
-    <div className="recent-journeys-section">
-      <div className="recent-journeys-header">
-        <h3 className="section-heading-narrative">Recent Journeys</h3>
-      </div>
+    <section className="journal-section">
+      <h2 className="journal-section-title">Recently</h2>
       
-      <div className="recent-journeys-timeline">
-        {visits.map((visit, index) => {
+      <ul className="journal-list">
+        {visits.map((visit) => {
           const country = getCountryByIso(visit.country_iso2);
           if (!country) return null;
           
           return (
-            <button
-              key={visit.id}
-              onClick={() => navigate(`/country/${visit.country_iso2}`)}
-              className="recent-journey-item group"
-            >
-              {/* Timeline dot and line */}
-              <div className="journey-timeline-indicator">
-                <div 
-                  className="journey-dot"
-                  style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--primary))' }}
-                />
-                {index < visits.length - 1 && (
-                  <div className="journey-line" />
-                )}
-              </div>
-              
-              {/* Content */}
-              <div className="journey-content">
-                <p className="journey-country group-hover:text-primary transition-colors">
-                  {country.name}
-                </p>
-                <p className="journey-date">
-                  {format(new Date(visit.arrival_date), 'MMM d, yyyy')}
-                </p>
-              </div>
-            </button>
+            <li key={visit.id}>
+              <button
+                onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                className="journal-list-item"
+              >
+                <span className="journal-list-place">{country.name}</span>
+                <span className="journal-list-date">
+                  {format(new Date(visit.arrival_date), 'MMM yyyy')}
+                </span>
+              </button>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
-      {/* View full timeline CTA */}
-      <Link to="/timeline" className="view-timeline-link group">
-        <span>View full timeline</span>
-        <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+      <Link to="/timeline" className="journal-more">
+        View full timeline →
       </Link>
-    </div>
+    </section>
   );
 }
