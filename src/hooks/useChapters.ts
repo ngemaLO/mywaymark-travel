@@ -101,6 +101,7 @@ export function useCreateChapter() {
     mutationFn: async (data: CreateChapterData) => {
       if (!user) throw new Error('Must be logged in');
 
+      // Create the chapter
       const { data: chapter, error } = await supabase
         .from('chapters')
         .insert({
@@ -116,10 +117,47 @@ export function useCreateChapter() {
         .single();
 
       if (error) throw error;
+
+      // Auto-associate overlapping trips
+      const { data: trips } = await supabase
+        .from('trips')
+        .select('id, start_date, end_date')
+        .eq('user_id', user.id);
+
+      if (trips && trips.length > 0) {
+        const chapterStart = data.start_date;
+        const chapterEnd = data.end_date;
+
+        // Find trips that overlap with chapter date range
+        const overlappingTripIds = trips
+          .filter(trip => {
+            const tripStart = trip.start_date;
+            const tripEnd = trip.end_date || trip.start_date;
+            const tripStartsBeforeChapterEnds = !chapterEnd || tripStart <= chapterEnd;
+            const tripEndsAfterChapterStarts = tripEnd >= chapterStart;
+            return tripStartsBeforeChapterEnds && tripEndsAfterChapterStarts;
+          })
+          .map(trip => trip.id);
+
+        // Insert chapter_trips for overlapping trips
+        if (overlappingTripIds.length > 0) {
+          const chapterTripsToInsert = overlappingTripIds.map(tripId => ({
+            user_id: user.id,
+            chapter_id: chapter.id,
+            trip_id: tripId,
+            added_method: 'auto' as const,
+          }));
+
+          await supabase.from('chapter_trips').insert(chapterTripsToInsert);
+        }
+      }
+
       return chapter as Chapter;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['chapter-trips'] });
+      queryClient.invalidateQueries({ queryKey: ['chapter-visits'] });
       toast.success('Chapter created!');
     },
     onError: (error: Error) => {
