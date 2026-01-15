@@ -547,98 +547,110 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
   }
 
   return (
-    <div className="map-container group">
-      {/* Subtle grid pattern - atmospheric, tertiary */}
-      <div 
-        className="absolute inset-0 opacity-[0.015]"
-        style={{
-          backgroundImage: `
-            linear-gradient(hsl(var(--map-grid)) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--map-grid)) 1px, transparent 1px)
-          `,
-          backgroundSize: '50px 50px'
-        }}
-      />
+    <div className="flex flex-col">
+      {/* Map wrapper with overflow hidden to crop Antarctica */}
+      <div className="map-container group overflow-hidden">
+        {/* Subtle grid pattern - atmospheric, tertiary */}
+        <div 
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `
+              linear-gradient(hsl(var(--map-grid)) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--map-grid)) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
 
-      {/* Scope toggle - top left (only show if not externally controlled) */}
-      {!isExternallyControlled && (
-        <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
-          <div className="flex items-center bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg shadow-sm overflow-hidden">
-            <button
-              onClick={() => handleScopeChange('all')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                mapScope === 'all' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              All Time
-            </button>
-            <button
-              onClick={() => handleScopeChange('chapter')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                mapScope === 'chapter' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              }`}
-              disabled={chapters.length === 0}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Chapter
-            </button>
-          </div>
+        {/* Scope toggle - top left (only show if not externally controlled) */}
+        {!isExternallyControlled && (
+          <div className="absolute top-4 left-4 z-20 flex items-center gap-2">
+            <div className="flex items-center bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg shadow-sm overflow-hidden">
+              <button
+                onClick={() => handleScopeChange('all')}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  mapScope === 'all' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                All Time
+              </button>
+              <button
+                onClick={() => handleScopeChange('chapter')}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                  mapScope === 'chapter' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                }`}
+                disabled={chapters.length === 0}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                Chapter
+              </button>
+            </div>
 
-          {/* Chapter selector dropdown */}
-          {mapScope === 'chapter' && chapters.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="bg-card/90 backdrop-blur-sm border-border/50 shadow-sm gap-2">
-                  <span className="truncate max-w-32">
-                    {selectedChapter?.title || 'Select Chapter'}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                {currentChapter && (
-                  <>
-                    <DropdownMenuItem onClick={() => setSelectedChapterId(currentChapter.id)}>
+            {/* Chapter selector dropdown */}
+            {mapScope === 'chapter' && chapters.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="bg-card/90 backdrop-blur-sm border-border/50 shadow-sm gap-2">
+                    <span className="truncate max-w-32">
+                      {selectedChapter?.title || 'Select Chapter'}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56">
+                  {currentChapter && (
+                    <>
+                      <DropdownMenuItem onClick={() => setSelectedChapterId(currentChapter.id)}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">Current Chapter</p>
+                          <p className="text-xs text-muted-foreground truncate">{currentChapter.title}</p>
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {chapters.map((chapter) => (
+                    <DropdownMenuItem 
+                      key={chapter.id} 
+                      onClick={() => setSelectedChapterId(chapter.id)}
+                    >
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium">Current Chapter</p>
-                        <p className="text-xs text-muted-foreground truncate">{currentChapter.title}</p>
+                        <p className="truncate">{chapter.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(chapter.start_date), 'MMM yyyy')}
+                          {chapter.end_date 
+                            ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
+                            : ' - Present'
+                          }
+                        </p>
                       </div>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
-                {chapters.map((chapter) => (
-                  <DropdownMenuItem 
-                    key={chapter.id} 
-                    onClick={() => setSelectedChapterId(chapter.id)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate">{chapter.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {format(new Date(chapter.start_date), 'MMM yyyy')}
-                        {chapter.end_date 
-                          ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
-                          : ' - Present'
-                        }
-                      </p>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      )}
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+        )}
 
-      <svg
-        viewBox="0 0 800 400"
-        className="w-full h-full relative z-10"
-        preserveAspectRatio="xMidYMid meet"
-      >
+        {/* Visited count badge */}
+        <div className="absolute top-3 right-3 z-20 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-border/50 shadow-sm">
+          <span className="text-sm font-medium text-foreground">
+            {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
+            {mapScope === 'chapter' && selectedChapter && (
+              <span className="text-muted-foreground ml-1">in chapter</span>
+            )}
+          </span>
+        </div>
+
+        <svg
+          viewBox="0 0 800 380"
+          className="w-full h-full relative z-10"
+          preserveAspectRatio="xMidYMin slice"
+        >
         {/* Country paths - using expanded polygons for proper overseas detection */}
         {expandedPolygons.map((polygon, index) => {
           const iso2 = getIso2FromFeature(polygon.originalFeature);
@@ -740,10 +752,38 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
             />
           </g>
         )}
-      </svg>
+        </svg>
 
-      {/* Legend - positioned below the map */}
-      <div className="flex items-center justify-center gap-4 text-xs pt-3">
+        {/* Custom tooltip (non-visited countries) */}
+        {tooltip && !mapHoverCard && (
+          <div 
+            className="absolute pointer-events-none z-50 rounded-md bg-slate-900/90 text-white px-3 py-2 shadow-lg"
+            style={{ 
+              left: tooltip.x + 12, 
+              top: tooltip.y - 10,
+              transform: 'translateY(-100%)'
+            }}
+          >
+            <div className="text-sm font-medium">{tooltip.title}</div>
+            {tooltip.subtitle && (
+              <div className="text-xs text-white/70 mt-0.5">{tooltip.subtitle}</div>
+            )}
+          </div>
+        )}
+
+        {/* Rich hover card for visited countries */}
+        {mapHoverCard && (
+          <MapHoverCard
+            countryIso2={mapHoverCard.iso2}
+            countryName={mapHoverCard.name}
+            x={mapHoverCard.x}
+            y={mapHoverCard.y}
+          />
+        )}
+      </div>
+
+      {/* Legend - positioned below the map, outside the overflow container */}
+      <div className="flex items-center justify-center gap-4 text-xs pt-3 font-sans">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm bg-gradient-to-r from-[#0055A4] via-[#009C3B] to-[#BC002D]" />
           <span className="text-muted-foreground">
@@ -769,43 +809,6 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
           <span className="text-muted-foreground">Not visited</span>
         </div>
       </div>
-
-      {/* Visited count badge */}
-      <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-card/90 backdrop-blur-sm border border-border/50 shadow-sm">
-        <span className="text-sm font-medium text-foreground">
-          {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
-          {mapScope === 'chapter' && selectedChapter && (
-            <span className="text-muted-foreground ml-1">in chapter</span>
-          )}
-        </span>
-      </div>
-
-      {/* Custom tooltip (non-visited countries) */}
-      {tooltip && !mapHoverCard && (
-        <div 
-          className="absolute pointer-events-none z-50 rounded-md bg-slate-900/90 text-white px-3 py-2 shadow-lg"
-          style={{ 
-            left: tooltip.x + 12, 
-            top: tooltip.y - 10,
-            transform: 'translateY(-100%)'
-          }}
-        >
-          <div className="text-sm font-medium">{tooltip.title}</div>
-          {tooltip.subtitle && (
-            <div className="text-xs text-white/70 mt-0.5">{tooltip.subtitle}</div>
-          )}
-        </div>
-      )}
-
-      {/* Rich hover card for visited countries */}
-      {mapHoverCard && (
-        <MapHoverCard
-          countryIso2={mapHoverCard.iso2}
-          countryName={mapHoverCard.name}
-          x={mapHoverCard.x}
-          y={mapHoverCard.y}
-        />
-      )}
     </div>
   );
 }
