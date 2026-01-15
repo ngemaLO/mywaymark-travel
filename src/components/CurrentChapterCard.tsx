@@ -11,98 +11,72 @@ export function CurrentChapterCard() {
     return null;
   }
 
-  // No chapters at all - show subtle prompt to create one
+  // No chapters at all - show a gentle, reflective prompt
   if (allChapters.length === 0) {
     return (
-      <section className="journal-section journal-section--prompt">
-        <p className="journal-prompt-text">
-          Chapters help organize your travels by life phases.{' '}
-          <Link to="/chapters" className="journal-link">
-            Start one
+      <section className="journal-chapter-opening">
+        <p className="journal-chapter-whisper">
+          Every journey has its seasons.{' '}
+          <Link to="/chapters" className="journal-chapter-whisper-link">
+            Begin yours
           </Link>
         </p>
       </section>
     );
   }
 
-  // Has chapters but none are "current" (today doesn't fall within any chapter's dates)
+  // Find the chapter to display - current, or most relevant
+  let chapterToShow = currentChapter;
+  let contextLine: string | null = null;
+
   if (!currentChapter) {
     const today = new Date().toISOString().split('T')[0];
     
-    // Find the most relevant chapter: upcoming or most recent
+    // Find the most relevant chapter
     const sortedChapters = [...allChapters].sort((a, b) => 
       new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
     );
     
     const upcomingChapter = sortedChapters.find(c => c.start_date > today);
     const pastChapter = sortedChapters.find(c => c.end_date && c.end_date < today);
-    const relevantChapter = upcomingChapter || pastChapter || sortedChapters[0];
+    chapterToShow = upcomingChapter || pastChapter || sortedChapters[0];
 
-    if (!relevantChapter) {
-      return null;
+    // Add a quiet transitional context
+    if (upcomingChapter) {
+      contextLine = `Beginning ${format(new Date(upcomingChapter.start_date), 'MMMM yyyy')}`;
     }
-
-    const isUpcoming = relevantChapter.start_date > today;
-    const label = isUpcoming ? 'Upcoming Chapter' : 'Most Recent Chapter';
-
-    const homeCountry = relevantChapter.home_base_country_iso2 
-      ? getCountryByIso(relevantChapter.home_base_country_iso2) 
-      : null;
-
-    const dateRange = relevantChapter.end_date
-      ? `${format(new Date(relevantChapter.start_date), 'MMM yyyy')} – ${format(new Date(relevantChapter.end_date), 'MMM yyyy')}`
-      : `Starting ${format(new Date(relevantChapter.start_date), 'MMMM yyyy')}`;
-
-    return (
-      <section className="journal-section">
-        <p className="journal-chapter-label">{label}</p>
-        <h2 className="journal-chapter-title">{relevantChapter.title}</h2>
-        
-        <p className="journal-chapter-meta">
-          {dateRange}
-          {homeCountry && <> · Based in {homeCountry.name}</>}
-        </p>
-
-        {relevantChapter.description && (
-          <p className="journal-chapter-description">
-            {relevantChapter.description}
-          </p>
-        )}
-
-        <Link to="/chapters" className="journal-more">
-          View all chapters →
-        </Link>
-      </section>
-    );
   }
 
-  // Has a current chapter - show it
-  const homeCountry = currentChapter.home_base_country_iso2 
-    ? getCountryByIso(currentChapter.home_base_country_iso2) 
+  if (!chapterToShow) {
+    return null;
+  }
+
+  const homeCountry = chapterToShow.home_base_country_iso2 
+    ? getCountryByIso(chapterToShow.home_base_country_iso2) 
     : null;
 
-  const dateRange = currentChapter.end_date
-    ? `${format(new Date(currentChapter.start_date), 'MMM yyyy')} – ${format(new Date(currentChapter.end_date), 'MMM yyyy')}`
-    : `Since ${format(new Date(currentChapter.start_date), 'MMMM yyyy')}`;
+  // Format the date context naturally
+  const dateContext = chapterToShow.end_date
+    ? `${format(new Date(chapterToShow.start_date), 'MMMM yyyy')} – ${format(new Date(chapterToShow.end_date), 'MMMM yyyy')}`
+    : format(new Date(chapterToShow.start_date), 'MMMM yyyy');
 
   return (
-    <section className="journal-section">
-      <p className="journal-chapter-label">Current Chapter</p>
-      <h2 className="journal-chapter-title">{currentChapter.title}</h2>
+    <section className="journal-chapter-opening">
+      <h2 className="journal-chapter-heading">{chapterToShow.title}</h2>
       
-      <p className="journal-chapter-meta">
-        {dateRange}
-        {homeCountry && <> · Based in {homeCountry.name}</>}
+      <p className="journal-chapter-context">
+        {contextLine || dateContext}
+        {homeCountry && ` · ${homeCountry.name}`}
       </p>
 
-      {currentChapter.description && (
-        <p className="journal-chapter-description">
-          {currentChapter.description}
+      {chapterToShow.description && (
+        <p className="journal-chapter-epigraph">
+          {chapterToShow.description}
         </p>
       )}
 
-      <Link to="/chapters" className="journal-more">
-        View all chapters →
+      <Link to="/chapters" className="journal-chapter-nav">
+        all chapters
       </Link>
     </section>
   );

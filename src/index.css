@@ -343,9 +343,67 @@
   }
 
   /* ============================================
-     CHAPTER DISPLAY
+     CHAPTER OPENING — Like turning to a new page
      ============================================ */
 
+  .journal-chapter-opening {
+    @apply mb-16 pt-4;
+  }
+
+  .journal-chapter-heading {
+    @apply text-2xl mb-3;
+    color: hsl(var(--foreground));
+    letter-spacing: -0.01em;
+  }
+
+  @media (min-width: 768px) {
+    .journal-chapter-heading {
+      @apply text-3xl;
+    }
+  }
+
+  .journal-chapter-context {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-sm mb-4;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .journal-chapter-epigraph {
+    @apply text-base leading-relaxed mb-4 max-w-prose;
+    color: hsl(var(--foreground) / 0.65);
+    font-style: italic;
+  }
+
+  .journal-chapter-nav {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs tracking-wide transition-colors;
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  .journal-chapter-nav:hover {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .journal-chapter-whisper {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground) / 0.7);
+    font-style: italic;
+  }
+
+  .journal-chapter-whisper-link {
+    color: hsl(var(--muted-foreground));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: hsl(var(--muted-foreground) / 0.4);
+    transition: all 0.2s ease;
+  }
+
+  .journal-chapter-whisper-link:hover {
+    color: hsl(var(--foreground) / 0.8);
+    text-decoration-color: hsl(var(--foreground) / 0.4);
+  }
+
+  /* Legacy chapter styles (for ChapterCard on /chapters page) */
   .journal-chapter-label {
     font-family: 'Instrument Sans', system-ui, sans-serif;
     @apply text-xs uppercase tracking-widest mb-2;
