@@ -546,9 +546,9 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-4">
       {/* Header row above map */}
-      <div className="flex items-center justify-end pb-2">
+      <div className="flex items-center justify-end pb-2 pr-2">
         <span className="text-sm font-medium text-foreground">
           {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
           {mapScope === 'chapter' && selectedChapter && (
