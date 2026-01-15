@@ -78,7 +78,7 @@ export function ChapterCard({ chapter, onEdit, onDelete, onManageTrips }: Chapte
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onManageTrips}>
               <ListPlus className="w-4 h-4 mr-2" />
-              Manage Trips
+              View Entries
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onDelete} className="text-destructive">
@@ -100,7 +100,7 @@ export function ChapterCard({ chapter, onEdit, onDelete, onManageTrips }: Chapte
           <Plane className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm">
             <span className="font-semibold text-foreground">{chapterTrips.length}</span>
-            <span className="text-muted-foreground"> trip{chapterTrips.length !== 1 ? 's' : ''}</span>
+            <span className="text-muted-foreground"> entr{chapterTrips.length !== 1 ? 'ies' : 'y'}</span>
           </span>
         </div>
         <div className="flex items-center gap-2">

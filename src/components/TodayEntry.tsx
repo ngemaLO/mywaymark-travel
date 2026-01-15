@@ -43,7 +43,7 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
         </p>
         <nav className="journal-actions">
           <button onClick={onAddTrip} className="journal-link">
-            Add a trip
+            Add an entry
           </button>
           <span className="journal-separator">or</span>
           <button onClick={() => navigate('/timeline')} className="journal-link journal-link--secondary">
@@ -105,7 +105,7 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
           {endTripMutation.isPending ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            'End trip'
+            'Mark as ended'
           )}
         </button>
       </nav>

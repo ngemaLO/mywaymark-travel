@@ -63,7 +63,7 @@ export default function ShareLinksManagement() {
             Sign In Required
           </h1>
           <p className="text-muted-foreground mb-8">
-            Please sign in to manage your share links.
+            Please sign in to view your share links.
           </p>
           <Button onClick={() => navigate('/auth')}>Sign In</Button>
         </div>
@@ -108,7 +108,7 @@ export default function ShareLinksManagement() {
                 Shared Links
               </h1>
               <p className="text-muted-foreground text-sm">
-                Manage your public travel profile links
+                Your public travel profile links
               </p>
             </div>
           </div>

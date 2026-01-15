@@ -223,8 +223,8 @@ export default function Timeline() {
               </h1>
               <p className="text-muted-foreground">
                 {chapterFilter === 'all' 
-                  ? 'A chronological view of all your travels, grouped by chapter.'
-                  : 'Viewing trips within the selected chapter.'}
+                  ? 'Your story, one place at a time.'
+                  : 'Entries from this chapter.'}
               </p>
             </div>
             <ChapterFilter value={chapterFilter} onChange={handleChapterChange} />
@@ -237,9 +237,9 @@ export default function Timeline() {
           </div>
         ) : visits.length === 0 ? (
           <div className="text-center py-16 space-y-4">
-            <p className="text-muted-foreground">No visits recorded yet.</p>
+            <p className="text-muted-foreground">No entries yet.</p>
             <Button onClick={() => navigate('/')}>
-              Add Your First Trip
+              Add Your First Entry
             </Button>
           </div>
         ) : groupedData.type === 'year' ? (
@@ -247,7 +247,7 @@ export default function Timeline() {
           filteredVisits.length === 0 ? (
             <div className="text-center py-16 space-y-4">
               <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/50" />
-              <p className="text-muted-foreground">No trips in this chapter yet.</p>
+              <p className="text-muted-foreground">No entries in this chapter yet.</p>
               <Button variant="outline" onClick={() => handleChapterChange('all')}>
                 View All Time
               </Button>
@@ -357,7 +357,7 @@ function ChapterSection({ chapter, visits, defaultOpen = false, onCountryClick, 
                     : ' - Present'}
                 </span>
                 <span>•</span>
-                <span>{visits.length} visit{visits.length !== 1 ? 's' : ''}</span>
+                <span>{visits.length} entr{visits.length !== 1 ? 'ies' : 'y'}</span>
                 <span>•</span>
                 <span>{uniqueCountries} countr{uniqueCountries !== 1 ? 'ies' : 'y'}</span>
               </div>
@@ -425,7 +425,7 @@ function UnassignedSection({ visits, defaultOpen = false, onCountryClick, onEdit
                 Unassigned
               </span>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span>{visits.length} visit{visits.length !== 1 ? 's' : ''}</span>
+                <span>{visits.length} entr{visits.length !== 1 ? 'ies' : 'y'}</span>
                 <span>•</span>
                 <span>{uniqueCountries} countr{uniqueCountries !== 1 ? 'ies' : 'y'}</span>
               </div>
@@ -490,7 +490,7 @@ function YearSection({ year, visits, defaultOpen = false, onCountryClick, onEdit
               {year}
             </span>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{visits.length} visit{visits.length !== 1 ? 's' : ''}</span>
+              <span>{visits.length} entr{visits.length !== 1 ? 'ies' : 'y'}</span>
               <span>•</span>
               <span>{uniqueCountries} countr{uniqueCountries !== 1 ? 'ies' : 'y'}</span>
             </div>

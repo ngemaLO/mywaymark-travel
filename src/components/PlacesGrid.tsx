@@ -48,9 +48,9 @@ function PlaceBadge({ country, onClick }: PlaceBadgeProps) {
         <div className="flex items-center gap-3 text-sm">
           <span className="font-medium text-foreground">{country.name}</span>
           <span className="text-muted-foreground">·</span>
-          <span className="text-muted-foreground">{firstVisitYear || 'First visit'}</span>
+          <span className="text-muted-foreground">{firstVisitYear || 'First time'}</span>
           <span className="text-muted-foreground">·</span>
-          <span className="text-muted-foreground">{visitCount} visit{visitCount !== 1 ? 's' : ''}</span>
+          <span className="text-muted-foreground">{visitCount} {visitCount !== 1 ? 'times' : 'time'}</span>
         </div>
       </HoverCardContent>
     </HoverCard>

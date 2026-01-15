@@ -40,7 +40,7 @@ const Index = () => {
             <div className="journal-action">
               <Button onClick={() => setAddTripOpen(true)} variant="ghost" className="journal-link">
                 <Plus className="w-4 h-4" />
-                Add your first trip
+                Add your first entry
               </Button>
             </div>
           </article>

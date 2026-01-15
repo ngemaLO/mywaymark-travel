@@ -94,7 +94,7 @@ export function Header() {
                   onClick={() => setAddTripOpen(true)}
                 >
                   <Plus className="w-4 h-4" />
-                  Add Trip
+                  Add Entry
                 </Button>
                 
                 <Button
@@ -112,7 +112,7 @@ export function Header() {
                   size="icon"
                   className="hidden sm:flex"
                   onClick={() => navigate('/share-links')}
-                  title="Manage share links"
+                  title="Shared links"
                 >
                   <LinkIcon className="w-4 h-4" />
                 </Button>
@@ -186,7 +186,7 @@ export function Header() {
                         }}
                       >
                         <Plus className="w-4 h-4" />
-                        Add Trip
+                        Add Entry
                       </Button>
                       
                       <hr className="my-4 border-border" />
@@ -212,7 +212,7 @@ export function Header() {
                         }}
                       >
                         <LinkIcon className="w-4 h-4" />
-                        Manage Links
+                        Shared Links
                       </Button>
 
                       <Button 
