@@ -30,54 +30,159 @@ interface Visit {
 
 type ChapterFilterValue = 'all' | 'current' | string;
 
-// Southern hemisphere countries (below equator or mostly below)
+// Southern hemisphere countries (majority below equator, with distinct seasons)
 const SOUTHERN_HEMISPHERE_COUNTRIES = new Set([
-  // South America
-  'AR', 'BO', 'BR', 'CL', 'PY', 'PE', 'UY', 'EC',
+  // South America (countries with distinct seasons)
+  'AR', // Argentina
+  'CL', // Chile
+  'UY', // Uruguay
+  'PY', // Paraguay
+  'BR', // Brazil (southern regions have seasons, major cities like São Paulo, Rio)
   // Oceania
-  'AU', 'NZ', 'FJ', 'PG', 'VU', 'SB', 'TO', 'WS', 'TV', 'NR',
+  'AU', // Australia
+  'NZ', // New Zealand
   // Southern Africa
-  'ZA', 'NA', 'BW', 'ZW', 'MZ', 'ZM', 'MW', 'LS', 'SZ', 'MG', 'MU'
+  'ZA', // South Africa
+  'NA', // Namibia
+  'BW', // Botswana
+  'ZW', // Zimbabwe
+  'MZ', // Mozambique
+  'ZM', // Zambia
+  'MW', // Malawi
+  'LS', // Lesotho
+  'SZ', // Eswatini
+  'MG', // Madagascar
+  'AO', // Angola
 ]);
 
-// Tropical countries near equator (no real seasons)
+// Tropical countries (between tropics, minimal seasonal variation)
 const TROPICAL_COUNTRIES = new Set([
-  'CO', 'VE', 'GY', 'SR', 'EC', // Northern South America
-  'KE', 'UG', 'TZ', 'RW', 'BI', 'CD', 'CG', 'GA', 'CM', 'GQ', 'CF', // Central Africa
-  'SG', 'MY', 'ID', 'PH', 'TH', 'VN', 'KH', 'LA', 'MM', 'BD', // Southeast Asia
-  'IN', 'LK', 'MV', // South Asia
-  'CR', 'PA', 'NI', 'HN', 'GT', 'SV', 'BZ', // Central America
-  'JM', 'HT', 'DO', 'CU', 'BS', 'BB', 'TT', 'GD', 'AG', 'DM', 'LC', 'VC', 'KN', // Caribbean
-  'PW', 'FM', 'MH', 'KI', // Pacific islands
+  // South America (equatorial/tropical)
+  'CO', // Colombia
+  'VE', // Venezuela
+  'EC', // Ecuador
+  'GY', // Guyana
+  'SR', // Suriname
+  'BO', // Bolivia (tropical lowlands)
+  'PE', // Peru (coastal/jungle regions)
+  // Central America
+  'PA', // Panama
+  'CR', // Costa Rica
+  'NI', // Nicaragua
+  'HN', // Honduras
+  'SV', // El Salvador
+  'GT', // Guatemala
+  'BZ', // Belize
+  'MX', // Mexico (southern regions - simplified)
+  // Caribbean
+  'CU', // Cuba
+  'JM', // Jamaica
+  'HT', // Haiti
+  'DO', // Dominican Republic
+  'BS', // Bahamas
+  'BB', // Barbados
+  'TT', // Trinidad and Tobago
+  'GD', // Grenada
+  'AG', // Antigua and Barbuda
+  'DM', // Dominica
+  'LC', // Saint Lucia
+  'VC', // Saint Vincent
+  'KN', // Saint Kitts and Nevis
+  // Central/West Africa
+  'NG', // Nigeria
+  'GH', // Ghana
+  'CI', // Côte d'Ivoire
+  'CM', // Cameroon
+  'GA', // Gabon
+  'CG', // Congo
+  'CD', // DRC
+  'CF', // Central African Republic
+  'GQ', // Equatorial Guinea
+  'ST', // São Tomé and Príncipe
+  'BJ', // Benin
+  'TG', // Togo
+  'BF', // Burkina Faso
+  'ML', // Mali
+  'NE', // Niger
+  'TD', // Chad
+  'SN', // Senegal
+  'GM', // Gambia
+  'GN', // Guinea
+  'GW', // Guinea-Bissau
+  'SL', // Sierra Leone
+  'LR', // Liberia
+  'SS', // South Sudan
+  // East Africa (equatorial)
+  'KE', // Kenya
+  'UG', // Uganda
+  'TZ', // Tanzania
+  'RW', // Rwanda
+  'BI', // Burundi
+  'SO', // Somalia
+  'DJ', // Djibouti
+  'ER', // Eritrea
+  'ET', // Ethiopia
+  'KM', // Comoros
+  'SC', // Seychelles
+  'MU', // Mauritius
+  // South/Southeast Asia
+  'IN', // India
+  'LK', // Sri Lanka
+  'MV', // Maldives
+  'BD', // Bangladesh
+  'MM', // Myanmar
+  'TH', // Thailand
+  'VN', // Vietnam
+  'KH', // Cambodia
+  'LA', // Laos
+  'MY', // Malaysia
+  'SG', // Singapore
+  'ID', // Indonesia
+  'TL', // Timor-Leste
+  'BN', // Brunei
+  'PH', // Philippines
+  // Pacific Islands
+  'PG', // Papua New Guinea
+  'FJ', // Fiji
+  'VU', // Vanuatu
+  'SB', // Solomon Islands
+  'WS', // Samoa
+  'TO', // Tonga
+  'TV', // Tuvalu
+  'NR', // Nauru
+  'KI', // Kiribati
+  'PW', // Palau
+  'FM', // Micronesia
+  'MH', // Marshall Islands
 ]);
 
 // Helper to get seasonal/temporal context based on country location
 function getSeasonalContext(date: string, countryIso2: string): string {
   const month = getMonth(new Date(date));
   
-  // Tropical countries - use wet/dry or just the month feeling
+  // Tropical countries - no traditional seasons, use evocative time markers
   if (TROPICAL_COUNTRIES.has(countryIso2)) {
-    const tropicalSeasons = [
-      'The new year',     // 0 - Jan
-      'That February',    // 1 - Feb
-      'Early in the year', // 2 - Mar
-      'That spring',      // 3 - Apr
-      'Mid-year',         // 4 - May
-      'That June',        // 5 - Jun
-      'Mid-year',         // 6 - Jul
-      'Late summer',      // 7 - Aug
-      'That September',   // 8 - Sep
-      'That autumn',      // 9 - Oct
-      'Late in the year', // 10 - Nov
-      'Year\'s end',      // 11 - Dec
+    const tropicalContext = [
+      'The new year',       // 0 - Jan
+      'That February',      // 1 - Feb
+      'Early in the year',  // 2 - Mar
+      'That April',         // 3 - Apr
+      'Mid-year',           // 4 - May
+      'That June',          // 5 - Jun
+      'Mid-year',           // 6 - Jul
+      'That August',        // 7 - Aug
+      'That September',     // 8 - Sep
+      'That October',       // 9 - Oct
+      'Late in the year',   // 10 - Nov
+      'Year\'s end',        // 11 - Dec
     ];
-    return tropicalSeasons[month];
+    return tropicalContext[month];
   }
   
-  // Southern hemisphere - flip the seasons
+  // Southern hemisphere - seasons are inverted
   if (SOUTHERN_HEMISPHERE_COUNTRIES.has(countryIso2)) {
     const southernSeasons = [
-      'That summer',      // 0 - Jan (summer in south)
+      'That summer',      // 0 - Jan
       'Late summer',      // 1 - Feb
       'Early autumn',     // 2 - Mar
       'That autumn',      // 3 - Apr
@@ -93,7 +198,7 @@ function getSeasonalContext(date: string, countryIso2: string): string {
     return southernSeasons[month];
   }
   
-  // Northern hemisphere (default)
+  // Northern hemisphere (default - Europe, North America, North Africa, Middle East, North Asia)
   const northernSeasons = [
     'That winter',      // 0 - Jan
     'Late winter',      // 1 - Feb
