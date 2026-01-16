@@ -80,7 +80,7 @@ export function Header() {
               <>
                 <Button
                   size="sm"
-                  variant="default"
+                  variant="ghost"
                   className="hidden sm:flex gap-2"
                   onClick={() => setCheckInOpen(true)}
                 >
@@ -90,7 +90,7 @@ export function Header() {
 
                 <Button
                   size="sm"
-                  variant="outline"
+                  variant="ghost"
                   className="hidden sm:flex gap-2"
                   onClick={() => setAddTripOpen(true)}
                 >
@@ -99,7 +99,7 @@ export function Header() {
                 </Button>
                 
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   className="hidden sm:flex gap-2"
                   onClick={() => setShareModalOpen(true)}
