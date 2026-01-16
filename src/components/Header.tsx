@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plus, Navigation } from 'lucide-react';
+import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plus, Navigation, BookOpen } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +22,7 @@ import {
 const navItems = [
   { label: 'Dashboard', path: '/', icon: MapPin },
   { label: 'Timeline', path: '/timeline', icon: Clock },
+  { label: 'Letters', path: '/letters', icon: BookOpen },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];
 

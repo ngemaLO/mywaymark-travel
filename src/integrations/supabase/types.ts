@@ -665,6 +665,77 @@ export type Database = {
           },
         ]
       }
+      waymark_letters: {
+        Row: {
+          body: string
+          chapter_id: string | null
+          created_at: string
+          error_message: string | null
+          generated_at: string
+          id: string
+          period_end: string
+          period_start: string
+          scope: Database["public"]["Enums"]["letter_scope"]
+          stats_snapshot: Json
+          status: Database["public"]["Enums"]["letter_status"]
+          subtitle: string | null
+          supporting_signals: Json
+          theme: string
+          title: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          body: string
+          chapter_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          generated_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          scope: Database["public"]["Enums"]["letter_scope"]
+          stats_snapshot?: Json
+          status?: Database["public"]["Enums"]["letter_status"]
+          subtitle?: string | null
+          supporting_signals?: Json
+          theme: string
+          title: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          body?: string
+          chapter_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          generated_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          scope?: Database["public"]["Enums"]["letter_scope"]
+          stats_snapshot?: Json
+          status?: Database["public"]["Enums"]["letter_status"]
+          subtitle?: string | null
+          supporting_signals?: Json
+          theme?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waymark_letters_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -674,6 +745,8 @@ export type Database = {
     }
     Enums: {
       chapter_trip_method: "auto" | "manual"
+      letter_scope: "year" | "chapter" | "custom"
+      letter_status: "ready" | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -802,6 +875,8 @@ export const Constants = {
   public: {
     Enums: {
       chapter_trip_method: ["auto", "manual"],
+      letter_scope: ["year", "chapter", "custom"],
+      letter_status: ["ready", "failed"],
     },
   },
 } as const
