@@ -227,8 +227,8 @@ function YearSection({ year, visits, defaultOpen = false, onCountryClick, onEdit
         <button className={cn(
           "w-full flex items-center justify-between p-4 rounded-xl transition-colors group",
           nested 
-            ? "bg-card/50 border border-border/30 hover:bg-card" 
-            : "bg-card border border-border/50 hover:bg-muted/50"
+            ? "hover:bg-muted/30" 
+            : "hover:bg-muted/30"
         )}>
           <div className="flex items-center gap-4">
             <span className={cn(
@@ -288,7 +288,7 @@ function VisitCard({ visit, index, onCountryClick, onEdit, onDelete }: VisitCard
       {/* Timeline dot */}
       <div className="absolute -left-[calc(1rem+5px)] top-4 w-3 h-3 rounded-full bg-primary border-2 border-background" />
       
-      <div className="w-full card-elevated p-5 space-y-2 text-left hover:bg-muted/50 transition-colors">
+      <div className="w-full p-5 space-y-2 text-left hover:bg-muted/30 transition-colors rounded-xl">
         <div className="flex items-center gap-3">
           <button
             onClick={() => onCountryClick(visit.country_iso2)}

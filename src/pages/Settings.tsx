@@ -71,7 +71,7 @@ export default function Settings() {
         </section>
 
         {/* Profile Section */}
-        <section className="card-elevated p-6 space-y-6">
+        <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <User className="w-5 h-5 text-primary" />
@@ -109,7 +109,7 @@ export default function Settings() {
         </section>
 
         {/* Home Base Section */}
-        <section className="card-elevated p-6 space-y-6">
+        <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Home className="w-5 h-5 text-primary" />
@@ -317,7 +317,7 @@ export default function Settings() {
         </section>
 
         {/* Location & Check-in Section */}
-        <section className="card-elevated p-6 space-y-6">
+        <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Navigation className="w-5 h-5 text-primary" />
@@ -366,7 +366,7 @@ export default function Settings() {
         </section>
 
         {/* Privacy Section */}
-        <section className="card-elevated p-6 space-y-6">
+        <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Shield className="w-5 h-5 text-primary" />
@@ -396,7 +396,7 @@ export default function Settings() {
         </section>
 
         {/* Data Section */}
-        <section className="card-elevated p-6 space-y-6">
+        <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
               <Download className="w-5 h-5 text-primary" />
@@ -423,7 +423,7 @@ export default function Settings() {
         </section>
 
         {/* Danger Zone */}
-        <section className="card-elevated p-6 space-y-6 border-destructive/20">
+        <section className="space-y-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
               <Trash2 className="w-5 h-5 text-destructive" />
