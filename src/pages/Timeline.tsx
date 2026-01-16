@@ -1,6 +1,6 @@
 import { Header } from '@/components/Header';
 import { getCountryByIso } from '@/data/countries';
-import { format, getYear, getMonth, differenceInDays } from 'date-fns';
+import { format, getYear, getMonth, differenceInDays, isToday, formatDistanceToNow } from 'date-fns';
 import { ChevronDown, Loader2, BookOpen } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { EditVisitModal } from '@/components/EditVisitModal';
 import { DeleteVisitDialog } from '@/components/DeleteVisitDialog';
 import { useChapters } from '@/hooks/useChapters';
+import { useEndCurrentTrip } from '@/hooks/useCurrentTrip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -235,6 +236,30 @@ function formatDateRange(arrival: string, departure: string | null): string {
   return `${format(start, 'MMMM d, yyyy')} – ${format(end, 'MMMM d, yyyy')}`;
 }
 
+// Generate present-tense arrival copy for ongoing entries
+function getOngoingArrivalCopy(arrivalDate: string): string {
+  const arrival = new Date(arrivalDate);
+  const today = new Date();
+  const daysAgo = differenceInDays(today, arrival);
+  
+  if (isToday(arrival)) {
+    return 'You arrived today.';
+  }
+  if (daysAgo === 1) {
+    return 'You arrived yesterday.';
+  }
+  if (daysAgo <= 7) {
+    return `You've been here ${daysAgo} days.`;
+  }
+  if (daysAgo <= 14) {
+    return `You've been here over a week.`;
+  }
+  if (daysAgo <= 30) {
+    return `You've been here ${Math.floor(daysAgo / 7)} weeks.`;
+  }
+  return `You arrived ${formatDistanceToNow(arrival, { addSuffix: true })}.`;
+}
+
 // Generate occasional memory moments
 function generateMemoryMoments(visits: Visit[]): Map<number, string> {
   const moments = new Map<number, string>();
@@ -284,6 +309,7 @@ export default function Timeline() {
   const { user } = useAuth();
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
   const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null);
+  const endCurrentTrip = useEndCurrentTrip();
 
   // Get chapter filter from URL
   const chapterParam = searchParams.get('chapter');
@@ -515,25 +541,43 @@ export default function Timeline() {
                         .slice(0, yearIndex)
                         .reduce((acc, y) => acc + groupedData.byYear[y].length, 0) + entryIndex;
                       
-                      const distanceClass = 
+                      // Determine if this is an ongoing entry (no departure date)
+                      const isOngoing = !visit.departure_date;
+                      
+                      // Ongoing entries get visual priority, don't fade
+                      const distanceClass = isOngoing ? '' : (
                         globalIndex > 15 ? 'timeline-entry--very-distant' :
-                        globalIndex > 8 ? 'timeline-entry--distant' : '';
+                        globalIndex > 8 ? 'timeline-entry--distant' : ''
+                      );
                       
                       // Check for memory moment before this entry
                       const memoryBefore = memoryMoments.get(globalIndex);
                       
+                      const handleEndTrip = () => {
+                        endCurrentTrip.mutate(visit.id);
+                      };
+                      
                       return (
                         <div key={visit.id}>
                           {/* Memory moment */}
-                          {memoryBefore && (
+                          {memoryBefore && !isOngoing && (
                             <div className="timeline-memory">
                               <p className="timeline-memory-text">{memoryBefore}</p>
                             </div>
                           )}
                           
+                          {/* Now marker for ongoing entries */}
+                          {isOngoing && (
+                            <div className="timeline-now-marker">
+                              <span className="timeline-now-line" />
+                              <span className="timeline-now-text">Now</span>
+                              <span className="timeline-now-line" />
+                            </div>
+                          )}
+                          
                           {/* The entry */}
-                          <article className={`timeline-entry ${distanceClass}`}>
-                            <div className="timeline-dot" />
+                          <article className={`timeline-entry ${distanceClass} ${isOngoing ? 'timeline-entry--ongoing' : ''}`}>
+                            <div className={`timeline-dot ${isOngoing ? 'timeline-dot--ongoing' : ''}`} />
                             
                             <h2 
                               className="timeline-place"
@@ -542,35 +586,76 @@ export default function Timeline() {
                               {country.name}
                             </h2>
                             
-                            <p className="timeline-date">
-                              {formatDateRange(visit.arrival_date, visit.departure_date)}
-                            </p>
-                            
-                            <p className="timeline-season">
-                              {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
-                            </p>
-                            
-                            {/* Actions - appear on hover */}
-                            <div className="timeline-actions">
-                              <span 
-                                className="timeline-action"
-                                onClick={() => setEditingVisit(visit)}
-                              >
-                                Edit
-                              </span>
-                              <span 
-                                className="timeline-action"
-                                onClick={() => navigate(`/country/${visit.country_iso2}`)}
-                              >
-                                View on map
-                              </span>
-                              <span 
-                                className="timeline-action timeline-action--destructive"
-                                onClick={() => setDeletingVisit(visit)}
-                              >
-                                Remove
-                              </span>
-                            </div>
+                            {isOngoing ? (
+                              <>
+                                {/* Present-tense copy for ongoing */}
+                                <p className="timeline-ongoing-copy">
+                                  {getOngoingArrivalCopy(visit.arrival_date)}
+                                </p>
+                                
+                                {/* Subtle presence indicator */}
+                                <p className="timeline-still-here">Still here.</p>
+                                
+                                {/* Primary action - Continue writing */}
+                                <div className="timeline-ongoing-actions">
+                                  <span 
+                                    className="timeline-continue"
+                                    onClick={() => setEditingVisit(visit)}
+                                  >
+                                    Continue writing
+                                  </span>
+                                </div>
+                                
+                                {/* Secondary actions - margin notes style */}
+                                <div className="timeline-margin-notes">
+                                  <span 
+                                    className="timeline-margin-note"
+                                    onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                                  >
+                                    View country
+                                  </span>
+                                  <span 
+                                    className="timeline-margin-note"
+                                    onClick={handleEndTrip}
+                                  >
+                                    Mark as ended
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                {/* Settled, reflective copy for ended trips */}
+                                <p className="timeline-date">
+                                  {formatDateRange(visit.arrival_date, visit.departure_date)}
+                                </p>
+                                
+                                <p className="timeline-season">
+                                  {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
+                                </p>
+                                
+                                {/* Actions - appear on hover, like margin notes */}
+                                <div className="timeline-actions">
+                                  <span 
+                                    className="timeline-action"
+                                    onClick={() => setEditingVisit(visit)}
+                                  >
+                                    Edit
+                                  </span>
+                                  <span 
+                                    className="timeline-action"
+                                    onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                                  >
+                                    View on map
+                                  </span>
+                                  <span 
+                                    className="timeline-action timeline-action--destructive"
+                                    onClick={() => setDeletingVisit(visit)}
+                                  >
+                                    Remove
+                                  </span>
+                                </div>
+                              </>
+                            )}
                           </article>
                         </div>
                       );
