@@ -561,13 +561,203 @@
     border-color: hsl(var(--border) / 0.4);
   }
 
-  /* Timeline styles */
-  .timeline-item {
-    @apply relative pl-8 pb-6 border-l border-border/50 last:border-transparent;
+  /* ============================================
+     TIMELINE — Narrative spine of your travels
+     ============================================ */
+
+  .timeline-page {
+    @apply max-w-xl mx-auto px-6 py-12;
   }
 
+  @media (min-width: 768px) {
+    .timeline-page {
+      @apply px-8 py-16;
+    }
+  }
+
+  /* The vertical narrative spine */
+  .timeline-spine {
+    @apply relative;
+    padding-left: 2rem;
+  }
+
+  .timeline-spine::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--border) / 0.6) 0%,
+      hsl(var(--border) / 0.3) 50%,
+      hsl(var(--border) / 0.1) 100%
+    );
+  }
+
+  /* Individual timeline entry (a moment in time) */
+  .timeline-entry {
+    @apply relative pb-12;
+  }
+
+  .timeline-entry:last-child {
+    @apply pb-0;
+  }
+
+  /* Older entries fade slightly */
+  .timeline-entry--distant {
+    opacity: 0.85;
+  }
+
+  .timeline-entry--very-distant {
+    opacity: 0.7;
+  }
+
+  /* The dot on the spine */
   .timeline-dot {
-    @apply absolute left-0 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-primary/80 border-2 border-background;
+    position: absolute;
+    left: -2rem;
+    top: 0.35rem;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 3px hsl(var(--background));
+  }
+
+  .timeline-dot--muted {
+    background: hsl(var(--muted-foreground) / 0.4);
+  }
+
+  /* Place name - the main headline */
+  .timeline-place {
+    @apply text-xl mb-1 cursor-pointer transition-colors;
+    color: hsl(var(--foreground));
+  }
+
+  .timeline-place:hover {
+    color: hsl(var(--primary));
+  }
+
+  @media (min-width: 768px) {
+    .timeline-place {
+      @apply text-2xl;
+    }
+  }
+
+  /* Date range - quiet, secondary */
+  .timeline-date {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-sm mb-2;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Seasonal whisper - atmospheric cue */
+  .timeline-season {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground) / 0.7);
+    font-style: italic;
+  }
+
+  /* Entry actions - appear on hover */
+  .timeline-actions {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply flex items-center gap-3 mt-3 opacity-0 transition-opacity;
+    transition-duration: 200ms;
+  }
+
+  .timeline-entry:hover .timeline-actions {
+    opacity: 1;
+  }
+
+  .timeline-action {
+    @apply text-xs transition-colors cursor-pointer;
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  .timeline-action:hover {
+    color: hsl(var(--foreground));
+  }
+
+  .timeline-action--destructive:hover {
+    color: hsl(var(--destructive));
+  }
+
+  /* Memory moment - interleaved reflection */
+  .timeline-memory {
+    @apply py-8 pl-4;
+    border-left: 1px solid transparent;
+  }
+
+  .timeline-memory-text {
+    @apply text-base;
+    color: hsl(var(--muted-foreground) / 0.65);
+    font-style: italic;
+    max-width: 280px;
+  }
+
+  /* Year marker */
+  .timeline-year {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs uppercase tracking-widest mb-8;
+    color: hsl(var(--muted-foreground) / 0.5);
+    letter-spacing: 0.15em;
+  }
+
+  /* Chapter scope header */
+  .timeline-scope {
+    @apply mb-8;
+  }
+
+  .timeline-scope-title {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  .timeline-scope-link {
+    color: hsl(var(--muted-foreground));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-color: hsl(var(--muted-foreground) / 0.3);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .timeline-scope-link:hover {
+    color: hsl(var(--foreground));
+    text-decoration-color: hsl(var(--foreground) / 0.4);
+  }
+
+  /* End of timeline message */
+  .timeline-end {
+    @apply pt-12 pb-8 text-center;
+    border-top: 1px solid hsl(var(--border) / 0.2);
+    margin-top: 4rem;
+  }
+
+  .timeline-end-text {
+    @apply text-sm;
+    color: hsl(var(--muted-foreground) / 0.5);
+    font-style: italic;
+  }
+
+  /* Filter trigger - editorial style */
+  .timeline-filter {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply inline-flex items-center gap-1.5 text-xs transition-colors cursor-pointer;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .timeline-filter:hover {
+    color: hsl(var(--foreground));
+  }
+
+  /* Legacy timeline styles - kept for compatibility */
+  .timeline-item {
+    @apply relative pl-8 pb-6 border-l border-border/50 last:border-transparent;
   }
 
   /* Badge styles */
