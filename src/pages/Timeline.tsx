@@ -1,23 +1,23 @@
 import { Header } from '@/components/Header';
 import { getCountryByIso } from '@/data/countries';
-import { format, getYear } from 'date-fns';
-import { Calendar, ChevronDown, Plane, Edit2, Loader2, Trash2, BookOpen } from 'lucide-react';
+import { format, getYear, getMonth, differenceInDays } from 'date-fns';
+import { ChevronDown, Loader2, BookOpen } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { EditVisitModal } from '@/components/EditVisitModal';
 import { DeleteVisitDialog } from '@/components/DeleteVisitDialog';
-import { ChapterFilter, type ChapterFilterValue } from '@/components/ChapterFilter';
-import { useChapters, type Chapter } from '@/hooks/useChapters';
+import { useChapters } from '@/hooks/useChapters';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Visit {
   id: string;
@@ -28,6 +28,89 @@ interface Visit {
   trip_id: string | null;
 }
 
+type ChapterFilterValue = 'all' | 'current' | string;
+
+// Helper to get seasonal/temporal context
+function getSeasonalContext(date: string): string {
+  const month = getMonth(new Date(date));
+  const seasons = [
+    'That winter',      // 0 - Jan
+    'Late winter',      // 1 - Feb
+    'Early spring',     // 2 - Mar
+    'That spring',      // 3 - Apr
+    'Late spring',      // 4 - May
+    'Early summer',     // 5 - Jun
+    'That summer',      // 6 - Jul
+    'Late summer',      // 7 - Aug
+    'Early autumn',     // 8 - Sep
+    'That autumn',      // 9 - Oct
+    'Late autumn',      // 10 - Nov
+    'Early winter',     // 11 - Dec
+  ];
+  return seasons[month];
+}
+
+// Format date range in a gentle, readable way
+function formatDateRange(arrival: string, departure: string | null): string {
+  const start = new Date(arrival);
+  if (!departure) {
+    return format(start, 'MMMM d, yyyy');
+  }
+  const end = new Date(departure);
+  const sameYear = getYear(start) === getYear(end);
+  const sameMonth = sameYear && getMonth(start) === getMonth(end);
+  
+  if (sameMonth) {
+    return `${format(start, 'MMMM d')} – ${format(end, 'd, yyyy')}`;
+  }
+  if (sameYear) {
+    return `${format(start, 'MMMM d')} – ${format(end, 'MMMM d, yyyy')}`;
+  }
+  return `${format(start, 'MMMM d, yyyy')} – ${format(end, 'MMMM d, yyyy')}`;
+}
+
+// Generate occasional memory moments
+function generateMemoryMoments(visits: Visit[]): Map<number, string> {
+  const moments = new Map<number, string>();
+  if (visits.length < 3) return moments;
+
+  // Find longest stay
+  let longestStayIndex = -1;
+  let longestDays = 0;
+  visits.forEach((v, i) => {
+    if (v.departure_date) {
+      const days = differenceInDays(new Date(v.departure_date), new Date(v.arrival_date));
+      if (days > longestDays) {
+        longestDays = days;
+        longestStayIndex = i;
+      }
+    }
+  });
+  if (longestStayIndex > 0 && longestDays > 7) {
+    const country = getCountryByIso(visits[longestStayIndex].country_iso2);
+    if (country) {
+      moments.set(longestStayIndex, `Your longest time away — ${longestDays} days in ${country.name}.`);
+    }
+  }
+
+  // Find repeated countries
+  const countryCounts = new Map<string, number[]>();
+  visits.forEach((v, i) => {
+    const existing = countryCounts.get(v.country_iso2) || [];
+    existing.push(i);
+    countryCounts.set(v.country_iso2, existing);
+  });
+  countryCounts.forEach((indices, iso) => {
+    if (indices.length >= 2 && indices[1] !== longestStayIndex) {
+      const country = getCountryByIso(iso);
+      if (country && !moments.has(indices[1])) {
+        moments.set(indices[1], `You returned here more than once.`);
+      }
+    }
+  });
+
+  return moments;
+}
 
 export default function Timeline() {
   const navigate = useNavigate();
@@ -85,18 +168,16 @@ export default function Timeline() {
   // Filter visits based on chapter selection (by date range)
   const filteredVisits = useMemo(() => {
     if (!selectedChapter) return visits;
-    // Show visits that overlap with the chapter's date range
     return visits.filter(v => {
       const visitStart = v.arrival_date;
       const visitEnd = v.departure_date || v.arrival_date;
       const chapterStart = selectedChapter.start_date;
       const chapterEnd = selectedChapter.end_date || today;
-      // Overlap check: visit ends after chapter starts AND visit starts before chapter ends
       return visitEnd >= chapterStart && visitStart <= chapterEnd;
     });
   }, [visits, selectedChapter, today]);
 
-  // Group visits by year - simple, clean timeline
+  // Group by year
   const groupedData = useMemo(() => {
     const visitsToGroup = chapterFilter !== 'all' ? filteredVisits : visits;
     
@@ -113,16 +194,28 @@ export default function Timeline() {
     };
   }, [chapterFilter, visits, filteredVisits]);
 
+  // Generate memory moments for the visible entries
+  const memoryMoments = useMemo(() => {
+    const allVisible = chapterFilter !== 'all' ? filteredVisits : visits;
+    return generateMemoryMoments(allVisible);
+  }, [chapterFilter, visits, filteredVisits]);
+
+  // Get filter display label
+  const getFilterLabel = () => {
+    if (chapterFilter === 'all') return 'Read all';
+    if (chapterFilter === 'current') {
+      return currentChapter ? currentChapter.title : 'This chapter';
+    }
+    return selectedChapter?.title || 'Select';
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <div className="container py-16 text-center">
-          <h1 className="text-2xl font-display font-bold text-foreground mb-4">
-            Sign In Required
-          </h1>
-          <p className="text-muted-foreground mb-8">
-            Please sign in to view your timeline.
+        <div className="timeline-page text-center py-16">
+          <p className="journal-body--muted mb-8">
+            Sign in to read your timeline.
           </p>
           <Button onClick={() => navigate('/auth')}>
             Sign In
@@ -132,61 +225,204 @@ export default function Timeline() {
     );
   }
 
+  const totalVisits = chapterFilter !== 'all' ? filteredVisits.length : visits.length;
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container py-8 space-y-8">
-        {/* Page Header */}
-        <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="space-y-1">
-              <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground">
-                Your Timeline
-              </h1>
-              <p className="text-muted-foreground">
-                {chapterFilter === 'all' 
-                  ? 'Your story, one place at a time.'
-                  : 'Entries from this chapter.'}
+      <main className="timeline-page">
+        {/* Page opening */}
+        <header className="mb-12">
+          <div className="flex items-baseline justify-between gap-4 mb-4">
+            <h1 className="journal-title">Timeline</h1>
+            
+            {chapters.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="timeline-filter">
+                    <span>{getFilterLabel()}</span>
+                    <ChevronDown className="w-3 h-3 opacity-50" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => handleChapterChange('all')}>
+                    Read all
+                  </DropdownMenuItem>
+                  
+                  {currentChapter && (
+                    <DropdownMenuItem onClick={() => handleChapterChange('current')}>
+                      This chapter
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {currentChapter.title}
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {chapters.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      {chapters.map((chapter) => (
+                        <DropdownMenuItem 
+                          key={chapter.id} 
+                          onClick={() => handleChapterChange(chapter.id)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate">{chapter.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(chapter.start_date), 'MMM yyyy')}
+                              {chapter.end_date 
+                                ? ` – ${format(new Date(chapter.end_date), 'MMM yyyy')}`
+                                : ' – Present'
+                              }
+                            </p>
+                          </div>
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
+
+          {/* Scope context */}
+          {selectedChapter && (
+            <div className="timeline-scope">
+              <p className="timeline-scope-title">
+                Entries from <em>{selectedChapter.title}</em>.{' '}
+                <span 
+                  className="timeline-scope-link"
+                  onClick={() => handleChapterChange('all')}
+                >
+                  Read all time
+                </span>
               </p>
             </div>
-            <ChapterFilter value={chapterFilter} onChange={handleChapterChange} />
-          </div>
-        </section>
+          )}
+        </header>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground/50" />
           </div>
         ) : visits.length === 0 ? (
-          <div className="text-center py-16 space-y-4">
-            <p className="text-muted-foreground">No entries yet.</p>
-            <Button onClick={() => navigate('/')}>
-              Add Your First Entry
+          <div className="text-center py-16">
+            <p className="journal-body--muted mb-8">
+              Your story hasn't started yet.
+            </p>
+            <Button variant="outline" onClick={() => navigate('/')}>
+              Add your first entry
             </Button>
           </div>
         ) : chapterFilter !== 'all' && filteredVisits.length === 0 ? (
-          <div className="text-center py-16 space-y-4">
-            <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/50" />
-            <p className="text-muted-foreground">No entries in this chapter yet.</p>
-            <Button variant="outline" onClick={() => handleChapterChange('all')}>
-              View All Time
-            </Button>
+          <div className="text-center py-16">
+            <BookOpen className="w-10 h-10 mx-auto text-muted-foreground/30 mb-4" />
+            <p className="journal-body--muted mb-4">
+              No entries during this chapter.
+            </p>
+            <button 
+              className="timeline-scope-link"
+              onClick={() => handleChapterChange('all')}
+            >
+              Read all time
+            </button>
           </div>
         ) : (
-          <div className="space-y-8">
-            {groupedData.years.map((year, yearIndex) => (
-              <YearSection 
-                key={year} 
-                year={year} 
-                visits={groupedData.byYear[year]}
-                defaultOpen={yearIndex === 0}
-                onCountryClick={(iso) => navigate(`/country/${iso}`)}
-                onEditVisit={setEditingVisit}
-                onDeleteVisit={setDeletingVisit}
-              />
-            ))}
-          </div>
+          <>
+            {/* The narrative spine */}
+            <div className="timeline-spine">
+              {groupedData.years.map((year, yearIndex) => {
+                const yearVisits = groupedData.byYear[year];
+                
+                return (
+                  <div key={year}>
+                    {/* Year marker */}
+                    <div className="timeline-year">{year}</div>
+                    
+                    {yearVisits.map((visit, entryIndex) => {
+                      const country = getCountryByIso(visit.country_iso2);
+                      if (!country) return null;
+                      
+                      // Calculate distance class for fading older entries
+                      const globalIndex = groupedData.years
+                        .slice(0, yearIndex)
+                        .reduce((acc, y) => acc + groupedData.byYear[y].length, 0) + entryIndex;
+                      
+                      const distanceClass = 
+                        globalIndex > 15 ? 'timeline-entry--very-distant' :
+                        globalIndex > 8 ? 'timeline-entry--distant' : '';
+                      
+                      // Check for memory moment before this entry
+                      const memoryBefore = memoryMoments.get(globalIndex);
+                      
+                      return (
+                        <div key={visit.id}>
+                          {/* Memory moment */}
+                          {memoryBefore && (
+                            <div className="timeline-memory">
+                              <p className="timeline-memory-text">{memoryBefore}</p>
+                            </div>
+                          )}
+                          
+                          {/* The entry */}
+                          <article className={`timeline-entry ${distanceClass}`}>
+                            <div className="timeline-dot" />
+                            
+                            <h2 
+                              className="timeline-place"
+                              onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                            >
+                              {country.name}
+                            </h2>
+                            
+                            <p className="timeline-date">
+                              {formatDateRange(visit.arrival_date, visit.departure_date)}
+                            </p>
+                            
+                            <p className="timeline-season">
+                              {getSeasonalContext(visit.arrival_date)}
+                            </p>
+                            
+                            {/* Actions - appear on hover */}
+                            <div className="timeline-actions">
+                              <span 
+                                className="timeline-action"
+                                onClick={() => setEditingVisit(visit)}
+                              >
+                                Edit
+                              </span>
+                              <span 
+                                className="timeline-action"
+                                onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                              >
+                                View on map
+                              </span>
+                              <span 
+                                className="timeline-action timeline-action--destructive"
+                                onClick={() => setDeletingVisit(visit)}
+                              >
+                                Remove
+                              </span>
+                            </div>
+                          </article>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* End of timeline */}
+            {totalVisits > 0 && (
+              <div className="timeline-end">
+                <p className="timeline-end-text">
+                  This is as far back as your journal goes — for now.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -201,155 +437,6 @@ export default function Timeline() {
         open={!!deletingVisit}
         onOpenChange={(open) => !open && setDeletingVisit(null)}
       />
-    </div>
-  );
-}
-
-
-interface YearSectionProps {
-  year: number;
-  visits: Visit[];
-  defaultOpen?: boolean;
-  onCountryClick: (iso: string) => void;
-  onEditVisit: (visit: Visit) => void;
-  onDeleteVisit: (visit: Visit) => void;
-  nested?: boolean;
-}
-
-function YearSection({ year, visits, defaultOpen = false, onCountryClick, onEditVisit, onDeleteVisit, nested = false }: YearSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  
-  const uniqueCountries = [...new Set(visits.map(v => v.country_iso2))].length;
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <button className={cn(
-          "w-full flex items-center justify-between p-4 rounded-xl transition-colors group",
-          nested 
-            ? "hover:bg-muted/30" 
-            : "hover:bg-muted/30"
-        )}>
-          <div className="flex items-center gap-4">
-            <span className={cn(
-              "font-display font-bold text-foreground",
-              nested ? "text-2xl" : "text-3xl"
-            )}>
-              {year}
-            </span>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>{visits.length} entr{visits.length !== 1 ? 'ies' : 'y'}</span>
-              <span>•</span>
-              <span>{uniqueCountries} countr{uniqueCountries !== 1 ? 'ies' : 'y'}</span>
-            </div>
-          </div>
-          <ChevronDown className={cn(
-            "w-5 h-5 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180"
-          )} />
-        </button>
-      </CollapsibleTrigger>
-      
-      <CollapsibleContent>
-        <div className="pt-4 space-y-4 pl-4 border-l-2 border-border ml-6">
-          {visits.map((visit, index) => (
-            <VisitCard 
-              key={visit.id} 
-              visit={visit} 
-              index={index}
-              onCountryClick={onCountryClick}
-              onEdit={() => onEditVisit(visit)}
-              onDelete={() => onDeleteVisit(visit)}
-            />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
-interface VisitCardProps {
-  visit: Visit;
-  index: number;
-  onCountryClick: (iso: string) => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}
-
-function VisitCard({ visit, index, onCountryClick, onEdit, onDelete }: VisitCardProps) {
-  const country = getCountryByIso(visit.country_iso2);
-  if (!country) return null;
-  
-  return (
-    <div 
-      className="relative opacity-0 animate-fade-in group"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      {/* Timeline dot */}
-      <div className="absolute -left-[calc(1rem+5px)] top-4 w-3 h-3 rounded-full bg-primary border-2 border-background" />
-      
-      <div className="w-full p-5 space-y-2 text-left hover:bg-muted/30 transition-colors rounded-xl">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onCountryClick(visit.country_iso2)}
-            className="w-12 h-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold hover:opacity-90 transition-opacity"
-          >
-            {country.iso2}
-          </button>
-          <div className="flex-1 min-w-0">
-            <button
-              onClick={() => onCountryClick(visit.country_iso2)}
-              className="text-lg font-semibold text-foreground truncate hover:text-primary transition-colors text-left"
-            >
-              {country.name}
-            </button>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>
-                  {visit.departure_date 
-                    ? `${format(new Date(visit.arrival_date), 'MMM d, yyyy')} - ${format(new Date(visit.departure_date), 'MMM d, yyyy')}`
-                    : format(new Date(visit.arrival_date), 'MMM d, yyyy')
-                  }
-                </span>
-              </div>
-              
-              {visit.source === 'flight' && (
-                <div className="flex items-center gap-1">
-                  <Plane className="w-3.5 h-3.5" />
-                  <span>Via flight</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit();
-              }}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
