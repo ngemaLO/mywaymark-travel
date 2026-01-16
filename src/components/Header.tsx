@@ -65,7 +65,7 @@ export function Header() {
                 onClick={() => navigate(item.path)}
                 className={cn(
                   "gap-2",
-                  location.pathname === item.path && "bg-muted"
+                  location.pathname === item.path && "text-primary font-medium"
                 )}
               >
                 <item.icon className="w-4 h-4" />
