@@ -2,3 +2,6 @@ project_id = "biawucdjcqwgzlxdgiet"
 
 [functions.get-shared-data]
 verify_jwt = false
+
+[functions.generate-letter]
+verify_jwt = true

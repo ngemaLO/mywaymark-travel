@@ -5,12 +5,14 @@ import { RecentJourneys } from '@/components/RecentJourneys';
 import { CurrentChapterCard } from '@/components/CurrentChapterCard';
 import { TodayEntry } from '@/components/TodayEntry';
 import { ArchiveLinks } from '@/components/ArchiveLinks';
+import { LetterNotice } from '@/components/letters/LetterNotice';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisitedCountries } from '@/hooks/useVisits';
+import { useEnsureAnnualLetter } from '@/hooks/useLetters';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AddTripModal } from '@/components/AddTripModal';
 import { ChapterFilter } from '@/components/ChapterFilter';
 
@@ -20,6 +22,14 @@ const Index = () => {
   const { visitedIsos, isLoading } = useVisitedCountries();
   const [addTripOpen, setAddTripOpen] = useState(false);
   const [mapScope, setMapScope] = useState<string>('all');
+  const { checkAndGenerate } = useEnsureAnnualLetter();
+
+  // Check for annual letter on load
+  useEffect(() => {
+    if (user) {
+      checkAndGenerate();
+    }
+  }, [user, checkAndGenerate]);
 
   const hasVisits = visitedIsos.length > 0;
 
@@ -51,6 +61,9 @@ const Index = () => {
 
             {/* 2. Recent — Last few entries, reflective */}
             <RecentJourneys />
+
+            {/* 2.5. Letter Notice — Subtle prompt when new letter is ready */}
+            <LetterNotice />
 
             {/* 3. Chapter — Current life context */}
             <CurrentChapterCard />

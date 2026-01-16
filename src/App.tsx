@@ -13,6 +13,8 @@ import SharedView from "./pages/SharedView";
 import ShareLinksManagement from "./pages/ShareLinksManagement";
 import Chapters from "./pages/Chapters";
 import Connect from "./pages/Connect";
+import Letters from "./pages/Letters";
+import LetterReader from "./pages/LetterReader";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
             <Route path="/share-links" element={<ShareLinksManagement />} />
             <Route path="/chapters" element={<Chapters />} />
             <Route path="/connect" element={<Connect />} />
+            <Route path="/letters" element={<Letters />} />
+            <Route path="/letters/:id" element={<LetterReader />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
