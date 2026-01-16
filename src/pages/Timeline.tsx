@@ -28,9 +28,6 @@ interface Visit {
   trip_id: string | null;
 }
 
-interface ChapterWithTrips extends Chapter {
-  tripIds: string[];
-}
 
 export default function Timeline() {
   const navigate = useNavigate();
@@ -55,40 +52,17 @@ export default function Timeline() {
   // Fetch chapters
   const { data: chapters = [] } = useChapters();
 
-  // Fetch chapter_trips to know which trips belong to which chapters
-  const { data: chapterTrips = [] } = useQuery({
-    queryKey: ['chapter-trips-all', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('chapter_trips')
-        .select('chapter_id, trip_id')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  // Determine current chapter ID if filter is 'current'
+  // Determine current chapter if filter is 'current'
   const today = new Date().toISOString().split('T')[0];
   const currentChapter = chapters.find(c => 
     c.start_date <= today && (!c.end_date || c.end_date >= today)
   );
 
-  const effectiveChapterId = chapterFilter === 'current' 
-    ? currentChapter?.id 
+  const selectedChapter = chapterFilter === 'current' 
+    ? currentChapter
     : chapterFilter !== 'all' 
-      ? chapterFilter 
+      ? chapters.find(c => c.id === chapterFilter)
       : null;
-
-  // Get trip IDs for the selected chapter
-  const selectedChapterTripIds = useMemo(() => {
-    if (!effectiveChapterId) return null;
-    return chapterTrips
-      .filter(ct => ct.chapter_id === effectiveChapterId)
-      .map(ct => ct.trip_id);
-  }, [effectiveChapterId, chapterTrips]);
 
   // Fetch visits from database
   const { data: visits = [], isLoading } = useQuery({
@@ -108,87 +82,36 @@ export default function Timeline() {
     enabled: !!user,
   });
 
-  // Filter visits based on chapter selection
+  // Filter visits based on chapter selection (by date range)
   const filteredVisits = useMemo(() => {
-    if (!selectedChapterTripIds) return visits;
-    // Show visits whose trip_id is in the selected chapter
-    return visits.filter(v => v.trip_id && selectedChapterTripIds.includes(v.trip_id));
-  }, [visits, selectedChapterTripIds]);
-
-  // Build chapter->tripIds mapping
-  const chapterTripMap = useMemo(() => {
-    const map: Record<string, string[]> = {};
-    chapterTrips.forEach(ct => {
-      if (!map[ct.chapter_id]) map[ct.chapter_id] = [];
-      map[ct.chapter_id].push(ct.trip_id);
+    if (!selectedChapter) return visits;
+    // Show visits that overlap with the chapter's date range
+    return visits.filter(v => {
+      const visitStart = v.arrival_date;
+      const visitEnd = v.departure_date || v.arrival_date;
+      const chapterStart = selectedChapter.start_date;
+      const chapterEnd = selectedChapter.end_date || today;
+      // Overlap check: visit ends after chapter starts AND visit starts before chapter ends
+      return visitEnd >= chapterStart && visitStart <= chapterEnd;
     });
-    return map;
-  }, [chapterTrips]);
+  }, [visits, selectedChapter, today]);
 
-  // Find which chapter a trip belongs to (first match for all-time view)
-  const tripToChapterMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    // Sort chapters by start_date to get consistent "first" chapter
-    const sortedChapters = [...chapters].sort((a, b) => 
-      new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
-    );
-    sortedChapters.forEach(chapter => {
-      const tripIds = chapterTripMap[chapter.id] || [];
-      tripIds.forEach(tripId => {
-        if (!map[tripId]) {
-          map[tripId] = chapter.id;
-        }
-      });
-    });
-    return map;
-  }, [chapters, chapterTripMap]);
-
-  // Group visits by chapter or year based on filter
+  // Group visits by year - simple, clean timeline
   const groupedData = useMemo(() => {
-    if (chapterFilter !== 'all') {
-      // Chapter-scoped: group by year
-      const byYear = filteredVisits.reduce((acc, visit) => {
-        const year = getYear(new Date(visit.arrival_date));
-        if (!acc[year]) acc[year] = [];
-        acc[year].push(visit);
-        return acc;
-      }, {} as Record<number, Visit[]>);
-
-      return {
-        type: 'year' as const,
-        years: Object.keys(byYear).map(Number).sort((a, b) => b - a),
-        byYear,
-      };
-    }
-
-    // All-time view: group by chapter first, then by year within each chapter
-    const byChapter: Record<string, Visit[]> = {};
-    const unassigned: Visit[] = [];
-
-    visits.forEach(visit => {
-      if (visit.trip_id && tripToChapterMap[visit.trip_id]) {
-        const chapterId = tripToChapterMap[visit.trip_id];
-        if (!byChapter[chapterId]) byChapter[chapterId] = [];
-        byChapter[chapterId].push(visit);
-      } else {
-        unassigned.push(visit);
-      }
-    });
-
-    // Sort chapters by start_date (newest first)
-    const sortedChapterIds = chapters
-      .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
-      .map(c => c.id)
-      .filter(id => byChapter[id]?.length > 0);
+    const visitsToGroup = chapterFilter !== 'all' ? filteredVisits : visits;
+    
+    const byYear = visitsToGroup.reduce((acc, visit) => {
+      const year = getYear(new Date(visit.arrival_date));
+      if (!acc[year]) acc[year] = [];
+      acc[year].push(visit);
+      return acc;
+    }, {} as Record<number, Visit[]>);
 
     return {
-      type: 'chapter' as const,
-      chapterIds: sortedChapterIds,
-      byChapter,
-      unassigned,
-      chapters: chapters.reduce((acc, c) => ({ ...acc, [c.id]: c }), {} as Record<string, Chapter>),
+      years: Object.keys(byYear).map(Number).sort((a, b) => b - a),
+      byYear,
     };
-  }, [chapterFilter, visits, filteredVisits, tripToChapterMap, chapters]);
+  }, [chapterFilter, visits, filteredVisits]);
 
   if (!user) {
     return (
@@ -242,59 +165,27 @@ export default function Timeline() {
               Add Your First Entry
             </Button>
           </div>
-        ) : groupedData.type === 'year' ? (
-          // Chapter-scoped view: group by year
-          filteredVisits.length === 0 ? (
-            <div className="text-center py-16 space-y-4">
-              <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/50" />
-              <p className="text-muted-foreground">No entries in this chapter yet.</p>
-              <Button variant="outline" onClick={() => handleChapterChange('all')}>
-                View All Time
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {groupedData.years.map((year, yearIndex) => (
-                <YearSection 
-                  key={year} 
-                  year={year} 
-                  visits={groupedData.byYear[year]}
-                  defaultOpen={yearIndex === 0}
-                  onCountryClick={(iso) => navigate(`/country/${iso}`)}
-                  onEditVisit={setEditingVisit}
-                  onDeleteVisit={setDeletingVisit}
-                />
-              ))}
-            </div>
-          )
+        ) : chapterFilter !== 'all' && filteredVisits.length === 0 ? (
+          <div className="text-center py-16 space-y-4">
+            <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/50" />
+            <p className="text-muted-foreground">No entries in this chapter yet.</p>
+            <Button variant="outline" onClick={() => handleChapterChange('all')}>
+              View All Time
+            </Button>
+          </div>
         ) : (
-          // All-time view: group by chapter
           <div className="space-y-8">
-            {groupedData.chapterIds.map((chapterId, index) => {
-              const chapter = groupedData.chapters[chapterId];
-              const chapterVisits = groupedData.byChapter[chapterId] || [];
-              return (
-                <ChapterSection
-                  key={chapterId}
-                  chapter={chapter}
-                  visits={chapterVisits}
-                  defaultOpen={index === 0}
-                  onCountryClick={(iso) => navigate(`/country/${iso}`)}
-                  onEditVisit={setEditingVisit}
-                  onDeleteVisit={setDeletingVisit}
-                />
-              );
-            })}
-
-            {groupedData.unassigned.length > 0 && (
-              <UnassignedSection
-                visits={groupedData.unassigned}
-                defaultOpen={false}
+            {groupedData.years.map((year, yearIndex) => (
+              <YearSection 
+                key={year} 
+                year={year} 
+                visits={groupedData.byYear[year]}
+                defaultOpen={yearIndex === 0}
                 onCountryClick={(iso) => navigate(`/country/${iso}`)}
                 onEditVisit={setEditingVisit}
                 onDeleteVisit={setDeletingVisit}
               />
-            )}
+            ))}
           </div>
         )}
       </main>
@@ -314,149 +205,6 @@ export default function Timeline() {
   );
 }
 
-interface ChapterSectionProps {
-  chapter: Chapter;
-  visits: Visit[];
-  defaultOpen?: boolean;
-  onCountryClick: (iso: string) => void;
-  onEditVisit: (visit: Visit) => void;
-  onDeleteVisit: (visit: Visit) => void;
-}
-
-function ChapterSection({ chapter, visits, defaultOpen = false, onCountryClick, onEditVisit, onDeleteVisit }: ChapterSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  const uniqueCountries = [...new Set(visits.map(v => v.country_iso2))].length;
-
-  // Group visits by year within the chapter
-  const visitsByYear = visits.reduce((acc, visit) => {
-    const year = getYear(new Date(visit.arrival_date));
-    if (!acc[year]) acc[year] = [];
-    acc[year].push(visit);
-    return acc;
-  }, {} as Record<number, Visit[]>);
-
-  const years = Object.keys(visitsByYear).map(Number).sort((a, b) => b - a);
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors group">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary" />
-            </div>
-            <div className="text-left">
-              <span className="text-xl font-display font-bold text-foreground">
-                {chapter.title}
-              </span>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span>
-                  {format(new Date(chapter.start_date), 'MMM yyyy')}
-                  {chapter.end_date 
-                    ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
-                    : ' - Present'}
-                </span>
-                <span>•</span>
-                <span>{visits.length} entr{visits.length !== 1 ? 'ies' : 'y'}</span>
-                <span>•</span>
-                <span>{uniqueCountries} countr{uniqueCountries !== 1 ? 'ies' : 'y'}</span>
-              </div>
-            </div>
-          </div>
-          <ChevronDown className={cn(
-            "w-5 h-5 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180"
-          )} />
-        </button>
-      </CollapsibleTrigger>
-      
-      <CollapsibleContent>
-        <div className="pt-4 space-y-6 ml-5">
-          {years.map((year, yearIndex) => (
-            <YearSection
-              key={year}
-              year={year}
-              visits={visitsByYear[year]}
-              defaultOpen={yearIndex === 0}
-              onCountryClick={onCountryClick}
-              onEditVisit={onEditVisit}
-              onDeleteVisit={onDeleteVisit}
-              nested
-            />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
-interface UnassignedSectionProps {
-  visits: Visit[];
-  defaultOpen?: boolean;
-  onCountryClick: (iso: string) => void;
-  onEditVisit: (visit: Visit) => void;
-  onDeleteVisit: (visit: Visit) => void;
-}
-
-function UnassignedSection({ visits, defaultOpen = false, onCountryClick, onEditVisit, onDeleteVisit }: UnassignedSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  const uniqueCountries = [...new Set(visits.map(v => v.country_iso2))].length;
-
-  // Group visits by year
-  const visitsByYear = visits.reduce((acc, visit) => {
-    const year = getYear(new Date(visit.arrival_date));
-    if (!acc[year]) acc[year] = [];
-    acc[year].push(visit);
-    return acc;
-  }, {} as Record<number, Visit[]>);
-
-  const years = Object.keys(visitsByYear).map(Number).sort((a, b) => b - a);
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center justify-between p-4 rounded-xl bg-muted/50 border border-border/50 hover:bg-muted transition-colors group">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div className="text-left">
-              <span className="text-xl font-display font-semibold text-muted-foreground">
-                Unassigned
-              </span>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span>{visits.length} entr{visits.length !== 1 ? 'ies' : 'y'}</span>
-                <span>•</span>
-                <span>{uniqueCountries} countr{uniqueCountries !== 1 ? 'ies' : 'y'}</span>
-              </div>
-            </div>
-          </div>
-          <ChevronDown className={cn(
-            "w-5 h-5 text-muted-foreground transition-transform duration-200",
-            isOpen && "rotate-180"
-          )} />
-        </button>
-      </CollapsibleTrigger>
-      
-      <CollapsibleContent>
-        <div className="pt-4 space-y-6 ml-5">
-          {years.map((year, yearIndex) => (
-            <YearSection
-              key={year}
-              year={year}
-              visits={visitsByYear[year]}
-              defaultOpen={yearIndex === 0}
-              onCountryClick={onCountryClick}
-              onEditVisit={onEditVisit}
-              onDeleteVisit={onDeleteVisit}
-              nested
-            />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
 
 interface YearSectionProps {
   year: number;
