@@ -30,10 +30,71 @@ interface Visit {
 
 type ChapterFilterValue = 'all' | 'current' | string;
 
-// Helper to get seasonal/temporal context
-function getSeasonalContext(date: string): string {
+// Southern hemisphere countries (below equator or mostly below)
+const SOUTHERN_HEMISPHERE_COUNTRIES = new Set([
+  // South America
+  'AR', 'BO', 'BR', 'CL', 'PY', 'PE', 'UY', 'EC',
+  // Oceania
+  'AU', 'NZ', 'FJ', 'PG', 'VU', 'SB', 'TO', 'WS', 'TV', 'NR',
+  // Southern Africa
+  'ZA', 'NA', 'BW', 'ZW', 'MZ', 'ZM', 'MW', 'LS', 'SZ', 'MG', 'MU'
+]);
+
+// Tropical countries near equator (no real seasons)
+const TROPICAL_COUNTRIES = new Set([
+  'CO', 'VE', 'GY', 'SR', 'EC', // Northern South America
+  'KE', 'UG', 'TZ', 'RW', 'BI', 'CD', 'CG', 'GA', 'CM', 'GQ', 'CF', // Central Africa
+  'SG', 'MY', 'ID', 'PH', 'TH', 'VN', 'KH', 'LA', 'MM', 'BD', // Southeast Asia
+  'IN', 'LK', 'MV', // South Asia
+  'CR', 'PA', 'NI', 'HN', 'GT', 'SV', 'BZ', // Central America
+  'JM', 'HT', 'DO', 'CU', 'BS', 'BB', 'TT', 'GD', 'AG', 'DM', 'LC', 'VC', 'KN', // Caribbean
+  'PW', 'FM', 'MH', 'KI', // Pacific islands
+]);
+
+// Helper to get seasonal/temporal context based on country location
+function getSeasonalContext(date: string, countryIso2: string): string {
   const month = getMonth(new Date(date));
-  const seasons = [
+  
+  // Tropical countries - use wet/dry or just the month feeling
+  if (TROPICAL_COUNTRIES.has(countryIso2)) {
+    const tropicalSeasons = [
+      'The new year',     // 0 - Jan
+      'That February',    // 1 - Feb
+      'Early in the year', // 2 - Mar
+      'That spring',      // 3 - Apr
+      'Mid-year',         // 4 - May
+      'That June',        // 5 - Jun
+      'Mid-year',         // 6 - Jul
+      'Late summer',      // 7 - Aug
+      'That September',   // 8 - Sep
+      'That autumn',      // 9 - Oct
+      'Late in the year', // 10 - Nov
+      'Year\'s end',      // 11 - Dec
+    ];
+    return tropicalSeasons[month];
+  }
+  
+  // Southern hemisphere - flip the seasons
+  if (SOUTHERN_HEMISPHERE_COUNTRIES.has(countryIso2)) {
+    const southernSeasons = [
+      'That summer',      // 0 - Jan (summer in south)
+      'Late summer',      // 1 - Feb
+      'Early autumn',     // 2 - Mar
+      'That autumn',      // 3 - Apr
+      'Late autumn',      // 4 - May
+      'Early winter',     // 5 - Jun
+      'That winter',      // 6 - Jul
+      'Late winter',      // 7 - Aug
+      'Early spring',     // 8 - Sep
+      'That spring',      // 9 - Oct
+      'Late spring',      // 10 - Nov
+      'Early summer',     // 11 - Dec
+    ];
+    return southernSeasons[month];
+  }
+  
+  // Northern hemisphere (default)
+  const northernSeasons = [
     'That winter',      // 0 - Jan
     'Late winter',      // 1 - Feb
     'Early spring',     // 2 - Mar
@@ -47,7 +108,7 @@ function getSeasonalContext(date: string): string {
     'Late autumn',      // 10 - Nov
     'Early winter',     // 11 - Dec
   ];
-  return seasons[month];
+  return northernSeasons[month];
 }
 
 // Format date range in a gentle, readable way
@@ -381,7 +442,7 @@ export default function Timeline() {
                             </p>
                             
                             <p className="timeline-season">
-                              {getSeasonalContext(visit.arrival_date)}
+                              {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
                             </p>
                             
                             {/* Actions - appear on hover */}
