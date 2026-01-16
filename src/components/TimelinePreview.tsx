@@ -17,7 +17,6 @@ interface Visit {
   arrival_date: string;
   departure_date: string | null;
   source: string;
-  trip_id: string | null;
 }
 
 interface TimelinePreviewProps {
@@ -36,69 +35,47 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
     c.start_date <= today && (!c.end_date || c.end_date >= today)
   );
 
-  // Resolve scope to chapter ID
-  const effectiveChapterId = useMemo(() => {
-    if (scope === 'all') return null;
-    if (scope === 'current') return currentChapter?.id || null;
-    return scope; // It's a chapter ID
-  }, [scope, currentChapter]);
-
+  // Resolve scope to chapter
   const selectedChapter = useMemo(() => {
-    if (!effectiveChapterId) return null;
-    return chapters.find(c => c.id === effectiveChapterId) || null;
-  }, [effectiveChapterId, chapters]);
-
-  // Fetch chapter_trips if chapter scope is active
-  const { data: chapterTripIds = [] } = useQuery({
-    queryKey: ['chapter-trips-timeline', user?.id, effectiveChapterId],
-    queryFn: async () => {
-      if (!user || !effectiveChapterId) return [];
-      const { data, error } = await supabase
-        .from('chapter_trips')
-        .select('trip_id')
-        .eq('user_id', user.id)
-        .eq('chapter_id', effectiveChapterId);
-      if (error) throw error;
-      return data.map(ct => ct.trip_id);
-    },
-    enabled: !!user && !!effectiveChapterId,
-  });
+    if (scope === 'all') return null;
+    if (scope === 'current') return currentChapter || null;
+    return chapters.find(c => c.id === scope) || null;
+  }, [scope, currentChapter, chapters]);
 
   const { data: visits = [], isLoading } = useQuery({
-    queryKey: ['recent-visits', user?.id, homeBase?.country_iso2, effectiveChapterId, chapterTripIds],
+    queryKey: ['recent-visits', user?.id, homeBase?.country_iso2, selectedChapter?.id],
     queryFn: async () => {
       if (!user) return [];
       
-      let query = supabase
+      const { data, error } = await supabase
         .from('visits')
-        .select('*')
+        .select('id, country_iso2, arrival_date, departure_date, source')
         .eq('user_id', user.id)
         .order('arrival_date', { ascending: false })
         .limit(15); // Fetch more to account for filtering
-      
-      const { data, error } = await query;
       
       if (error) throw error;
       
       let filtered = data as Visit[];
       
-      // If chapter scope is active, filter to chapter trips
-      if (effectiveChapterId && chapterTripIds.length > 0) {
-        filtered = filtered.filter(v => v.trip_id && chapterTripIds.includes(v.trip_id));
-      } else if (effectiveChapterId && chapterTripIds.length === 0) {
-        // Chapter has no trips
-        return [];
+      // If chapter scope is active, filter by date range overlap
+      if (selectedChapter) {
+        const chapterEnd = selectedChapter.end_date || today;
+        filtered = filtered.filter(v => {
+          const visitEnd = v.departure_date || v.arrival_date;
+          return visitEnd >= selectedChapter.start_date && v.arrival_date <= chapterEnd;
+        });
       }
       
-      // Filter out home base country, ongoing trips (current trips), and limit to 3
+      // Filter out home base country, ongoing entries, and limit to 3
       filtered = filtered
         .filter(v => v.country_iso2 !== homeBase?.country_iso2)
-        .filter(v => v.departure_date !== null) // Exclude ongoing trips
+        .filter(v => v.departure_date !== null) // Exclude ongoing
         .slice(0, 3);
       
       return filtered;
     },
-    enabled: !!user && (scope === 'all' || chapterTripIds.length > 0 || !effectiveChapterId),
+    enabled: !!user,
   });
 
   if (!user) {
@@ -109,7 +86,7 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
     return (
       <div className="space-y-4">
         <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          Recent Trips
+          Recent Entries
         </h3>
         <div className="flex items-center justify-center py-6">
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
@@ -118,8 +95,6 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
     );
   }
 
-  // Remove unused title variable since we use static heading now
-
   if (visits.length === 0) {
     return null; // Don't show empty state, just hide the section
   }
@@ -127,7 +102,7 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
   return (
     <div className="content-surface p-5 space-y-4">
       <h3 className="section-heading">
-        Recent Trips
+        Recent Entries
       </h3>
       
       <div className="space-y-1">
@@ -160,8 +135,8 @@ export function TimelinePreview({ scope = 'all' }: TimelinePreviewProps) {
       <button 
         className="ghost-pill w-full justify-center mt-2"
         onClick={() => {
-          const params = scope !== 'all' && effectiveChapterId 
-            ? `?chapter=${scope === 'current' ? 'current' : effectiveChapterId}` 
+          const params = scope !== 'all' && selectedChapter 
+            ? `?chapter=${scope === 'current' ? 'current' : selectedChapter.id}` 
             : '';
           navigate(`/timeline${params}`);
         }}

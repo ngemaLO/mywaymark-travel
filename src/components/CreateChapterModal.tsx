@@ -24,25 +24,19 @@ import { BookOpen, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useCreateChapter, useChapters, FREE_CHAPTER_LIMIT } from '@/hooks/useChapters';
-import { SuggestTripsStep } from '@/components/SuggestTripsStep';
-import type { Chapter } from '@/hooks/useChapters';
 
 interface CreateChapterModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-type Step = 'details' | 'suggest-trips';
-
 export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalProps) {
-  const [step, setStep] = useState<Step>('details');
   const [title, setTitle] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [isOngoing, setIsOngoing] = useState(false);
   const [homeBase, setHomeBase] = useState('');
   const [description, setDescription] = useState('');
-  const [createdChapter, setCreatedChapter] = useState<Chapter | null>(null);
 
   const createChapter = useCreateChapter();
   const { data: chapters = [] } = useChapters();
@@ -63,55 +57,28 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
   // Reset form when modal closes
   useEffect(() => {
     if (!open) {
-      setStep('details');
       setTitle('');
       setStartDate('');
       setEndDate('');
       setIsOngoing(false);
       setHomeBase('');
       setDescription('');
-      setCreatedChapter(null);
     }
   }, [open]);
 
   const handleCreateChapter = async () => {
-    const chapter = await createChapter.mutateAsync({
+    await createChapter.mutateAsync({
       title,
       start_date: startDate,
       end_date: isOngoing ? null : endDate || null,
       home_base_country_iso2: homeBase || null,
       description: description || null,
     });
-    setCreatedChapter(chapter);
-    setStep('suggest-trips');
-  };
-
-  const handleComplete = () => {
     onOpenChange(false);
   };
 
   const isAtFreeLimit = chapters.length >= FREE_CHAPTER_LIMIT;
   const isValid = title.trim() && startDate;
-
-  if (step === 'suggest-trips' && createdChapter) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary" />
-              Entries for "{createdChapter.title}"
-            </DialogTitle>
-            <DialogDescription>
-              Entries during this chapter will appear here automatically.
-            </DialogDescription>
-          </DialogHeader>
-
-          <SuggestTripsStep chapter={createdChapter} onComplete={handleComplete} />
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -145,21 +112,19 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
         ) : (
           <ScrollArea className="flex-1 -mx-6 px-6">
             <div className="space-y-5 py-4">
-              {/* Title */}
               <div className="space-y-2">
                 <Label htmlFor="chapter-title">
                   Title <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="chapter-title"
-                  placeholder="e.g., College Years, European Adventure, Post-Grad Life..."
+                  placeholder="e.g., College Years, European Adventure..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={100}
                 />
               </div>
 
-              {/* Start Date */}
               <div className="space-y-2">
                 <Label htmlFor="start-date">
                   Start Date <span className="text-destructive">*</span>
@@ -172,7 +137,6 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
                 />
               </div>
 
-              {/* End Date */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="end-date">End Date</Label>
@@ -201,10 +165,9 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
                 />
               </div>
 
-              {/* Home Base (Optional) */}
               <div className="space-y-2">
                 <Label htmlFor="home-base">Home Base (optional)</Label>
-              <Select value={homeBase || "__none__"} onValueChange={(val) => setHomeBase(val === "__none__" ? "" : val)}>
+                <Select value={homeBase || "__none__"} onValueChange={(val) => setHomeBase(val === "__none__" ? "" : val)}>
                   <SelectTrigger id="home-base">
                     <SelectValue placeholder="Select a country..." />
                   </SelectTrigger>
@@ -219,12 +182,8 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
                     </ScrollArea>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  The country you called home during this chapter.
-                </p>
               </div>
 
-              {/* Description (Optional) */}
               <div className="space-y-2">
                 <Label htmlFor="description">Description (optional)</Label>
                 <Textarea

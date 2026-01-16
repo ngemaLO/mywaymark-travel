@@ -100,36 +100,34 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
   const setMapScope = isExternallyControlled ? () => {} : setInternalMapScope;
   const setSelectedChapterId = isExternallyControlled ? () => {} : setInternalSelectedChapterId;
 
-  // Fetch chapter_trips for selected chapter
-  const { data: chapterTrips = [] } = useQuery({
-    queryKey: ['chapter-trips', user?.id, selectedChapterId],
+  // Fetch visits that overlap with the selected chapter's date range
+  const { data: chapterVisits = [] } = useQuery({
+    queryKey: ['chapter-map-visits', user?.id, selectedChapterId],
     queryFn: async () => {
       if (!user || !selectedChapterId) return [];
-      const { data, error } = await supabase
-        .from('chapter_trips')
-        .select('trip_id')
-        .eq('user_id', user.id)
-        .eq('chapter_id', selectedChapterId);
-      if (error) throw error;
-      return data.map(ct => ct.trip_id);
-    },
-    enabled: !!user && !!selectedChapterId && mapScope === 'chapter',
-  });
-
-  // Fetch visits for selected chapter's trips to get country codes
-  const { data: chapterVisits = [] } = useQuery({
-    queryKey: ['chapter-visits', user?.id, chapterTrips],
-    queryFn: async () => {
-      if (!user || chapterTrips.length === 0) return [];
+      
+      const chapter = chapters.find(c => c.id === selectedChapterId);
+      if (!chapter) return [];
+      
+      const chapterEnd = chapter.end_date || today;
+      
+      // Get all visits and filter by date overlap
       const { data, error } = await supabase
         .from('visits')
-        .select('country_iso2')
-        .eq('user_id', user.id)
-        .in('trip_id', chapterTrips);
+        .select('country_iso2, arrival_date, departure_date')
+        .eq('user_id', user.id);
+        
       if (error) throw error;
-      return [...new Set(data.map(v => v.country_iso2))];
+      
+      // Filter visits that overlap with chapter date range
+      const overlapping = (data || []).filter(v => {
+        const visitEnd = v.departure_date || v.arrival_date;
+        return visitEnd >= chapter.start_date && v.arrival_date <= chapterEnd;
+      });
+      
+      return [...new Set(overlapping.map(v => v.country_iso2))];
     },
-    enabled: !!user && chapterTrips.length > 0 && mapScope === 'chapter',
+    enabled: !!user && !!selectedChapterId && mapScope === 'chapter',
   });
 
   // Compute which countries to show as visited
@@ -137,7 +135,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
     if (mapScope === 'all') {
       return visitedIsos;
     }
-    // Chapter scope: only show countries from chapter trips
+    // Chapter scope: only show countries from visits in that chapter's date range
     return chapterVisits;
   }, [mapScope, visitedIsos, chapterVisits]);
 

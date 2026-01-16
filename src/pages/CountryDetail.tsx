@@ -4,7 +4,6 @@ import { getCountryByIso } from '@/data/countries';
 import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
 import { useCountryNote, useSaveCountryNote } from '@/hooks/useCountryNotes';
 import { useCountryImages, useAddCountryImage, useDeleteCountryImage, useUploadCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
-import { useTripsByCountry } from '@/hooks/useTripsByCountry';
 import { useCitiesByCountry, useAddCity, useRemoveCity } from '@/hooks/useCities';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,7 +52,6 @@ export default function CountryDetail() {
   const { visits: countryVisits, visitCount } = useVisitsByCountry(iso || '');
   const { data: note, isLoading: noteLoading } = useCountryNote(iso || '');
   const { data: images = [], isLoading: imagesLoading } = useCountryImages(iso || '');
-  const { data: trips = [], isLoading: tripsLoading } = useTripsByCountry(iso || '');
   const { data: cities = [], isLoading: citiesLoading } = useCitiesByCountry(iso || '');
   const { homeBase } = useCurrentHomeBase();
   const saveNoteMutation = useSaveCountryNote();
@@ -579,38 +577,6 @@ export default function CountryDetail() {
               )}
             </section>
 
-            {/* Trips Section */}
-            {tripsLoading ? (
-              <section className="card-elevated p-6 space-y-4">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-20 w-full" />
-              </section>
-            ) : trips.length > 0 && (
-              <section className="card-elevated p-6 space-y-4">
-                <h2 className="text-lg font-display font-semibold text-foreground">
-                  Related Trips
-                </h2>
-                <div className="space-y-3">
-                  {trips.map(trip => (
-                    <div 
-                      key={trip.id}
-                      className="p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
-                    >
-                      <h3 className="font-medium text-foreground">
-                        {trip.title || 'Untitled Trip'}
-                      </h3>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>
-                          {format(new Date(trip.start_date), 'MMM d')}
-                          {trip.end_date && ` - ${format(new Date(trip.end_date), 'MMM d, yyyy')}`}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -625,13 +591,13 @@ export default function CountryDetail() {
                   <p className="text-2xl font-display font-bold text-foreground">
                     {visitCount}
                   </p>
-                  <p className="text-xs text-muted-foreground">Visits</p>
+                  <p className="text-xs text-muted-foreground">Times</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-display font-bold text-foreground">
-                    {trips.length}
+                    {cities.length}
                   </p>
-                  <p className="text-xs text-muted-foreground">Trips</p>
+                  <p className="text-xs text-muted-foreground">Cities</p>
                 </div>
               </div>
             </section>

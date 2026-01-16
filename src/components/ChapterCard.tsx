@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Calendar, MapPin, Plane, Edit2, Trash2, MoreVertical, ListPlus } from 'lucide-react';
+import { Calendar, MapPin, Edit2, Trash2, MoreVertical, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,20 +8,53 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { useChapterTrips, useChapterCountries, type Chapter } from '@/hooks/useChapters';
+import type { Chapter } from '@/hooks/useChapters';
 import { getCountryByIso } from '@/data/countries';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ChapterCardProps {
   chapter: Chapter;
   onEdit: () => void;
   onDelete: () => void;
-  onManageTrips: () => void;
+  onViewEntries: () => void;
 }
 
-export function ChapterCard({ chapter, onEdit, onDelete, onManageTrips }: ChapterCardProps) {
-  const { data: chapterTrips = [] } = useChapterTrips(chapter.id);
-  const { data: countries = [] } = useChapterCountries(chapter.id);
+export function ChapterCard({ chapter, onEdit, onDelete, onViewEntries }: ChapterCardProps) {
+  const { user } = useAuth();
+  
+  // Get entries (visits) that overlap with this chapter's date range
+  const { data: chapterEntries = [] } = useQuery({
+    queryKey: ['chapter-entries-count', chapter.id, user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const today = new Date().toISOString().split('T')[0];
+      const chapterEnd = chapter.end_date || today;
+      
+      const { data, error } = await supabase
+        .from('visits')
+        .select('id, country_iso2')
+        .eq('user_id', user.id)
+        .lte('arrival_date', chapterEnd)
+        .or(`departure_date.gte.${chapter.start_date},departure_date.is.null`);
+      
+      if (error) throw error;
+      
+      // Filter for entries that truly overlap
+      return (data || []).filter(v => {
+        // For ongoing visits (no departure), they overlap if arrival <= chapterEnd
+        // For completed visits, check if departure >= chapterStart
+        return true; // The query already handles the basic filtering
+      });
+    },
+    enabled: !!user,
+  });
+
+  const entryCount = chapterEntries.length;
+  const uniqueCountries = [...new Set(chapterEntries.map(e => e.country_iso2))];
 
   const homeCountry = chapter.home_base_country_iso2
     ? getCountryByIso(chapter.home_base_country_iso2)
@@ -31,8 +64,8 @@ export function ChapterCard({ chapter, onEdit, onDelete, onManageTrips }: Chapte
   const isCurrent = chapter.start_date <= today && (!chapter.end_date || chapter.end_date >= today);
 
   const dateRange = chapter.end_date
-    ? `${format(new Date(chapter.start_date), 'MMM yyyy')} - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
-    : `${format(new Date(chapter.start_date), 'MMM yyyy')} - Present`;
+    ? `${format(new Date(chapter.start_date), 'MMM yyyy')} – ${format(new Date(chapter.end_date), 'MMM yyyy')}`
+    : `${format(new Date(chapter.start_date), 'MMM yyyy')} – Present`;
 
   return (
     <div className={cn(
@@ -76,8 +109,8 @@ export function ChapterCard({ chapter, onEdit, onDelete, onManageTrips }: Chapte
               <Edit2 className="w-4 h-4 mr-2" />
               Edit Details
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onManageTrips}>
-              <ListPlus className="w-4 h-4 mr-2" />
+            <DropdownMenuItem onClick={onViewEntries}>
+              <Eye className="w-4 h-4 mr-2" />
               View Entries
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -97,17 +130,17 @@ export function ChapterCard({ chapter, onEdit, onDelete, onManageTrips }: Chapte
 
       <div className="flex items-center gap-6 pt-3 border-t border-border/50">
         <div className="flex items-center gap-2">
-          <Plane className="w-4 h-4 text-muted-foreground" />
+          <Calendar className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm">
-            <span className="font-semibold text-foreground">{chapterTrips.length}</span>
-            <span className="text-muted-foreground"> entr{chapterTrips.length !== 1 ? 'ies' : 'y'}</span>
+            <span className="font-semibold text-foreground">{entryCount}</span>
+            <span className="text-muted-foreground"> entr{entryCount !== 1 ? 'ies' : 'y'}</span>
           </span>
         </div>
         <div className="flex items-center gap-2">
           <MapPin className="w-4 h-4 text-muted-foreground" />
           <span className="text-sm">
-            <span className="font-semibold text-foreground">{countries.length}</span>
-            <span className="text-muted-foreground"> countr{countries.length !== 1 ? 'ies' : 'y'}</span>
+            <span className="font-semibold text-foreground">{uniqueCountries.length}</span>
+            <span className="text-muted-foreground"> countr{uniqueCountries.length !== 1 ? 'ies' : 'y'}</span>
           </span>
         </div>
       </div>
