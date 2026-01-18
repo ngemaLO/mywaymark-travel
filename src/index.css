@@ -125,6 +125,11 @@
     @apply border-border;
   }
 
+  /* iOS safe area support */
+  html {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
   body {
     @apply text-foreground antialiased;
     font-family: 'Crimson Pro', Georgia, serif;
@@ -132,6 +137,19 @@
     line-height: 1.7;
     background-color: hsl(var(--background));
     position: relative;
+    /* Prevent horizontal overflow on mobile */
+    overflow-x: hidden;
+  }
+
+  /* Prevent iOS zoom on input focus - ensure 16px minimum */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  @media (min-width: 768px) {
+    input, textarea, select {
+      font-size: inherit !important;
+    }
   }
 
   /* Subtle paper grain texture overlay */
@@ -815,6 +833,18 @@
   .timeline-action {
     @apply text-xs transition-colors cursor-pointer;
     color: hsl(var(--muted-foreground) / 0.6);
+    /* Minimum 44px touch target for accessibility */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    margin: 0 -0.75rem;
+  }
+
+  /* First action doesn't need left margin compensation */
+  .timeline-action:first-child {
+    margin-left: 0;
+    padding-left: 0;
   }
 
   .timeline-action:hover {
@@ -823,6 +853,20 @@
 
   .timeline-action--destructive:hover {
     color: hsl(var(--destructive));
+  }
+
+  /* On desktop, reduce the touch target padding */
+  @media (hover: hover) and (pointer: fine) {
+    .timeline-action {
+      min-height: auto;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .timeline-action:first-child {
+      margin-left: 0;
+      padding-left: 0;
+    }
   }
 
   /* Memory moment - interleaved reflection */
@@ -1014,25 +1058,49 @@
     font-family: 'Instrument Sans', system-ui, sans-serif;
     @apply inline-flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer;
     color: hsl(var(--primary));
+    /* 44px touch target on mobile */
+    min-height: 44px;
   }
 
   .timeline-continue:hover {
     color: hsl(var(--primary) / 0.7);
   }
 
+  @media (hover: hover) and (pointer: fine) {
+    .timeline-continue {
+      min-height: auto;
+    }
+  }
+
   /* Margin notes - secondary actions */
   .timeline-margin-notes {
     font-family: 'Instrument Sans', system-ui, sans-serif;
-    @apply flex items-center gap-4;
+    @apply flex items-center gap-2;
   }
 
   .timeline-margin-note {
     @apply text-xs transition-colors cursor-pointer;
     color: hsl(var(--muted-foreground) / 0.45);
+    /* 44px touch target on mobile */
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 0.5rem;
   }
 
   .timeline-margin-note:hover {
     color: hsl(var(--muted-foreground));
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .timeline-margin-note {
+      min-height: auto;
+      padding: 0;
+    }
+    
+    .timeline-margin-notes {
+      gap: 1rem;
+    }
   }
 
   /* ============================================
