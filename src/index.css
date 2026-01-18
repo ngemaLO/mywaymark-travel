@@ -1002,6 +1002,114 @@
   }
 
   /* ============================================
+     TEMPORAL THRESHOLD — Divider between now and memory
+     A pause in reading, marking the shift from present to past
+     ============================================ */
+
+  .timeline-threshold {
+    @apply relative;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Extra space above — a pause before the past */
+  .timeline-threshold-space {
+    height: 2rem;
+  }
+
+  .timeline-threshold-line {
+    @apply relative flex items-center justify-center py-4;
+  }
+
+  .timeline-threshold-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      hsl(var(--border) / 0.5) 15%,
+      hsl(var(--border) / 0.5) 85%,
+      transparent 100%
+    );
+  }
+
+  .timeline-threshold-label {
+    font-family: 'Crimson Pro', Georgia, serif;
+    @apply relative text-sm px-4;
+    color: hsl(var(--muted-foreground) / 0.5);
+    font-style: italic;
+    background: hsl(var(--background));
+    letter-spacing: 0.02em;
+  }
+
+  .timeline-threshold-whisper {
+    @apply text-center text-xs mt-3;
+    color: hsl(var(--muted-foreground) / 0.35);
+    font-style: italic;
+  }
+
+  /* ============================================
+     PAST ENTRIES — Memory state
+     Quieter, tighter, settled
+     ============================================ */
+
+  /* Timeline spine when there's an ongoing entry above */
+  .timeline-spine--past {
+    margin-top: 1rem;
+  }
+
+  /* Entries below the threshold — reduced contrast */
+  .timeline-entry--past-threshold {
+    opacity: 0.88;
+  }
+
+  .timeline-entry--past-threshold .timeline-place {
+    font-weight: 400;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  .timeline-entry--past-threshold .timeline-date {
+    color: hsl(var(--muted-foreground) / 0.7);
+  }
+
+  .timeline-entry--past-threshold .timeline-season {
+    color: hsl(var(--muted-foreground) / 0.55);
+  }
+
+  /* Smaller dots for past entries when there's an ongoing */
+  .timeline-dot--small {
+    width: 5px;
+    height: 5px;
+    top: 0.45rem;
+  }
+
+  /* Memory entry — tighter spacing */
+  .timeline-entry--memory {
+    @apply pb-8;
+  }
+
+  /* Combined distance + past threshold effects */
+  .timeline-entry--past-threshold.timeline-entry--distant {
+    opacity: 0.75;
+  }
+
+  .timeline-entry--past-threshold.timeline-entry--very-distant {
+    opacity: 0.6;
+  }
+
+  /* Year markers in past section — even quieter */
+  .timeline-spine--past .timeline-year {
+    color: hsl(var(--muted-foreground) / 0.4);
+    @apply mb-6;
+  }
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ============================================
      COMPLETED ENTRIES — Settled, past-tense
      ============================================ */
 
@@ -1325,7 +1433,6 @@
     @apply w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0;
     background: hsl(var(--muted) / 0.5);
     color: hsl(var(--muted-foreground));
-  }
   }
 
   /* ============================================
