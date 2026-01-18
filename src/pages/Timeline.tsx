@@ -625,8 +625,19 @@ export default function Timeline() {
                     );
                   })()}
                   
+                  {/* TEMPORAL THRESHOLD — appears only when there's an ongoing entry */}
+                  {hasOngoing && (
+                    <div className="timeline-threshold">
+                      <div className="timeline-threshold-space" />
+                      <div className="timeline-threshold-line">
+                        <span className="timeline-threshold-label">Earlier journeys</span>
+                      </div>
+                      <p className="timeline-threshold-whisper">The present settles into memory.</p>
+                    </div>
+                  )}
+                  
                   {/* The narrative spine — completed entries only */}
-                  <div className="timeline-spine">
+                  <div className={`timeline-spine ${hasOngoing ? 'timeline-spine--past' : ''}`}>
                     {groupedData.years.map((year, yearIndex) => {
                       const yearVisits = groupedData.byYear[year];
                       // Filter out ongoing entries from the spine
@@ -664,9 +675,9 @@ export default function Timeline() {
                                   </div>
                                 )}
                                 
-                                {/* Completed entry */}
-                                <article className={`timeline-entry timeline-entry--completed ${distanceClass}`}>
-                                  <div className="timeline-dot" />
+                                {/* Completed entry — memory state */}
+                                <article className={`timeline-entry timeline-entry--memory ${hasOngoing ? 'timeline-entry--past-threshold' : ''} ${distanceClass}`}>
+                                  <div className={`timeline-dot ${hasOngoing ? 'timeline-dot--small' : ''}`} />
                                   
                                   <h2 
                                     className="timeline-place"
