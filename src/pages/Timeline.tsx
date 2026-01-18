@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { EditVisitModal } from '@/components/EditVisitModal';
 import { DeleteVisitDialog } from '@/components/DeleteVisitDialog';
+import { EndEntryModal } from '@/components/EndEntryModal';
 import { useChapters } from '@/hooks/useChapters';
 import { useEndCurrentTrip } from '@/hooks/useCurrentTrip';
 import {
@@ -260,6 +261,21 @@ function getOngoingArrivalCopy(arrivalDate: string): string {
   return `You arrived ${formatDistanceToNow(arrival, { addSuffix: true })}.`;
 }
 
+// Generate "Day X" metadata for ongoing entries
+function getLiveDayCount(arrivalDate: string): string {
+  const arrival = new Date(arrivalDate);
+  const today = new Date();
+  const days = differenceInDays(today, arrival);
+  
+  if (days === 0) {
+    return 'Day 1';
+  }
+  if (days <= 6) {
+    return `Since ${format(arrival, 'EEEE')}`;
+  }
+  return `Day ${days + 1}`;
+}
+
 // Generate occasional memory moments
 function generateMemoryMoments(visits: Visit[]): Map<number, string> {
   const moments = new Map<number, string>();
@@ -309,6 +325,7 @@ export default function Timeline() {
   const { user } = useAuth();
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
   const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null);
+  const [endingVisit, setEndingVisit] = useState<Visit | null>(null);
   const endCurrentTrip = useEndCurrentTrip();
 
   // Get chapter filter from URL
@@ -554,7 +571,13 @@ export default function Timeline() {
                       const memoryBefore = memoryMoments.get(globalIndex);
                       
                       const handleEndTrip = () => {
-                        endCurrentTrip.mutate(visit.id);
+                        setEndingVisit(visit);
+                      };
+
+                      const handleConfirmEnd = () => {
+                        endCurrentTrip.mutate(visit.id, {
+                          onSuccess: () => setEndingVisit(null)
+                        });
                       };
                       
                       return (
@@ -579,8 +602,13 @@ export default function Timeline() {
                           <article className={`timeline-entry ${distanceClass} ${isOngoing ? 'timeline-entry--ongoing' : ''}`}>
                             <div className={`timeline-dot ${isOngoing ? 'timeline-dot--ongoing' : ''}`} />
                             
+                            {/* Live metadata for ongoing entries */}
+                            {isOngoing && (
+                              <p className="timeline-live-meta">{getLiveDayCount(visit.arrival_date)}</p>
+                            )}
+                            
                             <h2 
-                              className="timeline-place"
+                              className={`timeline-place ${isOngoing ? 'timeline-place--ongoing' : ''}`}
                               onClick={() => navigate(`/country/${visit.country_iso2}`)}
                             >
                               {country.name}
@@ -612,13 +640,13 @@ export default function Timeline() {
                                     className="timeline-margin-note"
                                     onClick={() => navigate(`/country/${visit.country_iso2}`)}
                                   >
-                                    View country
+                                    View place
                                   </span>
                                   <span 
                                     className="timeline-margin-note"
                                     onClick={handleEndTrip}
                                   >
-                                    Mark as ended
+                                    End entry
                                   </span>
                                 </div>
                               </>
@@ -688,6 +716,21 @@ export default function Timeline() {
         open={!!deletingVisit}
         onOpenChange={(open) => !open && setDeletingVisit(null)}
       />
+
+      {endingVisit && (
+        <EndEntryModal
+          open={!!endingVisit}
+          onOpenChange={(open) => !open && setEndingVisit(null)}
+          countryIso2={endingVisit.country_iso2}
+          arrivalDate={endingVisit.arrival_date}
+          onConfirm={() => {
+            endCurrentTrip.mutate(endingVisit.id, {
+              onSuccess: () => setEndingVisit(null)
+            });
+          }}
+          isPending={endCurrentTrip.isPending}
+        />
+      )}
     </div>
   );
 }

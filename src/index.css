@@ -861,6 +861,242 @@
     color: hsl(var(--foreground));
   }
 
+  /* Live metadata - Day X, Since Monday */
+  .timeline-live-meta {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs uppercase tracking-widest mb-2;
+    color: hsl(var(--primary) / 0.6);
+    letter-spacing: 0.12em;
+  }
+
+  /* Ongoing place name - darker, more contrast */
+  .timeline-place--ongoing {
+    color: hsl(var(--foreground));
+    font-weight: 500;
+  }
+
+  /* ============================================
+     NOW BAND — Dashboard ongoing entry marker
+     ============================================ */
+
+  .now-band {
+    @apply flex items-center gap-4 mb-6;
+  }
+
+  .now-band-line {
+    @apply flex-1 h-px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--primary) / 0.25),
+      hsl(var(--primary) / 0.25),
+      transparent
+    );
+  }
+
+  .now-band-text {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs uppercase tracking-widest;
+    color: hsl(var(--primary) / 0.5);
+    letter-spacing: 0.25em;
+  }
+
+  /* ============================================
+     ONGOING JOURNAL ENTRY — Dashboard styles
+     ============================================ */
+
+  .journal-entry--ongoing {
+    @apply relative;
+    padding: 1.5rem;
+    margin: -1.5rem;
+    margin-bottom: 1rem;
+    border-radius: 0.75rem;
+    /* Subtle warm paper tint */
+    background: linear-gradient(
+      135deg,
+      hsl(40 40% 97% / 0.6) 0%,
+      hsl(40 30% 96% / 0.4) 100%
+    );
+  }
+
+  .dark .journal-entry--ongoing {
+    background: linear-gradient(
+      135deg,
+      hsl(40 15% 12% / 0.5) 0%,
+      hsl(35 10% 10% / 0.3) 100%
+    );
+  }
+
+  /* Pulsing dot for ongoing entries */
+  .journal-pulse-dot {
+    position: absolute;
+    top: 1.75rem;
+    right: 1.5rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    animation: journal-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes journal-pulse {
+    0%, 100% {
+      opacity: 0.6;
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.3);
+    }
+    50% {
+      opacity: 1;
+      box-shadow: 0 0 0 6px hsl(var(--primary) / 0);
+    }
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .journal-pulse-dot {
+      animation: none;
+      opacity: 0.8;
+    }
+    .timeline-dot--ongoing {
+      animation: none;
+    }
+  }
+
+  /* Live metadata on dashboard */
+  .journal-live-meta {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs uppercase tracking-widest mb-2;
+    color: hsl(var(--primary) / 0.6);
+    letter-spacing: 0.12em;
+  }
+
+  /* Ongoing title - stronger contrast */
+  .journal-title--ongoing {
+    color: hsl(var(--foreground));
+  }
+
+  /* Ongoing body - alive, present */
+  .journal-body--ongoing {
+    color: hsl(var(--foreground) / 0.9);
+  }
+
+  /* Presence whisper - subtle italic */
+  .journal-whisper {
+    @apply text-sm mb-5;
+    color: hsl(var(--muted-foreground) / 0.5);
+    font-style: italic;
+  }
+
+  /* Primary link style */
+  .journal-link--primary {
+    color: hsl(var(--primary));
+    font-weight: 500;
+  }
+
+  .journal-link--primary:hover {
+    color: hsl(var(--primary) / 0.75);
+  }
+
+  /* Ongoing actions layout */
+  .journal-actions--ongoing {
+    @apply mb-3;
+  }
+
+  /* Margin notes - secondary actions */
+  .journal-margin-notes {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply flex items-center gap-4;
+  }
+
+  .journal-margin-note {
+    @apply text-xs transition-colors cursor-pointer;
+    color: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  .journal-margin-note:hover {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ============================================
+     END ENTRY MODAL — Closing ritual
+     ============================================ */
+
+  .end-entry-modal {
+    @apply max-w-md;
+    font-family: 'Crimson Pro', Georgia, serif;
+  }
+
+  .end-entry-modal-title {
+    @apply text-xl mb-0;
+    color: hsl(var(--foreground));
+  }
+
+  .end-entry-modal-content {
+    @apply space-y-5 pt-2;
+  }
+
+  .end-entry-modal-context {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-sm;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .end-entry-field {
+    @apply space-y-2;
+  }
+
+  .end-entry-label {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply block text-sm font-medium;
+    color: hsl(var(--foreground) / 0.9);
+  }
+
+  .end-entry-optional {
+    @apply font-normal;
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  .end-entry-input,
+  .end-entry-textarea {
+    font-family: 'Crimson Pro', Georgia, serif;
+    @apply text-base;
+  }
+
+  .end-entry-suggestions {
+    @apply flex flex-wrap gap-2 mt-2;
+  }
+
+  .end-entry-suggestion {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs px-2.5 py-1 rounded-full transition-colors;
+    background: hsl(var(--muted) / 0.5);
+    color: hsl(var(--muted-foreground));
+    border: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  .end-entry-suggestion:hover {
+    background: hsl(var(--muted));
+    border-color: hsl(var(--border) / 0.5);
+    color: hsl(var(--foreground));
+  }
+
+  .end-entry-actions {
+    @apply flex items-center justify-end gap-3 pt-3;
+  }
+
+  .end-entry-cancel {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-sm transition-colors;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .end-entry-cancel:hover {
+    color: hsl(var(--foreground));
+  }
+
+  .end-entry-confirm {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+  }
+
   /* Legacy timeline styles - kept for compatibility */
   .timeline-item {
     @apply relative pl-8 pb-6 border-l border-border/50 last:border-transparent;
