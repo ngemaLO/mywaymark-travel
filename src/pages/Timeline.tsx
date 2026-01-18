@@ -539,159 +539,183 @@ export default function Timeline() {
           </div>
         ) : (
           <>
-            {/* The narrative spine */}
-            <div className="timeline-spine">
-              {groupedData.years.map((year, yearIndex) => {
-                const yearVisits = groupedData.byYear[year];
-                
-                return (
-                  <div key={year}>
-                    {/* Year marker */}
-                    <div className="timeline-year">{year}</div>
+          {/* Check for ongoing entry first */}
+            {(() => {
+              const ongoingVisit = visits.find(v => !v.departure_date);
+              const hasOngoing = !!ongoingVisit;
+              
+              return (
+                <>
+                  {/* NOW DIVIDER — appears when there's an ongoing entry */}
+                  {hasOngoing && ongoingVisit && (() => {
+                    const country = getCountryByIso(ongoingVisit.country_iso2);
+                    if (!country) return null;
                     
-                    {yearVisits.map((visit, entryIndex) => {
-                      const country = getCountryByIso(visit.country_iso2);
-                      if (!country) return null;
+                    return (
+                      <div className="timeline-now-divider">
+                        <div className="timeline-now-divider-line" />
+                        <span className="timeline-now-divider-label">Now</span>
+                        <div className="timeline-now-divider-line" />
+                      </div>
+                    );
+                  })()}
+                  
+                  {/* Whisper text beneath NOW */}
+                  {hasOngoing && (
+                    <p className="timeline-now-whisper">Still unfolding.</p>
+                  )}
+                  
+                  {/* Ongoing entry — rendered separately, before the timeline spine */}
+                  {hasOngoing && ongoingVisit && (() => {
+                    const country = getCountryByIso(ongoingVisit.country_iso2);
+                    if (!country) return null;
+                    
+                    const handleEndTrip = () => {
+                      setEndingVisit(ongoingVisit);
+                    };
+                    
+                    return (
+                      <article className="timeline-entry timeline-entry--ongoing">
+                        <div className="timeline-dot timeline-dot--breathing" />
+                        
+                        {/* Live metadata */}
+                        <p className="timeline-live-meta">{getLiveDayCount(ongoingVisit.arrival_date)}</p>
+                        
+                        <h2 
+                          className="timeline-place timeline-place--ongoing"
+                          onClick={() => navigate(`/country/${ongoingVisit.country_iso2}`)}
+                        >
+                          {country.name}
+                        </h2>
+                        
+                        {/* Present-tense copy */}
+                        <p className="timeline-ongoing-copy">
+                          {getOngoingArrivalCopy(ongoingVisit.arrival_date)}
+                        </p>
+                        
+                        {/* Presence whisper */}
+                        <p className="timeline-whisper">Still here.</p>
+                        
+                        {/* Primary action */}
+                        <div className="timeline-ongoing-actions">
+                          <span 
+                            className="timeline-continue"
+                            onClick={() => setEditingVisit(ongoingVisit)}
+                          >
+                            Continue writing
+                          </span>
+                        </div>
+                        
+                        {/* Secondary actions - margin notes */}
+                        <div className="timeline-margin-notes">
+                          <span 
+                            className="timeline-margin-note"
+                            onClick={() => navigate(`/country/${ongoingVisit.country_iso2}`)}
+                          >
+                            View place
+                          </span>
+                          <span 
+                            className="timeline-margin-note"
+                            onClick={handleEndTrip}
+                          >
+                            End entry
+                          </span>
+                        </div>
+                      </article>
+                    );
+                  })()}
+                  
+                  {/* The narrative spine — completed entries only */}
+                  <div className="timeline-spine">
+                    {groupedData.years.map((year, yearIndex) => {
+                      const yearVisits = groupedData.byYear[year];
+                      // Filter out ongoing entries from the spine
+                      const completedVisits = yearVisits.filter(v => v.departure_date);
                       
-                      // Calculate distance class for fading older entries
-                      const globalIndex = groupedData.years
-                        .slice(0, yearIndex)
-                        .reduce((acc, y) => acc + groupedData.byYear[y].length, 0) + entryIndex;
-                      
-                      // Determine if this is an ongoing entry (no departure date)
-                      const isOngoing = !visit.departure_date;
-                      
-                      // Ongoing entries get visual priority, don't fade
-                      const distanceClass = isOngoing ? '' : (
-                        globalIndex > 15 ? 'timeline-entry--very-distant' :
-                        globalIndex > 8 ? 'timeline-entry--distant' : ''
-                      );
-                      
-                      // Check for memory moment before this entry
-                      const memoryBefore = memoryMoments.get(globalIndex);
-                      
-                      const handleEndTrip = () => {
-                        setEndingVisit(visit);
-                      };
-
-                      const handleConfirmEnd = () => {
-                        endCurrentTrip.mutate(visit.id, {
-                          onSuccess: () => setEndingVisit(null)
-                        });
-                      };
+                      if (completedVisits.length === 0) return null;
                       
                       return (
-                        <div key={visit.id}>
-                          {/* Memory moment */}
-                          {memoryBefore && !isOngoing && (
-                            <div className="timeline-memory">
-                              <p className="timeline-memory-text">{memoryBefore}</p>
-                            </div>
-                          )}
+                        <div key={year}>
+                          {/* Year marker */}
+                          <div className="timeline-year">{year}</div>
                           
-                          {/* Now marker for ongoing entries */}
-                          {isOngoing && (
-                            <div className="timeline-now-marker">
-                              <span className="timeline-now-line" />
-                              <span className="timeline-now-text">Now</span>
-                              <span className="timeline-now-line" />
-                            </div>
-                          )}
-                          
-                          {/* The entry */}
-                          <article className={`timeline-entry ${distanceClass} ${isOngoing ? 'timeline-entry--ongoing' : ''}`}>
-                            <div className={`timeline-dot ${isOngoing ? 'timeline-dot--ongoing' : ''}`} />
+                          {completedVisits.map((visit, entryIndex) => {
+                            const country = getCountryByIso(visit.country_iso2);
+                            if (!country) return null;
                             
-                            {/* Live metadata for ongoing entries */}
-                            {isOngoing && (
-                              <p className="timeline-live-meta">{getLiveDayCount(visit.arrival_date)}</p>
-                            )}
+                            // Calculate distance class for fading older entries
+                            const globalIndex = groupedData.years
+                              .slice(0, yearIndex)
+                              .reduce((acc, y) => acc + groupedData.byYear[y].filter(v => v.departure_date).length, 0) + entryIndex;
                             
-                            <h2 
-                              className={`timeline-place ${isOngoing ? 'timeline-place--ongoing' : ''}`}
-                              onClick={() => navigate(`/country/${visit.country_iso2}`)}
-                            >
-                              {country.name}
-                            </h2>
+                            const distanceClass = 
+                              globalIndex > 15 ? 'timeline-entry--very-distant' :
+                              globalIndex > 8 ? 'timeline-entry--distant' : '';
                             
-                            {isOngoing ? (
-                              <>
-                                {/* Present-tense copy for ongoing */}
-                                <p className="timeline-ongoing-copy">
-                                  {getOngoingArrivalCopy(visit.arrival_date)}
-                                </p>
+                            // Check for memory moment
+                            const memoryBefore = memoryMoments.get(globalIndex);
+                            
+                            return (
+                              <div key={visit.id}>
+                                {/* Memory moment */}
+                                {memoryBefore && (
+                                  <div className="timeline-memory">
+                                    <p className="timeline-memory-text">{memoryBefore}</p>
+                                  </div>
+                                )}
                                 
-                                {/* Subtle presence indicator */}
-                                <p className="timeline-still-here">Still here.</p>
-                                
-                                {/* Primary action - Continue writing */}
-                                <div className="timeline-ongoing-actions">
-                                  <span 
-                                    className="timeline-continue"
-                                    onClick={() => setEditingVisit(visit)}
-                                  >
-                                    Continue writing
-                                  </span>
-                                </div>
-                                
-                                {/* Secondary actions - margin notes style */}
-                                <div className="timeline-margin-notes">
-                                  <span 
-                                    className="timeline-margin-note"
+                                {/* Completed entry */}
+                                <article className={`timeline-entry timeline-entry--completed ${distanceClass}`}>
+                                  <div className="timeline-dot" />
+                                  
+                                  <h2 
+                                    className="timeline-place"
                                     onClick={() => navigate(`/country/${visit.country_iso2}`)}
                                   >
-                                    View place
-                                  </span>
-                                  <span 
-                                    className="timeline-margin-note"
-                                    onClick={handleEndTrip}
-                                  >
-                                    End entry
-                                  </span>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                {/* Settled, reflective copy for ended trips */}
-                                <p className="timeline-date">
-                                  {formatDateRange(visit.arrival_date, visit.departure_date)}
-                                </p>
-                                
-                                <p className="timeline-season">
-                                  {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
-                                </p>
-                                
-                                {/* Actions - appear on hover, like margin notes */}
-                                <div className="timeline-actions">
-                                  <span 
-                                    className="timeline-action"
-                                    onClick={() => setEditingVisit(visit)}
-                                  >
-                                    Edit
-                                  </span>
-                                  <span 
-                                    className="timeline-action"
-                                    onClick={() => navigate(`/country/${visit.country_iso2}`)}
-                                  >
-                                    View on map
-                                  </span>
-                                  <span 
-                                    className="timeline-action timeline-action--destructive"
-                                    onClick={() => setDeletingVisit(visit)}
-                                  >
-                                    Remove
-                                  </span>
-                                </div>
-                              </>
-                            )}
-                          </article>
+                                    {country.name}
+                                  </h2>
+                                  
+                                  {/* Past-tense metadata */}
+                                  <p className="timeline-date">
+                                    {formatDateRange(visit.arrival_date, visit.departure_date)}
+                                  </p>
+                                  
+                                  <p className="timeline-season">
+                                    {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
+                                  </p>
+                                  
+                                  {/* Actions - appear on hover */}
+                                  <div className="timeline-actions">
+                                    <span 
+                                      className="timeline-action"
+                                      onClick={() => setEditingVisit(visit)}
+                                    >
+                                      Edit
+                                    </span>
+                                    <span 
+                                      className="timeline-action"
+                                      onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                                    >
+                                      View on map
+                                    </span>
+                                    <span 
+                                      className="timeline-action timeline-action--destructive"
+                                      onClick={() => setDeletingVisit(visit)}
+                                    >
+                                      Remove
+                                    </span>
+                                  </div>
+                                </article>
+                              </div>
+                            );
+                          })}
                         </div>
                       );
                     })}
                   </div>
-                );
-              })}
-            </div>
+                </>
+              );
+            })()}
             
             {/* End of timeline */}
             {totalVisits > 0 && (
