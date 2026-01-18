@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
-import { Globe, Loader2 } from 'lucide-react';
+import { Globe, Loader2, Mail, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 
 const authSchema = z.object({
@@ -20,6 +20,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -61,7 +62,7 @@ export default function Auth() {
         toast({ title: 'Welcome back!', description: 'You have been logged in successfully.' });
       } else {
         const redirectUrl = `${window.location.origin}/`;
-        const { error } = await supabase.auth.signUp({
+        const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -69,10 +70,16 @@ export default function Auth() {
           },
         });
         if (error) throw error;
-        toast({ 
-          title: 'Account created!', 
-          description: 'Welcome to Waymark. Start tracking your travels.',
-        });
+        
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+          setShowVerificationMessage(true);
+        } else {
+          toast({ 
+            title: 'Account created!', 
+            description: 'Welcome to Waymark. Start tracking your travels.',
+          });
+        }
       }
     } catch (error: any) {
       let message = error.message;
@@ -90,6 +97,52 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  // Show verification message screen
+  if (showVerificationMessage) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Mail className="w-10 h-10 text-primary" />
+            </div>
+            <h1 className="text-2xl font-display font-bold text-foreground text-center">
+              Check your email
+            </h1>
+            <p className="text-muted-foreground text-center max-w-sm">
+              We've sent a verification link to <span className="font-medium text-foreground">{email}</span>. 
+              Click the link to verify your account and start your journey.
+            </p>
+          </div>
+
+          <div className="card-elevated p-6 space-y-4">
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p>Didn't receive the email?</p>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>Check your spam folder</li>
+                <li>Make sure you entered the correct email</li>
+                <li>Wait a few minutes and try again</li>
+              </ul>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => {
+                setShowVerificationMessage(false);
+                setEmail('');
+                setPassword('');
+              }}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to sign up
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
