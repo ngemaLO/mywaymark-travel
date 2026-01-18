@@ -876,6 +876,157 @@
   }
 
   /* ============================================
+     NOW DIVIDER — Timeline temporal marker
+     A pause in reading, not a UI control
+     ============================================ */
+
+  .timeline-now-divider {
+    @apply flex items-center gap-6 py-8 mb-4;
+  }
+
+  .timeline-now-divider-line {
+    @apply flex-1 h-px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      hsl(var(--foreground) / 0.12),
+      hsl(var(--foreground) / 0.12),
+      transparent
+    );
+  }
+
+  .timeline-now-divider-label {
+    font-family: 'Crimson Pro', Georgia, serif;
+    @apply text-sm tracking-wide;
+    color: hsl(var(--muted-foreground) / 0.6);
+    font-style: italic;
+  }
+
+  /* Whisper beneath the NOW divider */
+  .timeline-now-whisper {
+    @apply text-center text-sm mb-10;
+    color: hsl(var(--muted-foreground) / 0.4);
+    font-style: italic;
+  }
+
+  /* ============================================
+     ONGOING ENTRY — Timeline present moment
+     ============================================ */
+
+  .timeline-entry--ongoing {
+    @apply relative mb-12;
+    padding: 1.5rem;
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    border-radius: 0.5rem;
+    /* Very subtle warm paper tint */
+    background: linear-gradient(
+      135deg,
+      hsl(40 40% 97% / 0.5) 0%,
+      hsl(40 30% 96% / 0.3) 100%
+    );
+  }
+
+  .dark .timeline-entry--ongoing {
+    background: linear-gradient(
+      135deg,
+      hsl(40 15% 12% / 0.4) 0%,
+      hsl(35 10% 10% / 0.2) 100%
+    );
+  }
+
+  /* Breathing dot — slow, subtle pulse */
+  .timeline-dot--breathing {
+    position: absolute;
+    top: 1.75rem;
+    right: 1.5rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: hsl(var(--primary));
+    animation: timeline-breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes timeline-breathe {
+    0%, 100% {
+      opacity: 0.5;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+  }
+
+  /* Present-tense copy */
+  .timeline-ongoing-copy {
+    @apply text-lg mb-1;
+    color: hsl(var(--foreground) / 0.85);
+  }
+
+  /* Presence whisper */
+  .timeline-whisper {
+    @apply text-sm mb-5;
+    color: hsl(var(--muted-foreground) / 0.45);
+    font-style: italic;
+  }
+
+  /* Continue writing - primary action */
+  .timeline-ongoing-actions {
+    @apply mb-3;
+  }
+
+  .timeline-continue {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply inline-flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer;
+    color: hsl(var(--primary));
+  }
+
+  .timeline-continue:hover {
+    color: hsl(var(--primary) / 0.7);
+  }
+
+  /* Margin notes - secondary actions */
+  .timeline-margin-notes {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply flex items-center gap-4;
+  }
+
+  .timeline-margin-note {
+    @apply text-xs transition-colors cursor-pointer;
+    color: hsl(var(--muted-foreground) / 0.45);
+  }
+
+  .timeline-margin-note:hover {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* ============================================
+     COMPLETED ENTRIES — Settled, past-tense
+     ============================================ */
+
+  .timeline-entry--completed {
+    @apply mb-10;
+  }
+
+  /* Tighter spacing for completed entries */
+  .timeline-entry--completed .timeline-date {
+    @apply mb-0.5;
+  }
+
+  .timeline-entry--completed .timeline-season {
+    @apply mb-2;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .timeline-dot--breathing {
+      animation: none;
+      opacity: 0.7;
+    }
+  }
+
+  /* ============================================
      NOW BAND — Dashboard ongoing entry marker
      ============================================ */
 
