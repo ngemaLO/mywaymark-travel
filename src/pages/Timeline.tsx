@@ -326,7 +326,26 @@ export default function Timeline() {
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
   const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null);
   const [endingVisit, setEndingVisit] = useState<Visit | null>(null);
+  const [revealedEntryId, setRevealedEntryId] = useState<string | null>(null);
   const endCurrentTrip = useEndCurrentTrip();
+
+  // Handle tap-to-reveal on mobile
+  const handleEntryTap = (visitId: string, e: React.MouseEvent) => {
+    // Don't toggle if clicking on an action or link
+    const target = e.target as HTMLElement;
+    if (target.closest('.timeline-action') || target.closest('.timeline-place')) {
+      return;
+    }
+    setRevealedEntryId(prev => prev === visitId ? null : visitId);
+  };
+
+  // Close revealed entry when tapping outside
+  const handlePageClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.timeline-entry')) {
+      setRevealedEntryId(null);
+    }
+  };
 
   // Get chapter filter from URL
   const chapterParam = searchParams.get('chapter');
@@ -676,7 +695,10 @@ export default function Timeline() {
                                 )}
                                 
                                 {/* Completed entry — memory state */}
-                                <article className={`timeline-entry timeline-entry--memory ${hasOngoing ? 'timeline-entry--past-threshold' : ''} ${distanceClass}`}>
+                                <article 
+                                  className={`timeline-entry timeline-entry--memory ${hasOngoing ? 'timeline-entry--past-threshold' : ''} ${distanceClass} ${revealedEntryId === visit.id ? 'timeline-entry--revealed' : ''}`}
+                                  onClick={(e) => handleEntryTap(visit.id, e)}
+                                >
                                   <div className={`timeline-dot ${hasOngoing ? 'timeline-dot--small' : ''}`} />
                                   
                                   <h2 
@@ -695,7 +717,10 @@ export default function Timeline() {
                                     {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
                                   </p>
                                   
-                                  {/* Actions - appear on hover */}
+                                  {/* Tap hint on mobile */}
+                                  <p className="timeline-tap-hint">Tap for options</p>
+                                  
+                                  {/* Actions - appear on hover/tap */}
                                   <div className="timeline-actions">
                                     <span 
                                       className="timeline-action"

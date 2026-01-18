@@ -767,15 +767,49 @@
     font-style: italic;
   }
 
-  /* Entry actions - appear on hover */
+  /* Entry actions - appear on hover (desktop) or tap (mobile) */
   .timeline-actions {
     font-family: 'Instrument Sans', system-ui, sans-serif;
-    @apply flex items-center gap-3 mt-3 opacity-0 transition-opacity;
+    @apply flex items-center gap-3 mt-3 opacity-0 transition-opacity pointer-events-none;
     transition-duration: 200ms;
   }
 
-  .timeline-entry:hover .timeline-actions {
+  /* Desktop: show on hover */
+  @media (hover: hover) and (pointer: fine) {
+    .timeline-entry:hover .timeline-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  /* Mobile: show when revealed via tap */
+  .timeline-entry--revealed .timeline-actions {
     opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Tap hint - only visible on touch devices before reveal */
+  .timeline-tap-hint {
+    font-family: 'Instrument Sans', system-ui, sans-serif;
+    @apply text-xs mt-2 opacity-0 transition-opacity;
+    color: hsl(var(--muted-foreground) / 0.4);
+    display: none;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .timeline-tap-hint {
+      display: block;
+      opacity: 0.7;
+    }
+    
+    .timeline-entry--revealed .timeline-tap-hint {
+      opacity: 0;
+    }
+    
+    /* Make entries feel tappable on mobile */
+    .timeline-entry--memory {
+      cursor: pointer;
+    }
   }
 
   .timeline-action {
