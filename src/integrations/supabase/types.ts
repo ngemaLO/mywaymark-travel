@@ -288,6 +288,7 @@ export type Database = {
         Row: {
           country_iso2: string
           created_at: string | null
+          created_by: string | null
           external_place_id: string | null
           id: string
           lat: number | null
@@ -298,6 +299,7 @@ export type Database = {
         Insert: {
           country_iso2: string
           created_at?: string | null
+          created_by?: string | null
           external_place_id?: string | null
           id?: string
           lat?: number | null
@@ -308,6 +310,7 @@ export type Database = {
         Update: {
           country_iso2?: string
           created_at?: string | null
+          created_by?: string | null
           external_place_id?: string | null
           id?: string
           lat?: number | null
