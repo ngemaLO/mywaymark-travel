@@ -8,18 +8,15 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { Globe, Loader2, Mail, ArrowLeft, KeyRound } from 'lucide-react';
 import { z } from 'zod';
+import { PasswordStrengthIndicator, isPasswordStrong } from '@/components/PasswordStrengthIndicator';
 
 const emailSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
 });
 
-const authSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-const passwordSchema = z.object({
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 export default function Auth() {
@@ -59,17 +56,24 @@ export default function Auth() {
       return true;
     }
     
-    if (mode === 'reset') {
-      const result = passwordSchema.safeParse({ password });
-      if (!result.success) {
-        setErrors({ password: result.error.errors[0]?.message });
+    if (mode === 'reset' || mode === 'signup') {
+      // For signup and reset, use strong password validation
+      const emailResult = mode === 'signup' ? emailSchema.safeParse({ email }) : { success: true };
+      if (!emailResult.success) {
+        setErrors({ email: 'Please enter a valid email address' });
+        return false;
+      }
+      
+      if (!isPasswordStrong(password)) {
+        setErrors({ password: 'Password does not meet all requirements' });
         return false;
       }
       setErrors({});
       return true;
     }
 
-    const result = authSchema.safeParse({ email, password });
+    // Login mode - just check email format and that password exists
+    const result = loginSchema.safeParse({ email, password });
     if (!result.success) {
       const fieldErrors: { email?: string; password?: string } = {};
       result.error.errors.forEach((err) => {
@@ -274,6 +278,7 @@ export default function Auth() {
                   disabled={loading}
                   className={errors.password ? 'border-destructive' : ''}
                 />
+                <PasswordStrengthIndicator password={password} />
                 {errors.password && (
                   <p className="text-xs text-destructive">{errors.password}</p>
                 )}
@@ -427,6 +432,9 @@ export default function Auth() {
                 disabled={loading}
                 className={errors.password ? 'border-destructive' : ''}
               />
+              {mode === 'signup' && (
+                <PasswordStrengthIndicator password={password} />
+              )}
               {errors.password && (
                 <p className="text-xs text-destructive">{errors.password}</p>
               )}
