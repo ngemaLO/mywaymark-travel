@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -22,13 +21,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role to bypass RLS for controlled data access
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Validate the share link token
     console.log('Validating share token...');
     const { data: shareLink, error: linkError } = await supabase
       .from('share_links')
@@ -53,7 +50,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check expiry
     if (shareLink.expires_at && new Date(shareLink.expires_at) < new Date()) {
       console.log('Share link has expired');
       return new Response(
@@ -71,17 +67,14 @@ Deno.serve(async (req) => {
       notes: unknown[];
       images: unknown[];
       trips: unknown[];
-      flights: number;
     } = {
       shareLink,
       visits: [],
       notes: [],
       images: [],
       trips: [],
-      flights: 0,
     };
 
-    // Always fetch visits (needed for map, stats, badges)
     const { data: visits, error: visitsError } = await supabase
       .from('visits')
       .select('*')
@@ -93,7 +86,6 @@ Deno.serve(async (req) => {
       result.visits = visits || [];
     }
 
-    // Fetch notes if scope allows
     if (shareLink.scope_notes) {
       const { data: notes, error: notesError } = await supabase
         .from('country_notes')
@@ -107,7 +99,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch images if scope allows
     if (shareLink.scope_images) {
       const { data: images, error: imagesError } = await supabase
         .from('country_images')
@@ -121,7 +112,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch trips if timeline scope
     if (shareLink.scope_timeline) {
       const { data: trips, error: tripsError } = await supabase
         .from('trips')
@@ -133,20 +123,6 @@ Deno.serve(async (req) => {
         console.error('Error fetching trips:', tripsError);
       } else {
         result.trips = trips || [];
-      }
-    }
-
-    // Fetch flight count for stats
-    if (shareLink.scope_stats) {
-      const { count, error: flightsError } = await supabase
-        .from('flights')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', userId);
-      
-      if (flightsError) {
-        console.error('Error fetching flight count:', flightsError);
-      } else {
-        result.flights = count || 0;
       }
     }
 

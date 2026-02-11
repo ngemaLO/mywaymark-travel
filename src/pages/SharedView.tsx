@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { usePublicShareLink, useSharedUserData } from '@/hooks/useShareLinks';
 import { getCountryByIso, countries, continents } from '@/data/countries';
-import { Globe, MapPin, Plane, Route, Calendar, Lock, ImageIcon } from 'lucide-react';
+import { Globe, MapPin, Route, Calendar, Lock, ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -116,7 +116,6 @@ export default function SharedView() {
   const uniqueCountries = visitedIsos.length;
   const uniquePlaces = new Set((userData?.visits || []).filter(v => v.place_id).map(v => v.place_id)).size;
   const tripCount = userData?.trips?.length || 0;
-  const flightCount = userData?.flights || 0;
 
   // Group notes and images by country
   const notesByCountry = (userData?.notes || []).reduce((acc, note) => {
@@ -133,7 +132,7 @@ export default function SharedView() {
   const getBadgeState = (iso: string): 'locked' | 'declared' | 'verified' => {
     if (!visitedCountryMap[iso]) return 'locked';
     const data = visitedCountryMap[iso];
-    return data.sources.has('google') || data.sources.has('flight') ? 'verified' : 'declared';
+    return data.sources.has('google') ? 'verified' : 'declared';
   };
 
   // Filter countries for badges
@@ -213,7 +212,7 @@ export default function SharedView() {
 
         {/* Stats */}
         {shareLink.scope_stats && (
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <section className="grid grid-cols-3 gap-4">
             <div className="stat-card">
               <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary mb-2">
                 <Globe className="w-5 h-5" />
@@ -234,13 +233,6 @@ export default function SharedView() {
               </div>
               <span className="text-2xl font-display font-bold text-foreground">{tripCount}</span>
               <span className="text-sm text-muted-foreground">Trips</span>
-            </div>
-            <div className="stat-card">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary mb-2">
-                <Plane className="w-5 h-5" />
-              </div>
-              <span className="text-2xl font-display font-bold text-foreground">{flightCount}</span>
-              <span className="text-sm text-muted-foreground">Flights</span>
             </div>
           </section>
         )}
