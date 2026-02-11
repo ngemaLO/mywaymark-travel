@@ -152,7 +152,7 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
             onClick={() => setEditModalOpen(true)}
             className="journal-link journal-link--primary"
           >
-            Continue writing
+            Update entry
           </button>
         </nav>
         
