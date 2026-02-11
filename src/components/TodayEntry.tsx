@@ -168,7 +168,7 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
             onClick={() => setMeetModalOpen(true)}
             className="journal-margin-note"
           >
-            Meet someone
+            Connections
           </button>
           <button 
             onClick={() => setEndModalOpen(true)}

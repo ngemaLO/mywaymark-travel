@@ -122,7 +122,7 @@ export function CurrentTripCard() {
                 className="gap-1.5"
               >
                 <Users className="w-3.5 h-3.5" />
-                Meet Someone
+                Connections
               </Button>
               <Button
                 variant="ghost"
