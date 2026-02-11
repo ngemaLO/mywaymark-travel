@@ -1049,7 +1049,7 @@
     font-style: italic;
   }
 
-  /* Continue writing - primary action */
+  /* Update entry - primary action */
   .timeline-ongoing-actions {
     @apply mb-3;
   }

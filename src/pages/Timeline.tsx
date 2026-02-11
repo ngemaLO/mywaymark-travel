@@ -621,7 +621,7 @@ export default function Timeline() {
                             className="timeline-continue"
                             onClick={() => setEditingVisit(ongoingVisit)}
                           >
-                            Continue writing
+                            Update entry
                           </span>
                         </div>
                         
