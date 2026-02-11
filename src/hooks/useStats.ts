@@ -5,7 +5,6 @@ import { useAuth } from '@/contexts/AuthContext';
 export interface TravelStats {
   countriesVisited: number;
   citiesVisited: number;
-  totalFlights: number;
 }
 
 export function useStats() {
@@ -15,7 +14,7 @@ export function useStats() {
     queryKey: ['stats', user?.id],
     queryFn: async (): Promise<TravelStats> => {
       if (!user) {
-        return { countriesVisited: 0, citiesVisited: 0, totalFlights: 0 };
+        return { countriesVisited: 0, citiesVisited: 0 };
       }
 
       // Get home bases to include in count
@@ -48,18 +47,9 @@ export function useStats() {
 
       if (citiesError) throw citiesError;
 
-      // Get flight count
-      const { count: flightCount, error: flightsError } = await supabase
-        .from('flights')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-
-      if (flightsError) throw flightsError;
-
       return {
         countriesVisited: uniqueCountries.size,
         citiesVisited: citiesCount || 0,
-        totalFlights: flightCount || 0,
       };
     },
     enabled: !!user,

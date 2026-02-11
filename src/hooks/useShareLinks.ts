@@ -200,7 +200,6 @@ export function useSharedUserData(token: string | undefined, shareLink: ShareLin
         notes: data.notes || [],
         images: data.images || [],
         trips: data.trips || [],
-        flights: data.flights || 0,
       };
     },
     enabled: !!token && !!shareLink,
