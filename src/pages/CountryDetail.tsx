@@ -2,7 +2,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { getCountryByIso } from '@/data/countries';
 import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
-import { useCountryNote, useSaveCountryNote } from '@/hooks/useCountryNotes';
+import { useCountryNote, useCountryNotes, useSaveCountryNote, useAddCountryNote, useDeleteCountryNote } from '@/hooks/useCountryNotes';
+import { useIsPremium } from '@/hooks/usePremium';
 import { useCountryImages, useAddCountryImage, useDeleteCountryImage, useUploadCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
 import { useCitiesByCountry, useAddCity, useRemoveCity } from '@/hooks/useCities';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
@@ -45,6 +46,8 @@ export default function CountryDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isEditingNote, setIsEditingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [isAddingNewNote, setIsAddingNewNote] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [cityName, setCityName] = useState('');
   const [isAddingCity, setIsAddingCity] = useState(false);
@@ -55,10 +58,14 @@ export default function CountryDetail() {
   const { isVisited, isLoading: visitsLoading } = useVisitedCountries();
   const { visits: countryVisits, visitCount } = useVisitsByCountry(iso || '');
   const { data: note, isLoading: noteLoading } = useCountryNote(iso || '');
+  const { data: allNotes = [], isLoading: allNotesLoading } = useCountryNotes(iso || '');
   const { data: images = [], isLoading: imagesLoading } = useCountryImages(iso || '');
   const { data: cities = [], isLoading: citiesLoading } = useCitiesByCountry(iso || '');
   const { homeBase } = useCurrentHomeBase();
   const saveNoteMutation = useSaveCountryNote();
+  const addNoteMutation = useAddCountryNote();
+  const deleteNoteMutation = useDeleteCountryNote();
+  const { isPremium } = useIsPremium();
   const addImageMutation = useAddCountryImage();
   const uploadImageMutation = useUploadCountryImage();
   const deleteImageMutation = useDeleteCountryImage();
@@ -162,15 +169,37 @@ export default function CountryDetail() {
     );
   }
 
-  const handleSaveNote = async () => {
+  const handleSaveNote = async (noteId?: string) => {
     if (!iso) return;
-    await saveNoteMutation.mutateAsync({ countryIso2: iso, note: noteText });
+    await saveNoteMutation.mutateAsync({ countryIso2: iso, note: noteText, noteId });
     setIsEditingNote(false);
+    setEditingNoteId(null);
   };
 
-  const handleStartEditNote = () => {
-    setNoteText(note?.note || '');
+  const handleStartEditNote = (existingNote?: { id: string; note: string | null }) => {
+    setNoteText(existingNote?.note || '');
+    setEditingNoteId(existingNote?.id || null);
     setIsEditingNote(true);
+    setIsAddingNewNote(false);
+  };
+
+  const handleStartAddNote = () => {
+    setNoteText('');
+    setIsAddingNewNote(true);
+    setIsEditingNote(false);
+    setEditingNoteId(null);
+  };
+
+  const handleSaveNewNote = async () => {
+    if (!iso || !noteText.trim()) return;
+    await addNoteMutation.mutateAsync({ countryIso2: iso, note: noteText });
+    setIsAddingNewNote(false);
+    setNoteText('');
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!iso) return;
+    await deleteNoteMutation.mutateAsync({ noteId, countryIso2: iso });
   };
 
   const handleAddImage = async () => {
@@ -271,25 +300,192 @@ export default function CountryDetail() {
                 <h2 className="text-lg font-display font-semibold text-foreground">
                   Personal Notes
                 </h2>
-                {!isEditingNote && (
-                  <div className="flex gap-1 items-center">
-                    <TTSControls text={currentNoteText} />
+                <div className="flex gap-1 items-center">
+                  {isPremium && !isAddingNewNote && !isEditingNote && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={handleStartEditNote}
+                      onClick={handleStartAddNote}
                       className="gap-2 text-muted-foreground hover:text-foreground"
                     >
-                      <Edit2 className="w-4 h-4" />
-                      Edit
+                      <Plus className="w-4 h-4" />
+                      Add note
                     </Button>
-                  </div>
-                )}
+                  )}
+                  {!isPremium && !isEditingNote && (
+                    <>
+                      <TTSControls text={currentNoteText} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleStartEditNote(note ? { id: note.id, note: note.note } : undefined)}
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Edit
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
               
-              {noteLoading ? (
+              {(noteLoading || allNotesLoading) ? (
                 <Skeleton className="h-24 w-full" />
+              ) : isPremium ? (
+                /* Premium: multiple notes */
+                <div className="space-y-3">
+                  {/* Add new note form */}
+                  {isAddingNewNote && (
+                    <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+                      <Textarea
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="Write a new note..."
+                        className="min-h-[100px] resize-none"
+                        maxLength={500}
+                        autoFocus
+                      />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {noteText.length}/500 characters
+                          </span>
+                          {stt.isSupported && (
+                            <Button
+                              variant={stt.isListening ? "destructive" : "outline"}
+                              size="sm"
+                              onClick={() => stt.isListening ? stt.stopListening() : stt.startListening()}
+                              disabled={addNoteMutation.isPending}
+                              className={`gap-1.5 ${stt.isListening ? 'animate-pulse' : ''}`}
+                            >
+                              {stt.isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                              {stt.isListening ? 'Listening…' : 'Dictate'}
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { stt.stopListening(); setIsAddingNewNote(false); setNoteText(''); }}
+                            disabled={addNoteMutation.isPending}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            onClick={() => { stt.stopListening(); handleSaveNewNote(); }}
+                            disabled={addNoteMutation.isPending || !noteText.trim()}
+                          >
+                            {addNoteMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            ) : (
+                              <Save className="w-4 h-4 mr-1" />
+                            )}
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Edit existing note form */}
+                  {isEditingNote && editingNoteId && (
+                    <div className="space-y-3 p-4 rounded-xl border border-border bg-muted/20">
+                      <Textarea
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="Edit your note..."
+                        className="min-h-[100px] resize-none"
+                        maxLength={500}
+                        autoFocus
+                      />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">
+                            {noteText.length}/500 characters
+                          </span>
+                          {stt.isSupported && (
+                            <Button
+                              variant={stt.isListening ? "destructive" : "outline"}
+                              size="sm"
+                              onClick={() => stt.isListening ? stt.stopListening() : stt.startListening()}
+                              disabled={saveNoteMutation.isPending}
+                              className={`gap-1.5 ${stt.isListening ? 'animate-pulse' : ''}`}
+                            >
+                              {stt.isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                              {stt.isListening ? 'Listening…' : 'Dictate'}
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { stt.stopListening(); setIsEditingNote(false); setEditingNoteId(null); }}
+                            disabled={saveNoteMutation.isPending}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            onClick={() => { stt.stopListening(); handleSaveNote(editingNoteId); }}
+                            disabled={saveNoteMutation.isPending}
+                          >
+                            {saveNoteMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            ) : (
+                              <Save className="w-4 h-4 mr-1" />
+                            )}
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* List of notes */}
+                  {allNotes.length > 0 ? (
+                    allNotes.map((n) => (
+                      <div key={n.id} className="group p-4 rounded-xl bg-muted/30 space-y-2">
+                        <p className="text-foreground leading-relaxed whitespace-pre-wrap">{n.note}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {n.updated_at ? format(new Date(n.updated_at), 'MMM d, yyyy') : ''}
+                          </span>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <TTSControls text={n.note || ''} />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                              onClick={() => handleStartEditNote({ id: n.id, note: n.note })}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                              onClick={() => handleDeleteNote(n.id)}
+                              disabled={deleteNoteMutation.isPending}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : !isAddingNewNote && (
+                    <p className="text-muted-foreground italic text-sm">
+                      No notes yet. Click "Add note" to start writing.
+                    </p>
+                  )}
+                </div>
               ) : isEditingNote ? (
+                /* Free tier: single note editing */
                 <div className="space-y-3">
                   <Textarea
                     value={noteText}
@@ -328,7 +524,7 @@ export default function CountryDetail() {
                       </Button>
                       <Button 
                         size="sm" 
-                        onClick={() => { stt.stopListening(); handleSaveNote(); }}
+                        onClick={() => { stt.stopListening(); handleSaveNote(editingNoteId || undefined); }}
                         disabled={saveNoteMutation.isPending}
                       >
                         {saveNoteMutation.isPending ? (
