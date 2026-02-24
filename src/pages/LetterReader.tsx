@@ -2,6 +2,7 @@ import { useLetter, useDeleteLetter } from '@/hooks/useLetters';
 import { useParams, useNavigate } from 'react-router-dom';
 import { X, Trash2, FileDown, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TTSControls } from '@/components/TTSControls';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,9 @@ const LetterReader = () => {
     return `${format(start, 'MMM yyyy')} – ${format(end, 'MMM yyyy')}`;
   };
 
+  // Combine all letter text for TTS
+  const fullLetterText = [letter.title, letter.subtitle, letter.body].filter(Boolean).join('. ');
+
   return (
     <div className="min-h-screen letter-reader-bg">
       {/* Minimal header */}
@@ -71,26 +75,30 @@ const LetterReader = () => {
           <X className="h-5 w-5" />
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="journal-link--tertiary">
-              <MoreHorizontal className="h-5 w-5" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem disabled>
-              <FileDown className="h-4 w-4 mr-2" />
-              Export PDF
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive"
-              onClick={handleDelete}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Remove
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-1">
+          <TTSControls text={fullLetterText} preferCalm />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="journal-link--tertiary">
+                <MoreHorizontal className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled>
+                <FileDown className="h-4 w-4 mr-2" />
+                Export PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-destructive"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remove
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
 
       {/* Letter content */}

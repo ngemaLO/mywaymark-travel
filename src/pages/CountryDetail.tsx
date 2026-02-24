@@ -29,14 +29,13 @@ import {
   Building2,
   Plus,
   Home,
-  Volume2,
-  VolumeX,
   Mic,
   MicOff
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState, useRef, useCallback } from 'react';
-import { useTextToSpeech, useSpeechToText } from '@/hooks/useSpeech';
+import { useSpeechToText } from '@/hooks/useSpeech';
+import { TTSControls } from '@/components/TTSControls';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Visit } from '@/hooks/useVisits';
@@ -72,7 +71,6 @@ export default function CountryDetail() {
   const [noteText, setNoteText] = useState('');
   
   // Speech hooks
-  const tts = useTextToSpeech();
   const handleDictationResult = useCallback((transcript: string) => {
     setNoteText(prev => {
       const separator = prev.trim() ? ' ' : '';
@@ -274,18 +272,8 @@ export default function CountryDetail() {
                   Personal Notes
                 </h2>
                 {!isEditingNote && (
-                  <div className="flex gap-1">
-                    {currentNoteText && tts.isSupported && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => tts.isSpeaking ? tts.stop() : tts.speak(currentNoteText)}
-                        className="gap-2 text-muted-foreground hover:text-foreground"
-                      >
-                        {tts.isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                        {tts.isSpeaking ? 'Stop' : 'Read'}
-                      </Button>
-                    )}
+                  <div className="flex gap-1 items-center">
+                    <TTSControls text={currentNoteText} />
                     <Button
                       variant="ghost"
                       size="sm"
@@ -321,10 +309,10 @@ export default function CountryDetail() {
                           size="sm"
                           onClick={() => stt.isListening ? stt.stopListening() : stt.startListening()}
                           disabled={saveNoteMutation.isPending}
-                          className="gap-1.5"
+                          className={`gap-1.5 ${stt.isListening ? 'animate-pulse' : ''}`}
                         >
                           {stt.isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                          {stt.isListening ? 'Stop' : 'Dictate'}
+                          {stt.isListening ? 'Listening…' : 'Dictate'}
                         </Button>
                       )}
                     </div>
