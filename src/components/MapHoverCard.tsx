@@ -5,6 +5,10 @@ import { useCountryImages } from "@/hooks/useCountryImages";
 import { useCountryNote } from "@/hooks/useCountryNotes";
 import { useVisitsByCountry } from "@/hooks/useVisits";
 
+function isoToFlag(iso2: string): string {
+  return [...iso2.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('');
+}
+
 interface MapHoverCardProps {
   countryIso2: string;
   countryName: string;
@@ -55,7 +59,7 @@ export function MapHoverCard({ countryIso2, countryName, x, y }: MapHoverCardPro
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="font-display font-semibold text-foreground">{countryName}</h4>
+          <h4 className="font-display font-semibold text-foreground">{isoToFlag(countryIso2)} {countryName}</h4>
           <span className="text-xs text-muted-foreground flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {visitCount} {visitCount !== 1 ? "times" : "time"}

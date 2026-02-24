@@ -1,6 +1,10 @@
 import { Header } from '@/components/Header';
 import { getCountryByIso } from '@/data/countries';
 import { format, getYear, getMonth, differenceInDays, isToday, formatDistanceToNow } from 'date-fns';
+
+function isoToFlag(iso2: string): string {
+  return [...iso2.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('');
+}
 import { ChevronDown, Loader2, BookOpen } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -604,7 +608,7 @@ export default function Timeline() {
                           className="timeline-place timeline-place--ongoing"
                           onClick={() => navigate(`/country/${ongoingVisit.country_iso2}`)}
                         >
-                          {country.name}
+                          {isoToFlag(ongoingVisit.country_iso2)} {country.name}
                         </h2>
                         
                         {/* Present-tense copy */}
@@ -705,7 +709,7 @@ export default function Timeline() {
                                     className="timeline-place"
                                     onClick={() => navigate(`/country/${visit.country_iso2}`)}
                                   >
-                                    {country.name}
+                                    {isoToFlag(visit.country_iso2)} {country.name}
                                   </h2>
                                   
                                   {/* Past-tense metadata */}
