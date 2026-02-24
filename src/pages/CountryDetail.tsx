@@ -28,10 +28,15 @@ import {
   AlertCircle,
   Building2,
   Plus,
-  Home
+  Home,
+  Volume2,
+  VolumeX,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useTextToSpeech, useSpeechToText } from '@/hooks/useSpeech';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Visit } from '@/hooks/useVisits';
@@ -65,6 +70,16 @@ export default function CountryDetail() {
   const visited = iso ? isVisited(iso) : false;
   const isHomeBase = homeBase?.country_iso2 === iso;
   const [noteText, setNoteText] = useState('');
+  
+  // Speech hooks
+  const tts = useTextToSpeech();
+  const handleDictationResult = useCallback((transcript: string) => {
+    setNoteText(prev => {
+      const separator = prev.trim() ? ' ' : '';
+      return prev + separator + transcript;
+    });
+  }, []);
+  const stt = useSpeechToText(handleDictationResult);
   
   // Sync note text when data loads
   const currentNoteText = isEditingNote ? noteText : (note?.note || '');
@@ -259,15 +274,28 @@ export default function CountryDetail() {
                   Personal Notes
                 </h2>
                 {!isEditingNote && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleStartEditNote}
-                    className="gap-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Edit
-                  </Button>
+                  <div className="flex gap-1">
+                    {currentNoteText && tts.isSupported && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => tts.isSpeaking ? tts.stop() : tts.speak(currentNoteText)}
+                        className="gap-2 text-muted-foreground hover:text-foreground"
+                      >
+                        {tts.isSpeaking ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                        {tts.isSpeaking ? 'Stop' : 'Read'}
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleStartEditNote}
+                      className="gap-2 text-muted-foreground hover:text-foreground"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Edit
+                    </Button>
+                  </div>
                 )}
               </div>
               
@@ -283,14 +311,28 @@ export default function CountryDetail() {
                     maxLength={500}
                   />
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {noteText.length}/500 characters
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {noteText.length}/500 characters
+                      </span>
+                      {stt.isSupported && (
+                        <Button
+                          variant={stt.isListening ? "destructive" : "outline"}
+                          size="sm"
+                          onClick={() => stt.isListening ? stt.stopListening() : stt.startListening()}
+                          disabled={saveNoteMutation.isPending}
+                          className="gap-1.5"
+                        >
+                          {stt.isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                          {stt.isListening ? 'Stop' : 'Dictate'}
+                        </Button>
+                      )}
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setIsEditingNote(false)}
+                        onClick={() => { stt.stopListening(); setIsEditingNote(false); }}
                         disabled={saveNoteMutation.isPending}
                       >
                         <X className="w-4 h-4 mr-1" />
@@ -298,7 +340,7 @@ export default function CountryDetail() {
                       </Button>
                       <Button 
                         size="sm" 
-                        onClick={handleSaveNote}
+                        onClick={() => { stt.stopListening(); handleSaveNote(); }}
                         disabled={saveNoteMutation.isPending}
                       >
                         {saveNoteMutation.isPending ? (
