@@ -6,7 +6,7 @@ export function useIsPremium() {
   const { user } = useAuth();
 
   return {
-    isPremium: false, // Always false until Stripe is enabled
+    isPremium: true, // Temporarily true for testing ElevenLabs
     isLoading: false,
     // For future use
     planName: null as string | null,
