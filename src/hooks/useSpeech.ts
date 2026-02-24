@@ -1,19 +1,71 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
+// --- Available Voices ---
+
+export interface VoiceOption {
+  voice: SpeechSynthesisVoice;
+  label: string;
+}
+
+export function useAvailableVoices() {
+  const [voices, setVoices] = useState<VoiceOption[]>([]);
+
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return;
+
+    const loadVoices = () => {
+      const allVoices = window.speechSynthesis.getVoices();
+      const mapped = allVoices
+        .filter(v => v.lang.startsWith('en'))
+        .map(v => ({
+          voice: v,
+          label: `${v.name} (${v.lang})`,
+        }));
+      setVoices(mapped);
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
+
+  return voices;
+}
+
+/** Try to pick a calm/soothing default voice */
+export function pickCalmVoice(voices: VoiceOption[]): SpeechSynthesisVoice | undefined {
+  // Prefer voices with "female" or soft-sounding names
+  const preferred = ['Samantha', 'Karen', 'Moira', 'Tessa', 'Google UK English Female', 'Microsoft Zira'];
+  for (const name of preferred) {
+    const match = voices.find(v => v.voice.name.includes(name));
+    if (match) return match.voice;
+  }
+  // Fallback: any English voice
+  return voices[0]?.voice;
+}
+
 // --- Text-to-Speech ---
+
+export interface TTSOptions {
+  voice?: SpeechSynthesisVoice;
+  rate?: number;
+}
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const speak = useCallback((text: string) => {
+  const speak = useCallback((text: string, options?: TTSOptions) => {
     if (!text.trim() || !('speechSynthesis' in window)) return;
 
-    // Stop any ongoing speech
     window.speechSynthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.95;
+    utterance.rate = options?.rate ?? 0.95;
+    if (options?.voice) utterance.voice = options.voice;
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
