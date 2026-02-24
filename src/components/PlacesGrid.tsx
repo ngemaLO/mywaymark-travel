@@ -10,6 +10,10 @@ import { Button } from '@/components/ui/button';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
 
+function isoToFlag(iso2: string): string {
+  return [...iso2.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('');
+}
+
 interface PlaceBadgeProps {
   country: {
     iso2: string;
@@ -30,10 +34,9 @@ function PlaceBadge({ country, onClick }: PlaceBadgeProps) {
           className="group flex flex-col items-center gap-1 transition-all duration-200 hover:scale-105"
         >
           <div
-            className="w-12 h-12 flex items-center justify-center rounded-lg font-semibold text-xs text-white transition-all duration-200 place-badge"
-            style={{ backgroundColor: country.flagPrimaryColor || 'hsl(var(--primary))' }}
+            className="w-12 h-12 flex items-center justify-center rounded-lg text-2xl transition-all duration-200 place-badge bg-muted/30"
           >
-            {country.iso2}
+            {isoToFlag(country.iso2)}
           </div>
           <span className="text-[11px] font-medium text-center max-w-[56px] truncate" style={{ color: 'hsl(215 20% 40%)' }}>
             {country.name}
@@ -253,8 +256,8 @@ function UnvisitedSection({
       <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3 opacity-40">
         {unvisitedCountries.slice(0, 20).map((country) => (
           <div key={country.iso2} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted text-muted-foreground text-xs font-semibold">
-              {country.iso2}
+            <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-muted text-2xl opacity-50">
+              {isoToFlag(country.iso2)}
             </div>
             <span className="text-[11px] text-muted-foreground text-center max-w-[56px] truncate">
               {country.name}

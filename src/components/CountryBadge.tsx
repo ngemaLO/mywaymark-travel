@@ -3,6 +3,10 @@ import { cn } from '@/lib/utils';
 import { Country } from '@/data/countries';
 import { Check } from 'lucide-react';
 
+function isoToFlag(iso2: string): string {
+  return [...iso2.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('');
+}
+
 interface CountryBadgeProps {
   country: Country;
   visited: boolean;
@@ -52,8 +56,8 @@ export const CountryBadge = forwardRef<HTMLButtonElement, CountryBadgeProps>(({
         )}
         style={visited && country.flagPrimaryColor ? { backgroundColor: country.flagPrimaryColor, color: 'white' } : undefined}
       >
-        {/* Country ISO code as main display */}
-        <span className="font-bold tracking-tight">{country.iso2}</span>
+        {/* Country flag emoji */}
+        <span className="text-2xl leading-none">{isoToFlag(country.iso2)}</span>
         
         {/* Visited indicator */}
         {visited && (
