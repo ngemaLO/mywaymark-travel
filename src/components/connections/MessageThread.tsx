@@ -126,13 +126,20 @@ export function MessageThread({ tripId, connection, isTripEnded, onBack }: Messa
       ) : (
         <form onSubmit={handleSend} className="p-4 border-t border-border/40">
           <div className="flex gap-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1"
-              disabled={sendMessage.isPending}
-            />
+            <div className="flex-1 relative">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value.slice(0, 2000))}
+                placeholder="Type a message..."
+                disabled={sendMessage.isPending}
+                maxLength={2000}
+              />
+              {newMessage.length > 1900 && (
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+                  {2000 - newMessage.length}
+                </span>
+              )}
+            </div>
             <Button 
               type="submit" 
               size="icon"
