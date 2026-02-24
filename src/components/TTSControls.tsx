@@ -14,6 +14,16 @@ interface TTSControlsProps {
   className?: string;
 }
 
+const ELEVENLABS_VOICES = [
+  { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', desc: 'Calm & warm' },
+  { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', desc: 'Clear & natural' },
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Soft & friendly' },
+  { id: 'CwhRBWXzGAHq8TQ4Fs17', name: 'Roger', desc: 'Deep & confident' },
+  { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', desc: 'Warm & articulate' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', desc: 'Smooth & composed' },
+  { id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily', desc: 'Bright & expressive' },
+];
+
 export function TTSControls({ text, preferCalm = false, className }: TTSControlsProps) {
   const tts = useTextToSpeech();
   const voices = useAvailableVoices();
@@ -21,6 +31,9 @@ export function TTSControls({ text, preferCalm = false, className }: TTSControls
   const [rate, setRate] = useState(preferCalm ? 0.85 : 0.95);
   const [selectedVoiceIndex, setSelectedVoiceIndex] = useState<number>(-1);
   const [usePremiumVoice, setUsePremiumVoice] = useState(true);
+  const [selectedElevenLabsVoice, setSelectedElevenLabsVoice] = useState(
+    preferCalm ? 'FGY2WhTYpPnrIDTdsKH5' : 'Xb7hH8MSUJpSbSDYk0k2'
+  );
   const [isLoadingPremium, setIsLoadingPremium] = useState(false);
   const [isPremiumPlaying, setIsPremiumPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -60,7 +73,7 @@ export function TTSControls({ text, preferCalm = false, className }: TTSControls
             apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ text, calm: preferCalm }),
+          body: JSON.stringify({ text, voiceId: selectedElevenLabsVoice, calm: preferCalm }),
         }
       );
 
@@ -142,25 +155,46 @@ export function TTSControls({ text, preferCalm = false, className }: TTSControls
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 space-y-4" align="end">
-          {/* Premium voice toggle */}
+          {/* Premium voice toggle & picker */}
           {isPremium && (
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-primary" />
-                Natural Voice
-              </label>
-              <button
-                onClick={() => setUsePremiumVoice(!usePremiumVoice)}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  usePremiumVoice ? 'bg-primary' : 'bg-muted'
-                }`}
-              >
-                <span
-                  className={`inline-block h-3.5 w-3.5 transform rounded-full bg-background transition-transform ${
-                    usePremiumVoice ? 'translate-x-4.5' : 'translate-x-0.5'
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  Natural Voice
+                </label>
+                <button
+                  onClick={() => setUsePremiumVoice(!usePremiumVoice)}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                    usePremiumVoice ? 'bg-primary' : 'bg-muted'
                   }`}
-                />
-              </button>
+                >
+                  <span
+                    className={`inline-block h-3.5 w-3.5 transform rounded-full bg-background transition-transform ${
+                      usePremiumVoice ? 'translate-x-4.5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {usePremiumVoice && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Voice
+                  </label>
+                  <select
+                    value={selectedElevenLabsVoice}
+                    onChange={(e) => setSelectedElevenLabsVoice(e.target.value)}
+                    className="w-full text-xs rounded-md border border-input bg-background px-2 py-1.5 text-foreground"
+                  >
+                    {ELEVENLABS_VOICES.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} — {v.desc}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           )}
 
