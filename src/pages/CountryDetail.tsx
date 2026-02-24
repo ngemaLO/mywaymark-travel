@@ -226,11 +226,11 @@ export default function CountryDetail() {
           {/* Country Badge Large */}
           <div
             className={cn(
-              "w-24 h-24 md:w-32 md:h-32 rounded-2xl flex items-center justify-center text-2xl md:text-3xl font-bold shadow-lg",
-              "bg-primary text-primary-foreground"
+              "w-24 h-24 md:w-32 md:h-32 rounded-2xl flex items-center justify-center text-5xl md:text-6xl shadow-lg",
+              "bg-muted/30"
             )}
           >
-            {country.iso2}
+            {[...country.iso2.toUpperCase()].map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('')}
           </div>
 
           <div className="space-y-2 flex-1">
