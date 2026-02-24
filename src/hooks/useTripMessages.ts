@@ -2,6 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+const messageSchema = z.object({
+  content: z.string()
+    .trim()
+    .min(1, 'Message cannot be empty')
+    .max(2000, 'Message too long (max 2000 characters)'),
+});
 
 export interface TripMessage {
   id: string;
@@ -49,13 +57,15 @@ export function useSendMessage() {
     }) => {
       if (!user) throw new Error('Must be logged in');
 
+      const validated = messageSchema.parse({ content });
+
       const { data, error } = await supabase
         .from('trip_messages')
         .insert({
           trip_id: tripId,
           connection_id: connectionId,
           sender_user_id: user.id,
-          content: content.trim(),
+          content: validated.content,
         })
         .select()
         .single();
