@@ -1645,4 +1645,44 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* ============================================
+     GLOBE HERO — Full-width immersive globe
+     ============================================ */
+
+  .globe-hero {
+    @apply relative flex flex-col items-center pt-4 pb-8;
+    overflow: visible;
+  }
+
+  .globe-hero-inner {
+    @apply w-full px-4;
+    max-width: 720px;
+  }
+
+  @media (min-width: 768px) {
+    .globe-hero-inner {
+      @apply px-0;
+    }
+  }
+
+  .globe-hero-stats {
+    @apply flex flex-col items-center gap-1 mt-2;
+  }
+
+  /* ============================================
+     SCROLL REVEAL — Intersection Observer animations
+     ============================================ */
+
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .scroll-reveal--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

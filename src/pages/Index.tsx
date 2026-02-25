@@ -6,6 +6,7 @@ import { CurrentChapterCard } from '@/components/CurrentChapterCard';
 import { TodayEntry } from '@/components/TodayEntry';
 import { ArchiveLinks } from '@/components/ArchiveLinks';
 import { LetterNotice } from '@/components/letters/LetterNotice';
+import { ScrollReveal } from '@/components/ScrollReveal';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisitedCountries } from '@/hooks/useVisits';
@@ -24,11 +25,8 @@ const Index = () => {
   const [mapScope, setMapScope] = useState<string>('all');
   const { checkAndGenerate } = useEnsureAnnualLetter();
 
-  // Check for annual letter on load
   useEffect(() => {
-    if (user) {
-      checkAndGenerate();
-    }
+    if (user) checkAndGenerate();
   }, [user, checkAndGenerate]);
 
   const hasVisits = visitedIsos.length > 0;
@@ -37,9 +35,9 @@ const Index = () => {
     <div className="min-h-screen">
       <Header />
       
-      <main className="journal-page">
-        {/* Empty State for new users */}
-        {user && !isLoading && !hasVisits ? (
+      {/* Empty State for new users */}
+      {user && !isLoading && !hasVisits ? (
+        <main className="journal-page">
           <article className="journal-entry journal-entry--welcome">
             <p className="journal-date">Welcome</p>
             <h1 className="journal-title">Your journey begins here</h1>
@@ -54,45 +52,57 @@ const Index = () => {
               </Button>
             </div>
           </article>
-        ) : (
-          <>
-            {/* 1. Today — Present moment, like opening your journal */}
-            <TodayEntry onAddTrip={() => setAddTripOpen(true)} />
-
-            {/* 2. Recent — Last few entries, reflective */}
-            <RecentJourneys />
-
-            {/* 2.5. Letter Notice — Subtle prompt when new letter is ready */}
-            <LetterNotice />
-
-            {/* 3. Chapter — Current life context */}
-            <CurrentChapterCard />
-
-            {/* 4. Archive — The accumulated history */}
-            <section className="journal-section journal-section--archive">
-              <header className="journal-section-header">
-                <div>
-                  <h2 className="journal-section-title">Your Archive</h2>
-                  <p className="journal-section-subtitle">Every place tells a story</p>
-                </div>
-                <ChapterFilter value={mapScope} onChange={setMapScope} />
-              </header>
-              
-              <div className="journal-map">
-                <WorldMap 
-                  onCountryClick={(iso) => navigate(`/country/${iso}`)}
-                  scope={mapScope}
-                />
-              </div>
-
+        </main>
+      ) : (
+        <>
+          {/* Hero Globe Section — Full width, immersive */}
+          <section className="globe-hero">
+            <div className="globe-hero-inner">
+              <WorldMap 
+                onCountryClick={(iso) => navigate(`/country/${iso}`)}
+                scope={mapScope}
+                heroMode
+              />
+            </div>
+            
+            {/* Archive stats overlaid below globe */}
+            <div className="globe-hero-stats">
               <ArchiveLinks />
-            </section>
+              <div className="mt-2">
+                <ChapterFilter value={mapScope} onChange={setMapScope} />
+              </div>
+            </div>
+          </section>
 
-            {/* 5. Memory — A quiet reflection at the end */}
-            <OnThisDay />
-          </>
-        )}
-      </main>
+          {/* Content sections below the globe */}
+          <main className="journal-page">
+            {/* 1. Today — Present moment */}
+            <ScrollReveal>
+              <TodayEntry onAddTrip={() => setAddTripOpen(true)} />
+            </ScrollReveal>
+
+            {/* 2. Recent entries */}
+            <ScrollReveal delay={100}>
+              <RecentJourneys />
+            </ScrollReveal>
+
+            {/* 2.5. Letter Notice */}
+            <ScrollReveal delay={50}>
+              <LetterNotice />
+            </ScrollReveal>
+
+            {/* 3. Chapter */}
+            <ScrollReveal delay={100}>
+              <CurrentChapterCard />
+            </ScrollReveal>
+
+            {/* 4. Memory */}
+            <ScrollReveal delay={150}>
+              <OnThisDay />
+            </ScrollReveal>
+          </main>
+        </>
+      )}
 
       {/* Colophon */}
       <footer className="journal-colophon">
