@@ -1,15 +1,15 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useVisitedCountries } from '@/hooks/useVisits';
+import { useVisitedCountries, useVisits } from '@/hooks/useVisits';
 import { getCountryByIso } from '@/data/countries';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapHoverCard } from '@/components/MapHoverCard';
-import { geoOrthographic, geoPath, geoCentroid, geoGraticule } from 'd3-geo';
+import { geoOrthographic, geoPath, geoCentroid, geoGraticule, geoInterpolate } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
 import { Home, Globe, BookOpen, RotateCcw } from 'lucide-react';
-import { useChapters, type Chapter } from '@/hooks/useChapters';
+import { useChapters } from '@/hooks/useChapters';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -27,14 +27,13 @@ export type MapScopeValue = 'all' | 'current' | string;
 interface WorldMapProps {
   onCountryClick?: (iso2: string) => void;
   scope?: MapScopeValue;
+  heroMode?: boolean;
 }
 
 interface CountryFeature {
   type: 'Feature';
   id: string;
-  properties: {
-    name: string;
-  };
+  properties: { name: string };
   geometry: GeoJSON.Geometry;
 }
 
@@ -55,20 +54,14 @@ const GLOBE_CENTER: [number, number] = [GLOBE_SIZE / 2, GLOBE_SIZE / 2];
 const GLOBE_SCALE = 240;
 
 interface TooltipState {
-  x: number;
-  y: number;
-  title: string;
-  subtitle?: string;
+  x: number; y: number; title: string; subtitle?: string;
 }
 
-export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps) {
+export function WorldMap({ onCountryClick, scope: externalScope, heroMode = false }: WorldMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [mapHoverCard, setMapHoverCard] = useState<{
-    x: number;
-    y: number;
-    iso2: string;
-    name: string;
+    x: number; y: number; iso2: string; name: string;
   } | null>(null);
   const [geoData, setGeoData] = useState<CountryFeature[] | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(true);
@@ -96,9 +89,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
       animFrameRef.current = requestAnimationFrame(animate);
     };
     animFrameRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
   }, [autoRotate, isDragging]);
 
   // Chapter scope state
@@ -107,19 +98,13 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
   const { data: chapters = [] } = useChapters();
 
   const today = new Date().toISOString().split('T')[0];
-  const currentChapter = chapters.find(c => 
-    c.start_date <= today && (!c.end_date || c.end_date >= today)
-  );
+  const currentChapter = chapters.find(c => c.start_date <= today && (!c.end_date || c.end_date >= today));
 
   const isExternallyControlled = externalScope !== undefined;
-  const mapScope: MapScope = isExternallyControlled 
-    ? (externalScope === 'all' ? 'all' : 'chapter')
-    : internalMapScope;
-  
+  const mapScope: MapScope = isExternallyControlled ? (externalScope === 'all' ? 'all' : 'chapter') : internalMapScope;
   const selectedChapterId = isExternallyControlled
     ? (externalScope === 'all' ? null : externalScope === 'current' ? currentChapter?.id || null : externalScope)
     : internalSelectedChapterId;
-  
   const setMapScope = isExternallyControlled ? () => {} : setInternalMapScope;
   const setSelectedChapterId = isExternallyControlled ? () => {} : setInternalSelectedChapterId;
 
@@ -130,10 +115,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
       const chapter = chapters.find(c => c.id === selectedChapterId);
       if (!chapter) return [];
       const chapterEnd = chapter.end_date || today;
-      const { data, error } = await supabase
-        .from('visits')
-        .select('country_iso2, arrival_date, departure_date')
-        .eq('user_id', user.id);
+      const { data, error } = await supabase.from('visits').select('country_iso2, arrival_date, departure_date').eq('user_id', user.id);
       if (error) throw error;
       const overlapping = (data || []).filter(v => {
         const visitEnd = v.departure_date || v.arrival_date;
@@ -144,15 +126,38 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
     enabled: !!user && !!selectedChapterId && mapScope === 'chapter',
   });
 
-  const displayedVisitedIsos = useMemo(() => {
-    if (mapScope === 'all') return visitedIsos;
-    return chapterVisits;
-  }, [mapScope, visitedIsos, chapterVisits]);
+  const displayedVisitedIsos = useMemo(() => mapScope === 'all' ? visitedIsos : chapterVisits, [mapScope, visitedIsos, chapterVisits]);
 
   const selectedChapter = useMemo(() => {
     if (!selectedChapterId) return null;
     return chapters.find(c => c.id === selectedChapterId) || null;
   }, [selectedChapterId, chapters]);
+
+  // Fetch visits for trip path lines
+  const { data: allVisits = [] } = useVisits();
+  
+  // Fetch first image per visited country for pin markers
+  const { data: countryFirstImages = {} } = useQuery({
+    queryKey: ['country-first-images', user?.id, visitedIsos],
+    queryFn: async () => {
+      if (!user || visitedIsos.length === 0) return {};
+      const { data, error } = await supabase
+        .from('country_images')
+        .select('country_iso2, image_url, thumb_url')
+        .eq('user_id', user.id)
+        .in('country_iso2', visitedIsos)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const img of data || []) {
+        if (!map[img.country_iso2]) {
+          map[img.country_iso2] = img.thumb_url || img.image_url;
+        }
+      }
+      return map;
+    },
+    enabled: !!user && visitedIsos.length > 0,
+  });
 
   // Fetch world TopoJSON data
   useEffect(() => {
@@ -163,10 +168,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
         setGeoData(countries.features as CountryFeature[]);
         setIsLoadingMap(false);
       })
-      .catch((err) => {
-        console.error('Failed to load world map data:', err);
-        setIsLoadingMap(false);
-      });
+      .catch((err) => { console.error('Failed to load world map data:', err); setIsLoadingMap(false); });
   }, []);
 
   const numericToIso2: Record<string, string> = useMemo(() => ({
@@ -234,17 +236,10 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
 
   // Orthographic projection (globe)
   const projection = useMemo(
-    () => geoOrthographic()
-      .scale(GLOBE_SCALE)
-      .translate(GLOBE_CENTER)
-      .rotate([-rotation[0], -rotation[1]])
-      .clipAngle(90),
+    () => geoOrthographic().scale(GLOBE_SCALE).translate(GLOBE_CENTER).rotate([-rotation[0], -rotation[1]]).clipAngle(90),
     [rotation]
   );
-
   const pathGenerator = useMemo(() => geoPath(projection), [projection]);
-
-  // Graticule for grid lines
   const graticule = useMemo(() => geoGraticule().step([20, 20])(), []);
   const graticulePath = useMemo(() => pathGenerator(graticule), [pathGenerator, graticule]);
   const outlinePath = useMemo(() => pathGenerator({ type: 'Sphere' } as any), [pathGenerator]);
@@ -263,35 +258,31 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
       if (lng < -130 && lng > -160 && lat > -25 && lat < -5) return { parentName: 'France', territoryName: 'French Polynesia', type: 'overseas collectivity' };
       if (lng < -55 && lng > -65 && lat > 12 && lat < 20) return { parentName: 'France', territoryName: 'French Caribbean', type: 'overseas region' };
     }
-    if (iso2 === 'GB') {
-      if (lng < -55 && lng > -65 && lat < -45 && lat > -55) return { parentName: 'United Kingdom', territoryName: 'Falkland Islands', type: 'overseas territory' };
-    }
+    if (iso2 === 'GB') { if (lng < -55 && lng > -65 && lat < -45 && lat > -55) return { parentName: 'United Kingdom', territoryName: 'Falkland Islands', type: 'overseas territory' }; }
     if (iso2 === 'US') {
       if (lng < -60 && lng > -70 && lat > 15 && lat < 20) return { parentName: 'United States', territoryName: 'Puerto Rico', type: 'unincorporated territory' };
       if (lng > 140 && lng < 150 && lat > 10 && lat < 16) return { parentName: 'United States', territoryName: 'Guam', type: 'unincorporated territory' };
     }
-    if (iso2 === 'DK') {
-      if (lng < -10 && lng > -75 && lat > 55) return { parentName: 'Denmark', territoryName: 'Greenland', type: 'autonomous territory' };
-    }
+    if (iso2 === 'DK') { if (lng < -10 && lng > -75 && lat > 55) return { parentName: 'Denmark', territoryName: 'Greenland', type: 'autonomous territory' }; }
     return null;
   }, []);
 
   const expandedPolygons = useMemo(() => {
     if (!geoData) return [];
     const result: ExpandedPolygon[] = [];
-    for (const feature of geoData) {
-      const iso2 = getIso2FromFeature(feature);
-      const geometry = feature.geometry;
+    for (const f of geoData) {
+      const iso2 = getIso2FromFeature(f);
+      const geometry = f.geometry;
       if (geometry.type === 'Polygon') {
         const centroid = geoCentroid({ type: 'Feature', geometry, properties: {} } as GeoJSON.Feature);
-        const overseasInfo = iso2 ? getOverseasInfo(iso2, centroid[0], centroid[1]) : null;
-        result.push({ originalFeature: feature, geometry: geometry as GeoJSON.Polygon, centroid, isOverseas: !!overseasInfo, overseasInfo: overseasInfo || undefined });
+        const oi = iso2 ? getOverseasInfo(iso2, centroid[0], centroid[1]) : null;
+        result.push({ originalFeature: f, geometry: geometry as GeoJSON.Polygon, centroid, isOverseas: !!oi, overseasInfo: oi || undefined });
       } else if (geometry.type === 'MultiPolygon') {
         for (const coords of geometry.coordinates) {
           const polygon: GeoJSON.Polygon = { type: 'Polygon', coordinates: coords };
           const centroid = geoCentroid({ type: 'Feature', geometry: polygon, properties: {} } as GeoJSON.Feature);
-          const overseasInfo = iso2 ? getOverseasInfo(iso2, centroid[0], centroid[1]) : null;
-          result.push({ originalFeature: feature, geometry: polygon, centroid, isOverseas: !!overseasInfo, overseasInfo: overseasInfo || undefined });
+          const oi = iso2 ? getOverseasInfo(iso2, centroid[0], centroid[1]) : null;
+          result.push({ originalFeature: f, geometry: polygon, centroid, isOverseas: !!oi, overseasInfo: oi || undefined });
         }
       }
     }
@@ -302,8 +293,8 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
     const featureName = feature.properties?.name;
     const iso2 = getIso2FromFeature(feature);
     if (featureName && overseasTerritories[featureName]) {
-      const territory = overseasTerritories[featureName];
-      return { title: territory.parentName, subtitle: `${territory.territoryName} (${territory.type})` };
+      const t = overseasTerritories[featureName];
+      return { title: t.parentName, subtitle: `${t.territoryName} (${t.type})` };
     }
     if ((iso2 === 'FR' || featureName === 'France') && hoverLngLat) {
       const [lng, lat] = hoverLngLat;
@@ -328,8 +319,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
     if (mapScope === 'chapter' && !isVisited && visitedIsos.includes(iso2)) return 'hsl(var(--map-land) / 0.6)';
     if (isHomeBase || isVisited) {
       const country = getCountryByIso(iso2);
-      const flagColor = country?.flagPrimaryColor;
-      if (flagColor) return flagColor;
+      if (country?.flagPrimaryColor) return country.flagPrimaryColor;
       return hoveredCountry === iso2 ? 'hsl(var(--map-visited-hover))' : 'hsl(var(--map-visited))';
     }
     if (mapScope === 'chapter') return hoveredCountry === iso2 ? 'hsl(var(--map-land-hover) / 0.5)' : 'hsl(var(--map-land) / 0.4)';
@@ -337,86 +327,136 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
   }, [hoveredCountry, displayedVisitedIsos, visitedIsos, homeBase, mapScope]);
 
   const getPolygonStroke = useCallback((iso2: string | null) => {
-    const isHomeBase = homeBase?.country_iso2 === iso2;
-    if (isHomeBase) return { stroke: 'hsl(var(--foreground))', strokeWidth: 1.5, strokeDasharray: undefined };
-    return { stroke: 'hsl(var(--border) / 0.4)', strokeWidth: 0.3, strokeDasharray: undefined };
+    if (homeBase?.country_iso2 === iso2) return { stroke: 'hsl(var(--foreground))', strokeWidth: 1.5 };
+    return { stroke: 'hsl(var(--border) / 0.4)', strokeWidth: 0.3 };
   }, [homeBase]);
 
-  // Home base centroid on globe
+  // Home base centroid
   const homeBaseCentroid = useMemo(() => {
     if (!homeBase || !geoData) return null;
-    const homeCountryFeature = geoData.find(feature => {
-      const iso2 = getIso2FromFeature(feature);
-      return iso2 === homeBase.country_iso2;
-    });
-    if (!homeCountryFeature) return null;
-    const centroid = geoCentroid(homeCountryFeature as GeoJSON.Feature);
+    const hf = geoData.find(f => getIso2FromFeature(f) === homeBase.country_iso2);
+    if (!hf) return null;
+    const centroid = geoCentroid(hf as GeoJSON.Feature);
     const projected = projection(centroid);
-    // Check if the centroid is on the visible side of the globe
-    const rotated = geoOrthographic()
-      .rotate([-rotation[0], -rotation[1]])
-      .translate([0, 0])
-      .scale(1);
-    const p = rotated(centroid);
-    if (!p || !projected) return null;
-    // Check if point is on front of globe (d3 clips it, so projected will be null for back side)
+    if (!projected) return null;
     return { x: projected[0], y: projected[1] };
-  }, [homeBase, geoData, getIso2FromFeature, projection, rotation]);
+  }, [homeBase, geoData, getIso2FromFeature, projection]);
+
+  // Pin markers for visited countries
+  const pinMarkers = useMemo(() => {
+    if (!geoData) return [];
+    const markers: { iso2: string; x: number; y: number; name: string; imageUrl?: string }[] = [];
+    const seen = new Set<string>();
+    
+    for (const f of geoData) {
+      const iso2 = getIso2FromFeature(f);
+      if (!iso2 || seen.has(iso2) || !displayedVisitedIsos.includes(iso2)) continue;
+      if (homeBase?.country_iso2 === iso2) continue; // home base has its own marker
+      seen.add(iso2);
+      
+      const centroid = geoCentroid(f as GeoJSON.Feature);
+      const projected = projection(centroid);
+      if (!projected) continue;
+      
+      const country = getCountryByIso(iso2);
+      markers.push({
+        iso2,
+        x: projected[0],
+        y: projected[1],
+        name: country?.name || iso2,
+        imageUrl: countryFirstImages[iso2],
+      });
+    }
+    return markers;
+  }, [geoData, displayedVisitedIsos, projection, getIso2FromFeature, homeBase, countryFirstImages]);
+
+  // Trip path arcs between consecutive visits
+  const tripPaths = useMemo(() => {
+    if (!geoData || allVisits.length < 2) return [];
+    
+    // Sort visits chronologically
+    const sorted = [...allVisits]
+      .filter(v => displayedVisitedIsos.includes(v.country_iso2))
+      .sort((a, b) => new Date(a.arrival_date).getTime() - new Date(b.arrival_date).getTime());
+    
+    // Build unique country centroids map
+    const centroids: Record<string, [number, number]> = {};
+    for (const f of geoData) {
+      const iso2 = getIso2FromFeature(f);
+      if (iso2 && !centroids[iso2]) {
+        centroids[iso2] = geoCentroid(f as GeoJSON.Feature);
+      }
+    }
+    
+    // Generate arc paths between consecutive different countries
+    const paths: { d: string; key: string }[] = [];
+    const seen = new Set<string>();
+    
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const from = sorted[i].country_iso2;
+      const to = sorted[i + 1].country_iso2;
+      if (from === to) continue;
+      const pairKey = `${from}-${to}`;
+      if (seen.has(pairKey)) continue;
+      seen.add(pairKey);
+      
+      const fromCoord = centroids[from];
+      const toCoord = centroids[to];
+      if (!fromCoord || !toCoord) continue;
+      
+      // Generate great circle arc with multiple points
+      const interpolator = geoInterpolate(fromCoord, toCoord);
+      const points: [number, number][] = [];
+      const steps = 30;
+      for (let t = 0; t <= steps; t++) {
+        const point = interpolator(t / steps);
+        const projected = projection(point);
+        if (projected) {
+          points.push(projected as [number, number]);
+        }
+      }
+      
+      if (points.length > 1) {
+        const d = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ');
+        paths.push({ d, key: pairKey });
+      }
+    }
+    return paths;
+  }, [geoData, allVisits, displayedVisitedIsos, projection, getIso2FromFeature]);
 
   const handleCountryClick = (iso2: string | null) => {
-    if (iso2 && visitedIsos.includes(iso2) && onCountryClick) {
-      onCountryClick(iso2);
-    }
+    if (iso2 && visitedIsos.includes(iso2) && onCountryClick) onCountryClick(iso2);
   };
 
   const handleScopeChange = (scope: MapScope) => {
     setMapScope(scope);
-    if (scope === 'all') {
-      setSelectedChapterId(null);
-    } else if (scope === 'chapter' && currentChapter) {
-      setSelectedChapterId(currentChapter.id);
-    } else if (scope === 'chapter' && chapters.length > 0) {
-      setSelectedChapterId(chapters[0].id);
-    }
+    if (scope === 'all') setSelectedChapterId(null);
+    else if (scope === 'chapter' && currentChapter) setSelectedChapterId(currentChapter.id);
+    else if (scope === 'chapter' && chapters.length > 0) setSelectedChapterId(chapters[0].id);
   };
 
-  // Drag handlers for globe rotation
+  // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setIsDragging(true);
-    setAutoRotate(false);
+    setIsDragging(true); setAutoRotate(false);
     dragStart.current = { x: e.clientX, y: e.clientY, rot: [...rotation] as [number, number] };
-    setMapHoverCard(null);
-    setTooltip(null);
+    setMapHoverCard(null); setTooltip(null);
   }, [rotation]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isDragging || !dragStart.current) {
-      // Handle hover tooltips when not dragging
-      return;
-    }
+    if (!isDragging || !dragStart.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
-    const sensitivity = 0.3;
-    setRotation([
-      dragStart.current.rot[0] + dx * sensitivity,
-      Math.max(-80, Math.min(80, dragStart.current.rot[1] - dy * sensitivity))
-    ]);
+    setRotation([dragStart.current.rot[0] + dx * 0.3, Math.max(-80, Math.min(80, dragStart.current.rot[1] - dy * 0.3))]);
   }, [isDragging]);
 
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-    dragStart.current = null;
-  }, []);
+  const handleMouseUp = useCallback(() => { setIsDragging(false); dragStart.current = null; }, []);
 
-  // Touch handlers for mobile
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length !== 1) return;
     const touch = e.touches[0];
-    setIsDragging(true);
-    setAutoRotate(false);
+    setIsDragging(true); setAutoRotate(false);
     dragStart.current = { x: touch.clientX, y: touch.clientY, rot: [...rotation] as [number, number] };
-    setMapHoverCard(null);
-    setTooltip(null);
+    setMapHoverCard(null); setTooltip(null);
   }, [rotation]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
@@ -425,19 +465,11 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
     const touch = e.touches[0];
     const dx = touch.clientX - dragStart.current.x;
     const dy = touch.clientY - dragStart.current.y;
-    const sensitivity = 0.3;
-    setRotation([
-      dragStart.current.rot[0] + dx * sensitivity,
-      Math.max(-80, Math.min(80, dragStart.current.rot[1] - dy * sensitivity))
-    ]);
+    setRotation([dragStart.current.rot[0] + dx * 0.3, Math.max(-80, Math.min(80, dragStart.current.rot[1] - dy * 0.3))]);
   }, [isDragging]);
 
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-    dragStart.current = null;
-  }, []);
+  const handleTouchEnd = useCallback(() => { setIsDragging(false); dragStart.current = null; }, []);
 
-  // Handle hover on country paths (only when not dragging)
   const handleCountryHover = useCallback((e: React.MouseEvent, polygon: ExpandedPolygon, iso2: string | null, isClickable: boolean) => {
     if (isDragging) return;
     iso2 && setHoveredCountry(iso2);
@@ -470,52 +502,34 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
 
   if (isLoading || isLoadingMap) {
     return (
-      <div className="flex items-center justify-center" style={{ aspectRatio: '1', maxWidth: GLOBE_SIZE }}>
-        <Skeleton className="w-full h-full rounded-full" />
+      <div className="flex items-center justify-center" style={{ aspectRatio: '1', maxWidth: heroMode ? '100%' : GLOBE_SIZE }}>
+        <Skeleton className="w-64 h-64 rounded-full" />
       </div>
     );
   }
 
+  const globeMaxWidth = heroMode ? 680 : GLOBE_SIZE;
+
   return (
     <div className="flex flex-col items-center">
-      {/* Header row above globe */}
-      <div className="flex items-center justify-between w-full pb-2 px-2">
+      {/* Controls row */}
+      <div className="flex items-center justify-between w-full pb-2 px-2" style={{ maxWidth: globeMaxWidth }}>
         <div className="flex items-center gap-2">
-          {/* Scope toggle (only show if not externally controlled) */}
           {!isExternallyControlled && (
             <>
               <div className="flex items-center bg-card/90 backdrop-blur-sm border border-border/50 rounded-lg shadow-sm overflow-hidden">
-                <button
-                  onClick={() => handleScopeChange('all')}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    mapScope === 'all' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
-                >
-                  <Globe className="w-3.5 h-3.5" />
-                  All Time
+                <button onClick={() => handleScopeChange('all')} className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${mapScope === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`}>
+                  <Globe className="w-3.5 h-3.5" /> All Time
                 </button>
-                <button
-                  onClick={() => handleScopeChange('chapter')}
-                  className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${
-                    mapScope === 'chapter' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                  }`}
-                  disabled={chapters.length === 0}
-                >
-                  <BookOpen className="w-3.5 h-3.5" />
-                  Chapter
+                <button onClick={() => handleScopeChange('chapter')} className={`px-3 py-1.5 text-sm font-medium transition-colors flex items-center gap-1.5 ${mapScope === 'chapter' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'}`} disabled={chapters.length === 0}>
+                  <BookOpen className="w-3.5 h-3.5" /> Chapter
                 </button>
               </div>
               {mapScope === 'chapter' && chapters.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="bg-card/90 backdrop-blur-sm border-border/50 shadow-sm gap-2">
-                      <span className="truncate max-w-32">
-                        {selectedChapter?.title || 'Select Chapter'}
-                      </span>
+                      <span className="truncate max-w-32">{selectedChapter?.title || 'Select Chapter'}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-56">
@@ -531,18 +545,12 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
                       </>
                     )}
                     {chapters.map((chapter) => (
-                      <DropdownMenuItem 
-                        key={chapter.id} 
-                        onClick={() => setSelectedChapterId(chapter.id)}
-                      >
+                      <DropdownMenuItem key={chapter.id} onClick={() => setSelectedChapterId(chapter.id)}>
                         <div className="flex-1 min-w-0">
                           <p className="truncate">{chapter.title}</p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(chapter.start_date), 'MMM yyyy')}
-                            {chapter.end_date 
-                              ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}`
-                              : ' - Present'
-                            }
+                            {chapter.end_date ? ` - ${format(new Date(chapter.end_date), 'MMM yyyy')}` : ' - Present'}
                           </p>
                         </div>
                       </DropdownMenuItem>
@@ -555,19 +563,12 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
         </div>
         <div className="flex items-center gap-3">
           {!autoRotate && (
-            <button
-              onClick={() => setAutoRotate(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-              title="Resume rotation"
-            >
+            <button onClick={() => setAutoRotate(true)} className="text-muted-foreground hover:text-foreground transition-colors" title="Resume rotation">
               <RotateCcw className="w-4 h-4" />
             </button>
           )}
           <span className="text-xs text-muted-foreground">
             {displayedVisitedIsos.length} countr{displayedVisitedIsos.length !== 1 ? 'ies' : 'y'}
-            {mapScope === 'chapter' && selectedChapter && (
-              <span className="ml-1">in chapter</span>
-            )}
           </span>
         </div>
       </div>
@@ -575,14 +576,9 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
       {/* Globe */}
       <div
         className="relative select-none"
-        style={{ width: '100%', maxWidth: GLOBE_SIZE, aspectRatio: '1' }}
+        style={{ width: '100%', maxWidth: globeMaxWidth, aspectRatio: '1' }}
         onMouseUp={handleMouseUp}
-        onMouseLeave={() => {
-          handleMouseUp();
-          setHoveredCountry(null);
-          setTooltip(null);
-          setMapHoverCard(null);
-        }}
+        onMouseLeave={() => { handleMouseUp(); setHoveredCountry(null); setTooltip(null); setMapHoverCard(null); }}
       >
         <svg
           ref={svgRef}
@@ -596,43 +592,32 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
           onTouchEnd={handleTouchEnd}
         >
           <defs>
-            {/* Globe shading gradient for 3D effect */}
             <radialGradient id="globe-shadow" cx="35%" cy="30%" r="60%">
-              <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.05" />
-              <stop offset="70%" stopColor="hsl(var(--foreground))" stopOpacity="0.08" />
-              <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.25" />
+              <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.02" />
+              <stop offset="70%" stopColor="hsl(var(--foreground))" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.2" />
             </radialGradient>
-            {/* Ocean gradient */}
             <radialGradient id="ocean-fill" cx="40%" cy="35%" r="65%">
               <stop offset="0%" stopColor="hsl(var(--map-bg))" />
-              <stop offset="100%" stopColor="hsl(var(--border))" />
+              <stop offset="100%" stopColor="hsl(var(--map-bg) / 0.85)" />
             </radialGradient>
-            {/* Highlight for glossy effect */}
             <radialGradient id="globe-highlight" cx="30%" cy="25%" r="40%">
-              <stop offset="0%" stopColor="white" stopOpacity="0.12" />
+              <stop offset="0%" stopColor="white" stopOpacity="0.15" />
               <stop offset="100%" stopColor="white" stopOpacity="0" />
             </radialGradient>
+            {/* Clip for pin images */}
+            {pinMarkers.filter(m => m.imageUrl).map(m => (
+              <clipPath key={`clip-${m.iso2}`} id={`pin-clip-${m.iso2}`}>
+                <circle cx={m.x} cy={m.y} r="10" />
+              </clipPath>
+            ))}
           </defs>
 
-          {/* Globe background (ocean) */}
-          {outlinePath && (
-            <path
-              d={outlinePath}
-              fill="url(#ocean-fill)"
-              stroke="hsl(var(--border))"
-              strokeWidth="0.5"
-            />
-          )}
+          {/* Ocean */}
+          {outlinePath && <path d={outlinePath} fill="url(#ocean-fill)" stroke="hsl(var(--map-bg) / 0.6)" strokeWidth="0.5" />}
 
-          {/* Graticule grid lines */}
-          {graticulePath && (
-            <path
-              d={graticulePath}
-              fill="none"
-              stroke="hsl(var(--border) / 0.2)"
-              strokeWidth="0.3"
-            />
-          )}
+          {/* Graticule */}
+          {graticulePath && <path d={graticulePath} fill="none" stroke="hsl(var(--map-bg) / 0.4)" strokeWidth="0.3" />}
 
           {/* Country paths */}
           {expandedPolygons.map((polygon, index) => {
@@ -642,9 +627,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
             const isClickable = (isVisitedAllTime || isHomeBase) && !polygon.isOverseas;
             const path = pathGenerator(polygon.geometry);
             const strokeStyle = getPolygonStroke(polygon.isOverseas ? null : iso2);
-            
             if (!path) return null;
-
             return (
               <path
                 key={`${polygon.originalFeature.id || index}-${index}`}
@@ -652,33 +635,64 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
                 fill={getPolygonFill(iso2, polygon.isOverseas)}
                 stroke={strokeStyle.stroke}
                 strokeWidth={strokeStyle.strokeWidth}
-                className={`transition-colors duration-200 ${
-                  isClickable && !isDragging ? 'cursor-pointer hover:brightness-110' : ''
-                }`}
+                className={`transition-colors duration-200 ${isClickable && !isDragging ? 'cursor-pointer hover:brightness-110' : ''}`}
                 onMouseEnter={(e) => handleCountryHover(e, polygon, iso2, isClickable)}
                 onMouseMove={(e) => handleCountryHover(e, polygon, iso2, isClickable)}
-                onMouseLeave={() => {
-                  setHoveredCountry(null);
-                  setTooltip(null);
-                  setMapHoverCard(null);
-                }}
+                onMouseLeave={() => { setHoveredCountry(null); setTooltip(null); setMapHoverCard(null); }}
                 onClick={() => !isDragging && isClickable && handleCountryClick(iso2)}
               />
             );
           })}
 
+          {/* Trip path arcs */}
+          {tripPaths.map(({ d, key }) => (
+            <path
+              key={key}
+              d={d}
+              fill="none"
+              stroke="hsl(var(--primary) / 0.5)"
+              strokeWidth="1.5"
+              strokeDasharray="4 3"
+              strokeLinecap="round"
+              className="pointer-events-none"
+            />
+          ))}
+
+          {/* Pin markers for visited countries */}
+          {pinMarkers.map((marker) => (
+            <g
+              key={`pin-${marker.iso2}`}
+              transform={`translate(${marker.x}, ${marker.y})`}
+              className={`cursor-pointer transition-transform duration-200 ${!isDragging ? 'hover:scale-125' : ''}`}
+              onClick={() => !isDragging && onCountryClick?.(marker.iso2)}
+            >
+              {marker.imageUrl ? (
+                <>
+                  <circle r="11" fill="hsl(var(--background))" stroke="hsl(var(--primary))" strokeWidth="2" />
+                  <clipPath id={`mc-${marker.iso2}`}>
+                    <circle r="9" />
+                  </clipPath>
+                  <image
+                    href={marker.imageUrl}
+                    x="-9" y="-9" width="18" height="18"
+                    clipPath={`url(#mc-${marker.iso2})`}
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                </>
+              ) : (
+                <>
+                  <circle r="5" fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth="1.5" opacity="0.9" />
+                  <circle r="2" fill="hsl(var(--background))" opacity="0.8" />
+                </>
+              )}
+            </g>
+          ))}
+
           {/* Home base icon marker */}
           {homeBaseCentroid && (
-            <g 
-              transform={`translate(${homeBaseCentroid.x}, ${homeBaseCentroid.y})`}
-              className="pointer-events-none"
-            >
+            <g transform={`translate(${homeBaseCentroid.x}, ${homeBaseCentroid.y})`} className="pointer-events-none">
               <circle r="7" fill="hsl(var(--background))" stroke="hsl(var(--foreground))" strokeWidth="1.5" />
-              <path
-                d="M0 -3 L3 0 L2.4 0 L2.4 2.4 L0.6 2.4 L0.6 0.6 L-0.6 0.6 L-0.6 2.4 L-2.4 2.4 L-2.4 0 L-3 0 Z"
-                fill="hsl(var(--foreground))"
-                strokeWidth="0"
-              />
+              <path d="M0 -3 L3 0 L2.4 0 L2.4 2.4 L0.6 2.4 L0.6 0.6 L-0.6 0.6 L-0.6 2.4 L-2.4 2.4 L-2.4 0 L-3 0 Z" fill="hsl(var(--foreground))" strokeWidth="0" />
             </g>
           )}
 
@@ -691,31 +705,15 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
           )}
         </svg>
 
-        {/* Tooltip for non-visited countries */}
+        {/* Tooltips */}
         {tooltip && !mapHoverCard && !isDragging && (
-          <div 
-            className="absolute pointer-events-none z-50 rounded-md bg-popover text-popover-foreground border border-border px-3 py-2 shadow-lg"
-            style={{ 
-              left: tooltip.x + 12, 
-              top: tooltip.y - 10,
-              transform: 'translateY(-100%)'
-            }}
-          >
+          <div className="absolute pointer-events-none z-50 rounded-md bg-popover text-popover-foreground border border-border px-3 py-2 shadow-lg" style={{ left: tooltip.x + 12, top: tooltip.y - 10, transform: 'translateY(-100%)' }}>
             <div className="text-sm font-medium">{tooltip.title}</div>
-            {tooltip.subtitle && (
-              <div className="text-xs text-muted-foreground mt-0.5">{tooltip.subtitle}</div>
-            )}
+            {tooltip.subtitle && <div className="text-xs text-muted-foreground mt-0.5">{tooltip.subtitle}</div>}
           </div>
         )}
-
-        {/* Rich hover card for visited countries */}
         {mapHoverCard && !isDragging && (
-          <MapHoverCard
-            countryIso2={mapHoverCard.iso2}
-            countryName={mapHoverCard.name}
-            x={mapHoverCard.x}
-            y={mapHoverCard.y}
-          />
+          <MapHoverCard countryIso2={mapHoverCard.iso2} countryName={mapHoverCard.name} x={mapHoverCard.x} y={mapHoverCard.y} />
         )}
       </div>
 
@@ -723,9 +721,7 @@ export function WorldMap({ onCountryClick, scope: externalScope }: WorldMapProps
       <div className="flex items-center justify-center gap-4 text-xs pt-3 font-sans">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-visited))' }} />
-          <span className="text-muted-foreground">
-            {mapScope === 'chapter' ? 'Visited (this chapter)' : 'Visited'}
-          </span>
+          <span className="text-muted-foreground">{mapScope === 'chapter' ? 'Visited (this chapter)' : 'Visited'}</span>
         </div>
         {mapScope === 'chapter' && (
           <div className="flex items-center gap-1.5">
