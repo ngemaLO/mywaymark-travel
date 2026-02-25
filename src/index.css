@@ -48,12 +48,12 @@
     --amber-light: 38 60% 70%;
 
     /* Map colors */
-    --map-bg: 40 15% 90%;
+    --map-bg: 205 55% 72%;
     --map-land: 40 10% 82%;
     --map-land-hover: 40 12% 75%;
     --map-visited: 185 40% 42%;
     --map-visited-hover: 185 45% 35%;
-    --map-grid: 40 10% 70%;
+    --map-grid: 205 30% 65%;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(30 10% 15% / 0.04);
@@ -102,12 +102,12 @@
     --ocean: 185 40% 55%;
     --ocean-light: 185 35% 65%;
 
-    --map-bg: 30 15% 12%;
+    --map-bg: 210 40% 18%;
     --map-land: 30 12% 22%;
     --map-land-hover: 30 10% 28%;
     --map-visited: 185 35% 48%;
     --map-visited-hover: 185 40% 55%;
-    --map-grid: 30 8% 25%;
+    --map-grid: 210 25% 25%;
 
     --sidebar-background: 30 15% 8%;
     --sidebar-foreground: 40 15% 90%;
