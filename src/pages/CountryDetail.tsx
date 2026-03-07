@@ -33,7 +33,8 @@ import {
   Plus,
   Home,
   Mic,
-  MicOff
+  MicOff,
+  Lightbulb
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState, useRef, useCallback } from 'react';
