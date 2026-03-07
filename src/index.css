@@ -1785,36 +1785,52 @@
     @apply relative z-10;
     transform-origin: left center;
     will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
   }
 
   /* Page flip animations */
   .diary-flip-out {
-    animation: diary-page-flip-out 0.28s ease-in forwards;
+    animation: diary-page-flip-out 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
   }
 
   .diary-flip-in {
-    animation: diary-page-flip-in 0.35s ease-out forwards;
+    animation: diary-page-flip-in 0.45s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
   }
 
   @keyframes diary-page-flip-out {
     0% {
       opacity: 1;
-      transform: perspective(1200px) rotateY(0deg) scale(1);
+      transform: perspective(1800px) rotateY(0deg);
+      box-shadow: none;
+    }
+    30% {
+      opacity: 1;
+      transform: perspective(1800px) rotateY(-25deg);
+      box-shadow: 10px 0 30px -5px hsl(30 20% 20% / 0.15);
     }
     100% {
       opacity: 0;
-      transform: perspective(1200px) rotateY(-8deg) scale(0.98);
+      transform: perspective(1800px) rotateY(-90deg);
+      box-shadow: 20px 0 40px -10px hsl(30 20% 20% / 0.0);
     }
   }
 
   @keyframes diary-page-flip-in {
     0% {
       opacity: 0;
-      transform: perspective(1200px) rotateY(6deg) scale(0.98);
+      transform: perspective(1800px) rotateY(90deg);
+      box-shadow: -20px 0 40px -10px hsl(30 20% 20% / 0.0);
+    }
+    50% {
+      opacity: 1;
+      transform: perspective(1800px) rotateY(20deg);
+      box-shadow: -10px 0 30px -5px hsl(30 20% 20% / 0.12);
     }
     100% {
       opacity: 1;
-      transform: perspective(1200px) rotateY(0deg) scale(1);
+      transform: perspective(1800px) rotateY(0deg);
+      box-shadow: none;
     }
   }
 
