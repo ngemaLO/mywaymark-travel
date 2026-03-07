@@ -19,11 +19,12 @@ export function DiaryPage({ children, className = '' }: DiaryPageProps) {
       {/* Book spine shadow on left */}
       <div className="diary-spine" aria-hidden="true" />
       
-      {/* Page content with flip animation */}
+      {/* Page content — re-keys on route change to trigger fade-in */}
       <div
-        className={`diary-page-inner ${animating ? 'diary-flip-out' : 'diary-flip-in'} ${className}`}
+        key={fadeKey}
+        className={`diary-page-inner diary-flip-in ${className}`}
       >
-        {displayChildren}
+        {children}
       </div>
 
       {/* Subtle page edge on right */}
