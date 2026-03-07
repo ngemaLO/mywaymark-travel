@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 interface DiaryPageProps {
@@ -8,24 +8,11 @@ interface DiaryPageProps {
 
 export function DiaryPage({ children, className = '' }: DiaryPageProps) {
   const location = useLocation();
-  const [animating, setAnimating] = useState(false);
-  const [displayChildren, setDisplayChildren] = useState(children);
-  const prevPathRef = useRef(location.pathname);
+  const [fadeKey, setFadeKey] = useState(location.pathname);
 
   useEffect(() => {
-    if (location.pathname !== prevPathRef.current) {
-      setAnimating(true);
-      // Brief flip-out, then swap content and flip-in
-      const timer = setTimeout(() => {
-        setDisplayChildren(children);
-        setAnimating(false);
-        prevPathRef.current = location.pathname;
-      }, 450);
-      return () => clearTimeout(timer);
-    } else {
-      setDisplayChildren(children);
-    }
-  }, [location.pathname, children]);
+    setFadeKey(location.pathname);
+  }, [location.pathname]);
 
   return (
     <div className="diary-book">
