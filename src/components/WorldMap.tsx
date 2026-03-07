@@ -79,13 +79,19 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
   const [autoRotate, setAutoRotate] = useState(true);
   const animFrameRef = useRef<number>();
 
+  const autoRotateStartTime = useRef<number>(0);
+
   useEffect(() => {
     if (!autoRotate || isDragging) return;
     let lastTime = performance.now();
+    if (!autoRotateStartTime.current) autoRotateStartTime.current = lastTime;
     const animate = (time: number) => {
       const delta = time - lastTime;
       lastTime = time;
-      setRotation(prev => [(prev[0] + delta * 0.008) % 360, prev[1]]);
+      const elapsed = (time - autoRotateStartTime.current) / 1000;
+      // Gentle latitude oscillation: swings between -35° and 35° over ~40 seconds
+      const latTilt = Math.sin(elapsed * (2 * Math.PI / 40)) * 35;
+      setRotation(prev => [(prev[0] + delta * 0.008) % 360, latTilt]);
       animFrameRef.current = requestAnimationFrame(animate);
     };
     animFrameRef.current = requestAnimationFrame(animate);
