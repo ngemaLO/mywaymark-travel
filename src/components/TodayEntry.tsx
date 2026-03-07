@@ -57,6 +57,7 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
   const navigate = useNavigate();
   const { data: travelState, isLoading } = useTravelState();
   const endTripMutation = useEndCurrentTrip();
+  const generateLetter = useGenerateLetter();
   const [meetModalOpen, setMeetModalOpen] = useState(false);
   const [endModalOpen, setEndModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -101,7 +102,6 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
   const country = getCountryByIso(currentTrip.country_iso2);
   if (!country) return null;
 
-  const generateLetter = useGenerateLetter();
 
   const handleEndEntry = () => {
     const arrivalDate = currentTrip.arrival_date;
