@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 export interface WaymarkLetter {
   id: string;
   user_id: string;
-  scope: 'year' | 'chapter' | 'custom';
+  scope: 'year' | 'chapter' | 'custom' | 'trip';
   chapter_id: string | null;
   period_start: string;
   period_end: string;
@@ -110,7 +110,7 @@ export function useGenerateLetter() {
 
   return useMutation({
     mutationFn: async (params: {
-      scope: 'year' | 'chapter' | 'custom';
+      scope: 'year' | 'chapter' | 'custom' | 'trip';
       period_start: string;
       period_end: string;
       chapter_id?: string;
