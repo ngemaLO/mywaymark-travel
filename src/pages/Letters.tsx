@@ -1,4 +1,5 @@
 import { Header } from '@/components/Header';
+import { BottomNav } from '@/components/BottomNav';
 import { useLetters, useDeleteLetter } from '@/hooks/useLetters';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -48,7 +49,7 @@ const Letters = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 md:pb-0">
       <Header />
       
       <main className="journal-page">
@@ -129,6 +130,7 @@ const Letters = () => {
       </footer>
 
       <CreateLetterModal open={createOpen} onOpenChange={setCreateOpen} />
+      <BottomNav />
     </div>
   );
 };
