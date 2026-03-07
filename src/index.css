@@ -1780,35 +1780,41 @@
     }
   }
 
+  /* Page layers container */
+  .diary-layers {
+    @apply relative z-10;
+    overflow: hidden;
+  }
+
   /* Page inner content */
   .diary-page-inner {
-    @apply relative z-10;
     will-change: opacity;
   }
 
-  /* Crossfade transition — like turning thin diary paper */
-  .diary-flip-out {
-    animation: diary-fade-out 0.45s ease-in forwards;
+  /* True crossfade — old fades out while new fades in simultaneously */
+  .diary-fade-out {
+    animation: diary-crossfade-out 0.5s ease-in-out forwards;
+    pointer-events: none;
   }
 
-  .diary-flip-in {
-    animation: diary-fade-in 0.5s ease-out forwards;
+  .diary-fade-in {
+    animation: diary-crossfade-in 0.5s ease-in-out forwards;
   }
 
-  @keyframes diary-fade-out {
-    0% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(6px); }
+  @keyframes diary-crossfade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
   }
 
-  @keyframes diary-fade-in {
-    0% { opacity: 0; transform: translateY(-6px); }
-    100% { opacity: 1; transform: translateY(0); }
+  @keyframes diary-crossfade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
 
   /* Respect reduced motion */
   @media (prefers-reduced-motion: reduce) {
-    .diary-flip-out,
-    .diary-flip-in {
+    .diary-fade-out,
+    .diary-fade-in {
       animation: none;
       opacity: 1;
     }
