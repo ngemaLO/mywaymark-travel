@@ -748,7 +748,7 @@ export type Database = {
     }
     Enums: {
       chapter_trip_method: "auto" | "manual"
-      letter_scope: "year" | "chapter" | "custom"
+      letter_scope: "year" | "chapter" | "custom" | "trip"
       letter_status: "ready" | "failed"
     }
     CompositeTypes: {
@@ -878,7 +878,7 @@ export const Constants = {
   public: {
     Enums: {
       chapter_trip_method: ["auto", "manual"],
-      letter_scope: ["year", "chapter", "custom"],
+      letter_scope: ["year", "chapter", "custom", "trip"],
       letter_status: ["ready", "failed"],
     },
   },
