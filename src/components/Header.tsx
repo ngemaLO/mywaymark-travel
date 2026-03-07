@@ -1,17 +1,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, Menu, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plus, Navigation, BookOpen } from 'lucide-react';
+import { Share2, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plus, Navigation, BookOpen } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShareModal } from '@/components/ShareModal';
 import { AddTripModal } from '@/components/AddTripModal';
 import { CheckInModal } from '@/components/CheckInModal';
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
