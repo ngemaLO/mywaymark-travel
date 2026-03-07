@@ -57,6 +57,7 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
   const navigate = useNavigate();
   const { data: travelState, isLoading } = useTravelState();
   const endTripMutation = useEndCurrentTrip();
+  const generateLetter = useGenerateLetter();
   const [meetModalOpen, setMeetModalOpen] = useState(false);
   const [endModalOpen, setEndModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
