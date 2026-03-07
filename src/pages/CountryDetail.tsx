@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { getCountryByIso } from '@/data/countries';
+import { getCountryFacts } from '@/data/countryFacts';
 import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
 import { useCountryNote, useCountryNotes, useSaveCountryNote, useAddCountryNote, useDeleteCountryNote } from '@/hooks/useCountryNotes';
 import { useIsPremium } from '@/hooks/usePremium';
