@@ -334,6 +334,7 @@ export default function Timeline() {
   const [endingVisit, setEndingVisit] = useState<Visit | null>(null);
   const [revealedEntryId, setRevealedEntryId] = useState<string | null>(null);
   const endCurrentTrip = useEndCurrentTrip();
+  const generateLetter = useGenerateLetter();
 
   // Handle tap-to-reveal on mobile
   const handleEntryTap = (visitId: string, e: React.MouseEvent) => {
