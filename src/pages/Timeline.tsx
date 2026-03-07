@@ -1,4 +1,5 @@
 import { Header } from '@/components/Header';
+import { BottomNav } from '@/components/BottomNav';
 import { getCountryByIso } from '@/data/countries';
 import { format, getYear, getMonth, differenceInDays, isToday, formatDistanceToNow } from 'date-fns';
 
@@ -460,7 +461,7 @@ export default function Timeline() {
   const totalVisits = chapterFilter !== 'all' ? filteredVisits.length : visits.length;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
       
       <main className="timeline-page">
@@ -795,6 +796,7 @@ export default function Timeline() {
           isPending={endCurrentTrip.isPending}
         />
       )}
+      <BottomNav />
     </div>
   );
 }

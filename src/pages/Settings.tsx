@@ -1,4 +1,5 @@
 import { Header } from '@/components/Header';
+import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -56,7 +57,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
       
       <main className="container py-8 max-w-2xl space-y-8">
@@ -462,6 +463,7 @@ export default function Settings() {
           </div>
         </section>
       </main>
+      <BottomNav />
     </div>
   );
 }

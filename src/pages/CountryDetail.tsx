@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
+import { BottomNav } from '@/components/BottomNav';
 import { getCountryByIso } from '@/data/countries';
 import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
 import { useCountryNote, useCountryNotes, useSaveCountryNote, useAddCountryNote, useDeleteCountryNote } from '@/hooks/useCountryNotes';
@@ -236,7 +237,7 @@ export default function CountryDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Header />
       
       <main className="container py-8 space-y-8">
@@ -842,6 +843,7 @@ export default function CountryDetail() {
         open={!!deletingVisit}
         onOpenChange={(open) => !open && setDeletingVisit(null)}
       />
+      <BottomNav />
     </div>
   );
 }
