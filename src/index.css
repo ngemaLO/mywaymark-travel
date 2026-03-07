@@ -1783,46 +1783,26 @@
   /* Page inner content */
   .diary-page-inner {
     @apply relative z-10;
-    will-change: transform, opacity;
-    overflow: hidden;
+    will-change: opacity;
   }
 
-  /* Page flip animations — horizontal wipe like turning a page */
+  /* Crossfade transition — like turning thin diary paper */
   .diary-flip-out {
-    animation: diary-page-flip-out 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    animation: diary-fade-out 0.25s ease-in forwards;
   }
 
   .diary-flip-in {
-    animation: diary-page-flip-in 0.36s cubic-bezier(0, 0, 0.2, 1) forwards;
+    animation: diary-fade-in 0.3s ease-out forwards;
   }
 
-  @keyframes diary-page-flip-out {
-    0% {
-      opacity: 1;
-      transform: translateX(0);
-      clip-path: inset(0 0 0 0);
-    }
-    100% {
-      opacity: 0;
-      transform: translateX(-40px);
-      clip-path: inset(0 0 0 100%);
-    }
+  @keyframes diary-fade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
   }
 
-  @keyframes diary-page-flip-in {
-    0% {
-      opacity: 0;
-      transform: translateX(30px);
-      clip-path: inset(0 100% 0 0);
-    }
-    40% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 1;
-      transform: translateX(0);
-      clip-path: inset(0 0 0 0);
-    }
+  @keyframes diary-fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
   }
 
   /* Respect reduced motion */
@@ -1831,8 +1811,6 @@
     .diary-flip-in {
       animation: none;
       opacity: 1;
-      transform: none;
-      clip-path: none;
     }
   }
 
