@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { getCountryByIso } from '@/data/countries';
+import { getCountryFacts } from '@/data/countryFacts';
 import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
 import { useCountryNote, useCountryNotes, useSaveCountryNote, useAddCountryNote, useDeleteCountryNote } from '@/hooks/useCountryNotes';
 import { useIsPremium } from '@/hooks/usePremium';
@@ -32,7 +33,8 @@ import {
   Plus,
   Home,
   Mic,
-  MicOff
+  MicOff,
+  Lightbulb
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState, useRef, useCallback } from 'react';
@@ -827,6 +829,21 @@ export default function CountryDetail() {
                   <p className="text-xs text-muted-foreground">Cities</p>
                 </div>
               </div>
+            </section>
+
+            {/* Travel Facts */}
+            <section className="card-elevated p-6 space-y-4">
+              <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
+                <Lightbulb className="w-5 h-5 text-amber-500" />
+                Did You Know?
+              </h2>
+              <ul className="space-y-3">
+                {getCountryFacts(iso || '', country.continent).map((fact, i) => (
+                  <li key={i} className="text-sm text-muted-foreground leading-relaxed pl-4 border-l-2 border-primary/20">
+                    {fact}
+                  </li>
+                ))}
+              </ul>
             </section>
           </div>
         </div>
