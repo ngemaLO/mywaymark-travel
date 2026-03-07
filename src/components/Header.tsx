@@ -22,7 +22,6 @@ const navItems = [
 ];
 
 export function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [addTripOpen, setAddTripOpen] = useState(false);
   const [checkInOpen, setCheckInOpen] = useState(false);
