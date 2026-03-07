@@ -18,6 +18,7 @@ import { DeleteVisitDialog } from '@/components/DeleteVisitDialog';
 import { EndEntryModal } from '@/components/EndEntryModal';
 import { useChapters } from '@/hooks/useChapters';
 import { useEndCurrentTrip } from '@/hooks/useCurrentTrip';
+import { useGenerateLetter } from '@/hooks/useLetters';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -789,8 +790,17 @@ export default function Timeline() {
           countryIso2={endingVisit.country_iso2}
           arrivalDate={endingVisit.arrival_date}
           onConfirm={() => {
+            const arrivalDate = endingVisit.arrival_date;
+            const departureDate = new Date().toISOString().split('T')[0];
             endCurrentTrip.mutate(endingVisit.id, {
-              onSuccess: () => setEndingVisit(null)
+              onSuccess: () => {
+                setEndingVisit(null);
+                generateLetter.mutate({
+                  scope: 'trip',
+                  period_start: arrivalDate,
+                  period_end: departureDate,
+                });
+              }
             });
           }}
           isPending={endCurrentTrip.isPending}
