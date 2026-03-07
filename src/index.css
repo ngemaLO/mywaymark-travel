@@ -1631,6 +1631,203 @@
     font-style: italic;
   }
 
+  /* ============================================
+     DIARY BOOK — Physical book feel
+     ============================================ */
+
+  .diary-book {
+    @apply relative mx-auto;
+    max-width: 52rem;
+    min-height: 100vh;
+    /* Subtle inner shadow like recessed pages */
+    box-shadow:
+      inset 4px 0 12px -4px hsl(30 20% 30% / 0.08),
+      inset -2px 0 8px -4px hsl(30 20% 30% / 0.04),
+      0 0 0 1px hsl(var(--border) / 0.15);
+  }
+
+  @media (min-width: 768px) {
+    .diary-book {
+      margin-top: 0.5rem;
+      margin-bottom: 2rem;
+      border-radius: 2px 6px 6px 2px;
+      /* More pronounced on desktop */
+      box-shadow:
+        inset 6px 0 18px -6px hsl(30 20% 30% / 0.1),
+        inset -2px 0 10px -4px hsl(30 20% 30% / 0.05),
+        0 1px 3px hsl(30 15% 20% / 0.06),
+        0 0 0 1px hsl(var(--border) / 0.12);
+    }
+  }
+
+  .dark .diary-book {
+    box-shadow:
+      inset 4px 0 12px -4px hsl(0 0% 0% / 0.25),
+      inset -2px 0 8px -4px hsl(0 0% 0% / 0.15),
+      0 0 0 1px hsl(var(--border) / 0.2);
+  }
+
+  /* Book spine — left edge shadow like a binding */
+  .diary-spine {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      hsl(30 18% 40% / 0.12),
+      hsl(30 18% 40% / 0.06) 40%,
+      transparent
+    );
+    border-radius: 2px 0 0 2px;
+  }
+
+  @media (min-width: 768px) {
+    .diary-spine {
+      width: 10px;
+      background: linear-gradient(
+        to right,
+        hsl(30 18% 40% / 0.15),
+        hsl(30 18% 40% / 0.08) 30%,
+        hsl(30 18% 40% / 0.03) 60%,
+        transparent
+      );
+    }
+  }
+
+  .dark .diary-spine {
+    background: linear-gradient(
+      to right,
+      hsl(0 0% 0% / 0.35),
+      hsl(0 0% 0% / 0.15) 40%,
+      transparent
+    );
+  }
+
+  /* Page edge — right side layered pages */
+  .diary-edge {
+    position: absolute;
+    right: 0;
+    top: 2rem;
+    bottom: 2rem;
+    width: 4px;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  @media (min-width: 768px) {
+    .diary-edge {
+      width: 6px;
+      background:
+        linear-gradient(to left,
+          hsl(var(--border) / 0.2) 0px,
+          transparent 1px
+        ),
+        linear-gradient(to left,
+          hsl(var(--border) / 0.12) 2px,
+          transparent 3px
+        ),
+        linear-gradient(to left,
+          hsl(var(--border) / 0.08) 4px,
+          transparent 5px
+        );
+      border-radius: 0 4px 4px 0;
+    }
+  }
+
+  /* Corner curls — subtle page lift */
+  .diary-corner {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  @media (min-width: 768px) {
+    .diary-corner {
+      opacity: 1;
+    }
+
+    .diary-corner--top-right {
+      top: 0;
+      right: 0;
+      background: linear-gradient(
+        225deg,
+        hsl(var(--background)) 0%,
+        hsl(var(--background)) 40%,
+        hsl(30 15% 70% / 0.15) 50%,
+        transparent 60%
+      );
+      border-radius: 0 6px 0 0;
+    }
+
+    .diary-corner--bottom-right {
+      bottom: 0;
+      right: 0;
+      background: linear-gradient(
+        135deg,
+        hsl(var(--background)) 0%,
+        hsl(var(--background)) 40%,
+        hsl(30 15% 70% / 0.12) 50%,
+        transparent 60%
+      );
+      border-radius: 0 0 6px 0;
+    }
+  }
+
+  /* Page inner content */
+  .diary-page-inner {
+    @apply relative z-10;
+    transform-origin: left center;
+    will-change: transform, opacity;
+  }
+
+  /* Page flip animations */
+  .diary-flip-out {
+    animation: diary-page-flip-out 0.28s ease-in forwards;
+  }
+
+  .diary-flip-in {
+    animation: diary-page-flip-in 0.35s ease-out forwards;
+  }
+
+  @keyframes diary-page-flip-out {
+    0% {
+      opacity: 1;
+      transform: perspective(1200px) rotateY(0deg) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: perspective(1200px) rotateY(-8deg) scale(0.98);
+    }
+  }
+
+  @keyframes diary-page-flip-in {
+    0% {
+      opacity: 0;
+      transform: perspective(1200px) rotateY(6deg) scale(0.98);
+    }
+    100% {
+      opacity: 1;
+      transform: perspective(1200px) rotateY(0deg) scale(1);
+    }
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .diary-flip-out,
+    .diary-flip-in {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
