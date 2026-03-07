@@ -102,7 +102,6 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
   const country = getCountryByIso(currentTrip.country_iso2);
   if (!country) return null;
 
-  const generateLetter = useGenerateLetter();
 
   const handleEndEntry = () => {
     const arrivalDate = currentTrip.arrival_date;
