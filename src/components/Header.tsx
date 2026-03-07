@@ -49,76 +49,62 @@ export function Header() {
             <span className="text-xl font-display font-bold text-foreground">Waymark</span>
           </button>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop: Clean minimal nav links */}
+          <nav className="hidden md:flex items-center gap-6">
             {navItems.map(item => (
-              <Button
+              <button
                 key={item.path}
-                variant="ghost"
-                size="sm"
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "gap-2",
-                  location.pathname === item.path && "text-primary font-medium"
+                  "text-sm font-medium transition-colors hover:text-foreground",
+                  location.pathname === item.path 
+                    ? "text-foreground" 
+                    : "text-muted-foreground"
                 )}
               >
-                <item.icon className="w-4 h-4" />
                 {item.label}
-              </Button>
+              </button>
             ))}
           </nav>
 
-          {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* Desktop: Compact action group */}
+          <div className="hidden md:flex items-center gap-1">
             {user ? (
               <>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="gap-2"
-                  onClick={() => setCheckInOpen(true)}
-                >
-                  <Navigation className="w-4 h-4" />
-                  Check In
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="gap-2"
                   onClick={() => setAddTripOpen(true)}
+                  className="gap-1.5"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5" />
                   Add Entry
                 </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => setShareModalOpen(true)}
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </Button>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate('/share-links')}
-                  title="Shared links"
-                >
-                  <LinkIcon className="w-4 h-4" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleSignOut}
-                  title="Sign out"
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <User className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => setCheckInOpen(true)}>
+                      <Navigation className="w-4 h-4 mr-2" />
+                      Check In
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShareModalOpen(true)}>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/share-links')}>
+                      <LinkIcon className="w-4 h-4 mr-2" />
+                      Shared Links
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <Button
@@ -132,40 +118,34 @@ export function Header() {
             )}
           </div>
 
-          {/* Mobile: only show share/profile actions */}
+          {/* Mobile: minimal top actions */}
           <div className="flex md:hidden items-center gap-1">
             {user ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => setShareModalOpen(true)}
-                >
-                  <Share2 className="w-4 h-4" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9">
-                      <User className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setCheckInOpen(true)}>
-                      <Navigation className="w-4 h-4 mr-2" />
-                      Check In
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/share-links')}>
-                      <LinkIcon className="w-4 h-4 mr-2" />
-                      Shared Links
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <User className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setCheckInOpen(true)}>
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Check In
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShareModalOpen(true)}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/share-links')}>
+                    <LinkIcon className="w-4 h-4 mr-2" />
+                    Shared Links
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Button
                 size="sm"
