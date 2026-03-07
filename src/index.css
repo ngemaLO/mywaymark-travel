@@ -1783,54 +1783,45 @@
   /* Page inner content */
   .diary-page-inner {
     @apply relative z-10;
-    transform-origin: left center;
     will-change: transform, opacity;
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
+    overflow: hidden;
   }
 
-  /* Page flip animations */
+  /* Page flip animations — horizontal wipe like turning a page */
   .diary-flip-out {
-    animation: diary-page-flip-out 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    animation: diary-page-flip-out 0.32s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
   .diary-flip-in {
-    animation: diary-page-flip-in 0.45s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+    animation: diary-page-flip-in 0.36s cubic-bezier(0, 0, 0.2, 1) forwards;
   }
 
   @keyframes diary-page-flip-out {
     0% {
       opacity: 1;
-      transform: perspective(1800px) rotateY(0deg);
-      box-shadow: none;
-    }
-    30% {
-      opacity: 1;
-      transform: perspective(1800px) rotateY(-25deg);
-      box-shadow: 10px 0 30px -5px hsl(30 20% 20% / 0.15);
+      transform: translateX(0);
+      clip-path: inset(0 0 0 0);
     }
     100% {
       opacity: 0;
-      transform: perspective(1800px) rotateY(-90deg);
-      box-shadow: 20px 0 40px -10px hsl(30 20% 20% / 0.0);
+      transform: translateX(-40px);
+      clip-path: inset(0 0 0 100%);
     }
   }
 
   @keyframes diary-page-flip-in {
     0% {
       opacity: 0;
-      transform: perspective(1800px) rotateY(90deg);
-      box-shadow: -20px 0 40px -10px hsl(30 20% 20% / 0.0);
+      transform: translateX(30px);
+      clip-path: inset(0 100% 0 0);
     }
-    50% {
+    40% {
       opacity: 1;
-      transform: perspective(1800px) rotateY(20deg);
-      box-shadow: -10px 0 30px -5px hsl(30 20% 20% / 0.12);
     }
     100% {
       opacity: 1;
-      transform: perspective(1800px) rotateY(0deg);
-      box-shadow: none;
+      transform: translateX(0);
+      clip-path: inset(0 0 0 0);
     }
   }
 
@@ -1841,6 +1832,7 @@
       animation: none;
       opacity: 1;
       transform: none;
+      clip-path: none;
     }
   }
 
