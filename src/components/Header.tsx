@@ -43,7 +43,7 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-14 md:h-16 items-center justify-between">
           {/* Logo */}
           <button 
             onClick={() => navigate('/')}
@@ -74,14 +74,14 @@ export function Header() {
             ))}
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
+          {/* Desktop Actions */}
+          <div className="hidden md:flex items-center gap-2">
             {user ? (
               <>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="hidden sm:flex gap-2"
+                  className="gap-2"
                   onClick={() => setCheckInOpen(true)}
                 >
                   <Navigation className="w-4 h-4" />
@@ -91,7 +91,7 @@ export function Header() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="hidden sm:flex gap-2"
+                  className="gap-2"
                   onClick={() => setAddTripOpen(true)}
                 >
                   <Plus className="w-4 h-4" />
@@ -101,7 +101,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden sm:flex gap-2"
+                  className="gap-2"
                   onClick={() => setShareModalOpen(true)}
                 >
                   <Share2 className="w-4 h-4" />
@@ -111,7 +111,6 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hidden sm:flex"
                   onClick={() => navigate('/share-links')}
                   title="Shared links"
                 >
@@ -121,7 +120,6 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="hidden sm:flex"
                   onClick={handleSignOut}
                   title="Sign out"
                 >
@@ -138,111 +136,52 @@ export function Header() {
                 Sign In
               </Button>
             )}
+          </div>
 
-            {/* Mobile menu */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="w-5 h-5" />
+          {/* Mobile: only show share/profile actions */}
+          <div className="flex md:hidden items-center gap-1">
+            {user ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setShareModalOpen(true)}
+                >
+                  <Share2 className="w-4 h-4" />
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[280px]">
-                <nav className="flex flex-col gap-2 mt-8">
-                  {navItems.map(item => (
-                    <Button
-                      key={item.path}
-                      variant={location.pathname === item.path ? "secondary" : "ghost"}
-                      className="justify-start gap-3"
-                      onClick={() => {
-                        navigate(item.path);
-                        setMobileMenuOpen(false);
-                      }}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.label}
-                    </Button>
-                  ))}
-                  
-                  <hr className="my-4 border-border" />
-                  
-                  {user ? (
-                    <>
-                      <Button 
-                        className="justify-start gap-3"
-                        onClick={() => {
-                          setCheckInOpen(true);
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <Navigation className="w-4 h-4" />
-                        Check In
-                      </Button>
-
-                      <Button 
-                        variant="outline"
-                        className="justify-start gap-3"
-                        onClick={() => {
-                          setAddTripOpen(true);
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add Entry
-                      </Button>
-                      
-                      <hr className="my-4 border-border" />
-                      
-                      <Button 
-                        variant="outline"
-                        className="justify-start gap-3"
-                        onClick={() => {
-                          setShareModalOpen(true);
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <Share2 className="w-4 h-4" />
-                        Share Profile
-                      </Button>
-
-                      <Button 
-                        variant="ghost" 
-                        className="justify-start gap-3"
-                        onClick={() => {
-                          navigate('/share-links');
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <LinkIcon className="w-4 h-4" />
-                        Shared Links
-                      </Button>
-
-                      <Button 
-                        variant="ghost" 
-                        className="justify-start gap-3 text-destructive"
-                        onClick={() => {
-                          handleSignOut();
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      className="justify-start gap-3"
-                      onClick={() => {
-                        navigate('/auth');
-                        setMobileMenuOpen(false);
-                      }}
-                    >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9">
                       <User className="w-4 h-4" />
-                      Sign In
                     </Button>
-                  )}
-                </nav>
-              </SheetContent>
-            </Sheet>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setCheckInOpen(true)}>
+                      <Navigation className="w-4 h-4 mr-2" />
+                      Check In
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/share-links')}>
+                      <LinkIcon className="w-4 h-4 mr-2" />
+                      Shared Links
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => navigate('/auth')}
+                className="gap-2"
+              >
+                <User className="w-4 h-4" />
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </header>

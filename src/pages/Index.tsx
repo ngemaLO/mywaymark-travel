@@ -1,4 +1,5 @@
 import { Header } from '@/components/Header';
+import { BottomNav } from '@/components/BottomNav';
 import { WorldMap } from '@/components/WorldMap';
 import { OnThisDay } from '@/components/OnThisDay';
 import { RecentJourneys } from '@/components/RecentJourneys';
@@ -32,7 +33,7 @@ const Index = () => {
   const hasVisits = visitedIsos.length > 0;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-20 md:pb-0">
       <Header />
       
       {/* Empty State for new users */}
@@ -110,6 +111,7 @@ const Index = () => {
       </footer>
 
       <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />
+      <BottomNav />
     </div>
   );
 };
