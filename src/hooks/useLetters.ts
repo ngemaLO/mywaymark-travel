@@ -198,9 +198,12 @@ export function useGenerateLetter() {
       if (insertError) throw insertError;
       return insertedLetter as WaymarkLetter;
     },
-    onSuccess: () => {
+    onSuccess: (letter) => {
       queryClient.invalidateQueries({ queryKey: ['letters'] });
-      toast({ description: 'Your Waymark Letter is ready.' });
+      toast({
+        title: '✉️ Letter ready',
+        description: `${letter.title} — tap to read`,
+      });
     },
     onError: (error) => {
       toast({ 
