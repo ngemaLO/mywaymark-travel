@@ -198,9 +198,20 @@ export function useGenerateLetter() {
       if (insertError) throw insertError;
       return insertedLetter as WaymarkLetter;
     },
-    onSuccess: () => {
+    onSuccess: (letter) => {
       queryClient.invalidateQueries({ queryKey: ['letters'] });
-      toast({ description: 'Your Waymark Letter is ready.' });
+      toast({
+        title: '✉️ Letter ready',
+        description: letter.title,
+        action: letter.id ? (
+          <a
+            href={`/letters/${letter.id}`}
+            className="inline-flex items-center gap-1 text-xs font-medium underline underline-offset-2 opacity-80 hover:opacity-100 transition-opacity"
+          >
+            Read it →
+          </a>
+        ) : undefined,
+      });
     },
     onError: (error) => {
       toast({ 
