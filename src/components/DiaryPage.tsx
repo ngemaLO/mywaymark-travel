@@ -20,7 +20,7 @@ export function DiaryPage({ children, className = '' }: DiaryPageProps) {
         setDisplayChildren(children);
         setAnimating(false);
         prevPathRef.current = location.pathname;
-      }, 250);
+      }, 450);
       return () => clearTimeout(timer);
     } else {
       setDisplayChildren(children);
