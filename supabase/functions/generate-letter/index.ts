@@ -19,7 +19,7 @@ interface Signal {
 }
 
 interface GenerateLetterRequest {
-  scope: 'year' | 'chapter' | 'custom';
+  scope: 'year' | 'chapter' | 'custom' | 'trip';
   period_start: string;
   period_end: string;
   entries: Entry[];
@@ -195,10 +195,15 @@ serve(async (req) => {
     const yearLabel = startYear === endYear ? `${startYear}` : `${startYear}–${endYear}`;
 
     // Create title
+    const primaryCountryName = entries[0]?.country_name || entries[0]?.country_iso2 || '';
     const title = scope === 'year' 
       ? `${yearLabel} — ${theme.replace('A year', 'A Year')}`
       : scope === 'chapter'
       ? theme.replace('A year', 'A Chapter')
+      : scope === 'trip'
+      ? primaryCountryName
+        ? `${primaryCountryName}, ${yearLabel}`
+        : `A journey, ${yearLabel}`
       : theme.replace('A year', 'A Time');
 
     // Build the prompt for AI
@@ -216,6 +221,7 @@ serve(async (req) => {
 
     const countryNames = entries.map(e => e.country_name || e.country_iso2).join(', ');
 
+    const wordLimit = scope === 'trip' ? 80 : 150;
     const systemPrompt = `You are a reflective travel journal writer. Your tone is warm, contemplative, and poetic — never analytical or list-like. You write as if composing a letter to someone about their travels. 
 
 Rules:
@@ -224,8 +230,8 @@ Rules:
 - Minimal numbers — use them only if poetic ("three continents", not "12 entries")
 - No advice or judgement
 - Write in second person ("You...")
-- Keep it under 150 words
-- Structure: Opening line → Theme statement → 2-3 observations → Closing line`;
+- Keep it under ${wordLimit} words
+- Structure: Opening line → Theme statement → ${scope === 'trip' ? '1-2 observations' : '2-3 observations'} → Closing line`;
 
     const userPrompt = `Write a reflective letter about this period of travel.
 
@@ -276,7 +282,7 @@ Write a short, poetic letter that captures the essence of this travel period. Fo
     return new Response(
       JSON.stringify({
         title,
-        subtitle: scope === 'year' ? 'A letter from your travels.' : null,
+        subtitle: scope === 'year' ? 'A letter from your travels.' : scope === 'trip' ? 'A letter from this journey.' : null,
         theme,
         body: letterBody,
         supporting_signals: signals,

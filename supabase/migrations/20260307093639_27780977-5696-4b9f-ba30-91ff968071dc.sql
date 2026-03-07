@@ -1,0 +1,1 @@
+ALTER TYPE public.letter_scope ADD VALUE IF NOT EXISTS 'trip';

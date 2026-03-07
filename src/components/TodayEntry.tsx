@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTravelState, useEndCurrentTrip } from '@/hooks/useCurrentTrip';
+import { useGenerateLetter } from '@/hooks/useLetters';
 import { getCountryByIso } from '@/data/countries';
 import { format, differenceInDays, isToday } from 'date-fns';
 import { MeetInPersonModal } from './connections/MeetInPersonModal';
@@ -100,10 +101,21 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
   const country = getCountryByIso(currentTrip.country_iso2);
   if (!country) return null;
 
+  const generateLetter = useGenerateLetter();
+
   const handleEndEntry = () => {
+    const arrivalDate = currentTrip.arrival_date;
+    const departureDate = new Date().toISOString().split('T')[0];
+    
     endTripMutation.mutate(currentTrip.id, {
       onSuccess: () => {
         setEndModalOpen(false);
+        // Auto-generate a letter for this completed entry
+        generateLetter.mutate({
+          scope: 'trip',
+          period_start: arrivalDate,
+          period_end: departureDate,
+        });
       }
     });
   };
