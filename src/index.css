@@ -6,68 +6,68 @@
 
 @layer base {
 :root {
-    /* Waymark Color Palette - Muted, editorial */
-    --background: 39 33% 96%;
-    --foreground: 30 10% 15%;
+    /* Waymark Color Palette - Dark, editorial */
+    --background: 0 0% 0%;
+    --foreground: 40 15% 90%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 30 10% 15%;
+    --card: 0 0% 6%;
+    --card-foreground: 40 15% 90%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 30 10% 15%;
+    --popover: 0 0% 6%;
+    --popover-foreground: 40 15% 90%;
 
-    /* Deep teal - exploration, depth */
-    --primary: 185 45% 32%;
-    --primary-foreground: 0 0% 100%;
+    /* Teal - exploration, depth */
+    --primary: 185 40% 55%;
+    --primary-foreground: 0 0% 0%;
 
-    /* Warm cream */
-    --secondary: 40 30% 94%;
-    --secondary-foreground: 30 20% 25%;
+    /* Dark surface */
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 40 15% 85%;
 
-    /* Soft grey for muted elements */
-    --muted: 40 10% 92%;
-    --muted-foreground: 30 8% 45%;
+    /* Muted on dark */
+    --muted: 0 0% 12%;
+    --muted-foreground: 40 10% 55%;
 
     /* Amber accent - memory, warmth */
-    --accent: 38 70% 50%;
+    --accent: 38 70% 55%;
     --accent-foreground: 38 90% 15%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 15% 88%;
-    --input: 40 15% 88%;
-    --ring: 185 45% 32%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 185 40% 55%;
 
     --radius: 0.5rem;
 
     /* Custom tokens */
-    --ocean: 185 45% 32%;
-    --ocean-light: 185 35% 50%;
-    --amber: 38 70% 50%;
+    --ocean: 185 40% 55%;
+    --ocean-light: 185 35% 65%;
+    --amber: 38 70% 55%;
     --amber-light: 38 60% 70%;
 
     /* Map colors */
-    --map-bg: 205 55% 72%;
-    --map-land: 40 10% 82%;
-    --map-land-hover: 40 12% 75%;
-    --map-visited: 185 40% 42%;
-    --map-visited-hover: 185 45% 35%;
-    --map-grid: 205 30% 65%;
+    --map-bg: 210 40% 10%;
+    --map-land: 0 0% 18%;
+    --map-land-hover: 0 0% 24%;
+    --map-visited: 185 35% 48%;
+    --map-visited-hover: 185 40% 55%;
+    --map-grid: 210 25% 20%;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(30 10% 15% / 0.04);
-    --shadow-md: 0 4px 8px -2px hsl(30 10% 15% / 0.06);
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 4px 8px -2px hsl(0 0% 0% / 0.4);
 
     /* Sidebar */
-    --sidebar-background: 40 20% 98%;
-    --sidebar-foreground: 30 10% 15%;
-    --sidebar-primary: 185 45% 32%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 30% 94%;
-    --sidebar-accent-foreground: 30 20% 25%;
-    --sidebar-border: 40 15% 88%;
-    --sidebar-ring: 185 45% 32%;
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 40 15% 90%;
+    --sidebar-primary: 185 40% 55%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 40 15% 85%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 185 40% 55%;
   }
 
   .dark {
