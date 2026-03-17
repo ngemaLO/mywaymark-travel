@@ -19,6 +19,7 @@ import { EndEntryModal } from '@/components/EndEntryModal';
 import { useChapters } from '@/hooks/useChapters';
 import { useEndCurrentTrip } from '@/hooks/useCurrentTrip';
 import { useGenerateLetter } from '@/hooks/useLetters';
+import { useGenerateTripSummary, useTripSummariesByTripIds } from '@/hooks/useTripSummaries';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -335,6 +336,7 @@ export default function Timeline() {
   const [revealedEntryId, setRevealedEntryId] = useState<string | null>(null);
   const endCurrentTrip = useEndCurrentTrip();
   const generateLetter = useGenerateLetter();
+  const generateTripSummary = useGenerateTripSummary();
 
   // Handle tap-to-reveal on mobile
   const handleEntryTap = (visitId: string, e: React.MouseEvent) => {
@@ -344,14 +346,6 @@ export default function Timeline() {
       return;
     }
     setRevealedEntryId(prev => prev === visitId ? null : visitId);
-  };
-
-  // Close revealed entry when tapping outside
-  const handlePageClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.timeline-entry')) {
-      setRevealedEntryId(null);
-    }
   };
 
   // Get chapter filter from URL
@@ -412,6 +406,17 @@ export default function Timeline() {
     });
   }, [visits, selectedChapter, today]);
 
+  const tripIds = useMemo(
+    () => [...new Set(visits.map((visit) => visit.trip_id).filter((tripId): tripId is string => !!tripId))],
+    [visits]
+  );
+
+  const { data: tripSummaries = [] } = useTripSummariesByTripIds(tripIds);
+  const tripSummaryMap = useMemo(
+    () => new Map(tripSummaries.map((summary) => [summary.trip_id, summary])),
+    [tripSummaries]
+  );
+
   // Group by year
   const groupedData = useMemo(() => {
     const visitsToGroup = chapterFilter !== 'all' ? filteredVisits : visits;
@@ -461,6 +466,7 @@ export default function Timeline() {
   }
 
   const totalVisits = chapterFilter !== 'all' ? filteredVisits.length : visits.length;
+  const renderedTripSummaryActions = new Set<string>();
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
@@ -729,6 +735,31 @@ export default function Timeline() {
                                   
                                   {/* Actions - appear on hover/tap */}
                                   <div className="timeline-actions">
+                                    {(() => {
+                                      if (!visit.trip_id || renderedTripSummaryActions.has(visit.trip_id)) {
+                                        return null;
+                                      }
+
+                                      renderedTripSummaryActions.add(visit.trip_id);
+
+                                      return (
+                                        <span
+                                          className="timeline-action"
+                                          onClick={() =>
+                                            generateTripSummary.mutate({
+                                              tripId: visit.trip_id!,
+                                              regenerate: tripSummaryMap.has(visit.trip_id!),
+                                            })
+                                          }
+                                        >
+                                          {generateTripSummary.isPending && generateTripSummary.variables?.tripId === visit.trip_id
+                                            ? 'Working...'
+                                            : tripSummaryMap.has(visit.trip_id)
+                                            ? 'Regenerate summary'
+                                            : 'Generate summary'}
+                                        </span>
+                                      );
+                                    })()}
                                     <span 
                                       className="timeline-action"
                                       onClick={() => setEditingVisit(visit)}

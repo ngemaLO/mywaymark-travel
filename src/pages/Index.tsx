@@ -17,6 +17,7 @@ import { Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AddTripModal } from '@/components/AddTripModal';
 import { ChapterFilter } from '@/components/ChapterFilter';
+import { TripSummaryCard } from '@/components/ai/TripSummaryCard';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -80,6 +81,11 @@ const Index = () => {
             {/* 1. Today — Present moment */}
             <ScrollReveal>
               <TodayEntry onAddTrip={() => setAddTripOpen(true)} />
+            </ScrollReveal>
+
+            {/* 2. Recent entries */}
+            <ScrollReveal delay={50}>
+              <TripSummaryCard />
             </ScrollReveal>
 
             {/* 2. Recent entries */}

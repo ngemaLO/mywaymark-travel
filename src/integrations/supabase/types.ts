@@ -536,6 +536,74 @@ export type Database = {
           },
         ]
       }
+      trip_summaries: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          generated_at: string
+          highlights: Json
+          id: string
+          model: string | null
+          period_end: string | null
+          period_start: string
+          source_context: Json
+          stats_snapshot: Json
+          status: string
+          summary: string
+          title: string
+          trip_id: string
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          generated_at?: string
+          highlights?: Json
+          id?: string
+          model?: string | null
+          period_end?: string | null
+          period_start: string
+          source_context?: Json
+          stats_snapshot?: Json
+          status?: string
+          summary: string
+          title: string
+          trip_id: string
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          generated_at?: string
+          highlights?: Json
+          id?: string
+          model?: string | null
+          period_end?: string | null
+          period_start?: string
+          source_context?: Json
+          stats_snapshot?: Json
+          status?: string
+          summary?: string
+          title?: string
+          trip_id?: string
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_summaries_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: true
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trips: {
         Row: {
           created_at: string | null
