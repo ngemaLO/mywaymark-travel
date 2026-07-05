@@ -796,7 +796,7 @@ export default function Settings() {
 
           <div className="space-y-3">
             <button
-              onClick={() => navigate('/chapters')}
+              onClick={() => navigate('/travels')}
               className="w-full flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
             >
               <div className="flex items-center gap-3">

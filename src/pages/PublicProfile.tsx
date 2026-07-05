@@ -5,14 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getCountryByIso } from '@/data/countries';
 import { Globe, MapPin, Copy, Check, UserPlus, UserCheck, Loader2, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { format } from 'date-fns';
-
-function isoToFlag(iso2: string): string {
-  return [...iso2.toUpperCase()]
-    .map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65))
-    .join('');
-}
+import { useState, useMemo } from 'react';
+import { TravelContext } from '@/components/TravelContext';
+import { PlacesGrid } from '@/components/PlacesGrid';
+import type { VisitDataEntry } from '@/components/PlacesGrid';
 
 export default function PublicProfile() {
   const { username } = useParams<{ username: string }>();
@@ -38,6 +34,35 @@ export default function PublicProfile() {
 
   const visitedIsos = [...new Set(visits.map(v => v.country_iso2))].filter(Boolean) as string[];
   const countryCount = visitedIsos.length;
+
+  // Derive visit data for PlacesGrid
+  const visitDataMap = useMemo((): Record<string, VisitDataEntry> => {
+    const map: Record<string, VisitDataEntry> = {};
+    for (const v of visits) {
+      if (!map[v.country_iso2]) {
+        map[v.country_iso2] = { visitCount: 0, firstVisitYear: null };
+      }
+      map[v.country_iso2].visitCount++;
+      const year = new Date(v.arrival_date).getFullYear();
+      if (!map[v.country_iso2].firstVisitYear || year < map[v.country_iso2].firstVisitYear!) {
+        map[v.country_iso2].firstVisitYear = year;
+      }
+    }
+    return map;
+  }, [visits]);
+
+  // Derive TravelContext data from public visits
+  const travelContextData = useMemo(() => {
+    if (visits.length === 0) return null;
+    const sorted = [...visits].sort(
+      (a, b) => new Date(a.arrival_date).getTime() - new Date(b.arrival_date).getTime()
+    );
+    const first = sorted[sorted.length - 1]; // visits are desc, so last in sorted asc
+    const firstAsc = sorted[0];
+    const travelingSince = new Date(firstAsc.arrival_date).getFullYear();
+    const firstCountry = getCountryByIso(firstAsc.country_iso2) ?? null;
+    return { travelingSince, firstCountry };
+  }, [visits]);
 
   const profileUrl = window.location.href;
 
@@ -123,6 +148,14 @@ export default function PublicProfile() {
             </div>
           </div>
 
+          {/* Travel bio */}
+          {travelContextData && (
+            <TravelContext
+              travelingSince={travelContextData.travelingSince}
+              firstCountry={travelContextData.firstCountry}
+            />
+          )}
+
           {/* Actions */}
           <div className="flex gap-2">
             {!isOwnProfile && (
@@ -160,41 +193,16 @@ export default function PublicProfile() {
           <div className="flex justify-center py-8">
             <Globe className="w-5 h-5 animate-spin text-muted-foreground/50" />
           </div>
-        ) : countryCount === 0 ? (
-          <div className="text-center py-8 text-sm text-muted-foreground">
-            No countries logged yet.
-          </div>
         ) : (
           <section className="space-y-4">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Countries
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {visitedIsos.map(iso2 => {
-                const country = getCountryByIso(iso2);
-                const lastVisit = visits.find(v => v.country_iso2 === iso2);
-                return (
-                  <div
-                    key={iso2}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm"
-                  >
-                    <span className="text-2xl leading-none select-none" role="img">
-                      {isoToFlag(iso2)}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {country?.name ?? iso2}
-                      </p>
-                      {lastVisit?.arrival_date && (
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(lastVisit.arrival_date), 'MMM yyyy')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <PlacesGrid
+              visitedIsos={visitedIsos}
+              visitDataMap={visitDataMap}
+              readOnly
+            />
           </section>
         )}
 

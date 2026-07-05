@@ -109,7 +109,11 @@ export function AddTripModal({ open, onOpenChange, preselectedCountry }: AddTrip
         ongoing = true;
       } else if (whenMode === 'month') {
         const monthIndex = MONTHS.indexOf(month);
+        const yearNum = parseInt(year);
         arrivalDate = `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
+        // Month mode is always a completed visit — close it on the last day of the month
+        const lastDay = new Date(yearNum, monthIndex + 1, 0).getDate();
+        departureDate = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
       } else {
         arrivalDate = startDate;
         departureDate = isOngoing ? null : (endDate || null);

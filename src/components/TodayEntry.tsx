@@ -5,9 +5,9 @@ import { useTravelState, useEndCurrentTrip } from '@/hooks/useCurrentTrip';
 import { useGenerateLetter } from '@/hooks/useLetters';
 import { getCountryByIso } from '@/data/countries';
 import { format, differenceInDays, isToday } from 'date-fns';
-import { MeetInPersonModal } from './connections/MeetInPersonModal';
 import { EndEntryModal } from './EndEntryModal';
 import { EditVisitModal } from './EditVisitModal';
+import { DeleteVisitDialog } from './DeleteVisitDialog';
 
 interface TodayEntryProps {
   onAddTrip: () => void;
@@ -58,9 +58,9 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
   const { data: travelState, isLoading } = useTravelState();
   const endTripMutation = useEndCurrentTrip();
   const generateLetter = useGenerateLetter();
-  const [meetModalOpen, setMeetModalOpen] = useState(false);
   const [endModalOpen, setEndModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (!user || isLoading) {
     return null;
@@ -170,31 +170,32 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
         
         {/* Secondary actions - margin notes style */}
         <nav className="journal-margin-notes">
-          <button 
-            onClick={() => navigate(`/country/${currentTrip.country_iso2}`)} 
+          <button
+            onClick={() => navigate(`/country/${currentTrip.country_iso2}`)}
             className="journal-margin-note"
           >
             View place
           </button>
-          <button 
-            onClick={() => setMeetModalOpen(true)}
-            className="journal-margin-note"
-          >
-            Connections
-          </button>
-          <button 
+          <button
             onClick={() => setEndModalOpen(true)}
             className="journal-margin-note"
           >
             End entry
           </button>
+          <button
+            onClick={() => setDeleteDialogOpen(true)}
+            className="journal-margin-note"
+            style={{ color: 'hsl(var(--destructive))' }}
+          >
+            Delete entry
+          </button>
         </nav>
       </article>
 
-      <MeetInPersonModal
-        open={meetModalOpen}
-        onOpenChange={setMeetModalOpen}
-        tripId={currentTrip.trip_id || currentTrip.id}
+      <DeleteVisitDialog
+        visit={{ id: currentTrip.id, country_iso2: currentTrip.country_iso2, arrival_date: currentTrip.arrival_date }}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
       />
 
       <EndEntryModal

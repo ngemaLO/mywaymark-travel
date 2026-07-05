@@ -17,7 +17,7 @@ export function CurrentChapterCard() {
       <section className="journal-chapter-opening">
         <p className="journal-chapter-whisper">
           Every journey has its seasons.{' '}
-          <Link to="/chapters" className="journal-chapter-whisper-link">
+          <Link to="/travels" className="journal-chapter-whisper-link">
             Begin yours
           </Link>
         </p>
@@ -75,7 +75,7 @@ export function CurrentChapterCard() {
         </p>
       )}
 
-      <Link to="/chapters" className="journal-chapter-nav">
+      <Link to="/travels" className="journal-chapter-nav">
         all chapters
       </Link>
     </section>

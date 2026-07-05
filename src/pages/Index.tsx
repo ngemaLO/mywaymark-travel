@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisitedCountries } from '@/hooks/useVisits';
 import { useEnsureAnnualLetter } from '@/hooks/useLetters';
+import { useConnectionVisitedCountries, useConnectionCurrentTrips } from '@/hooks/useFollows';
 import { Button } from '@/components/ui/button';
 import { Plus, MapPin, Compass, BarChart2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -40,6 +41,8 @@ const Index = () => {
 
   const hasVisits = visitedIsos.length > 0;
   const { currentMilestone, triggerFlag, dismiss: dismissMilestone } = useMilestones(visitedIsos);
+  const { data: connectionVisitedIsos = [] } = useConnectionVisitedCountries();
+  const { data: connectionCurrentTrips = [] } = useConnectionCurrentTrips();
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -51,7 +54,7 @@ const Index = () => {
           {/* Show the globe even for new users — their unclaimed world */}
           <section className="globe-hero">
             <div className="globe-hero-inner">
-              <WorldMap heroMode />
+              <WorldMap heroMode connectionVisitedIsos={connectionVisitedIsos} connectionCurrentTrips={connectionCurrentTrips} />
             </div>
           </section>
 
@@ -113,6 +116,8 @@ const Index = () => {
               <WorldMap
                 onCountryClick={(iso) => setPanelIso(iso)}
                 heroMode
+                connectionVisitedIsos={connectionVisitedIsos}
+                connectionCurrentTrips={connectionCurrentTrips}
               />
             </div>
 

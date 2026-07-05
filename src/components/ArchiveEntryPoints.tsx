@@ -82,7 +82,7 @@ export function ArchiveEntryPoints() {
         title="Chapters"
         count={chaptersCount}
         label={chaptersCount === 1 ? 'chapter' : 'chapters'}
-        to="/chapters"
+        to="/travels"
       />
     </div>
   );

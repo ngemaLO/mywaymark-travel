@@ -9,6 +9,7 @@ import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
 import { Home, Globe, BookOpen, RotateCcw } from 'lucide-react';
+import type { ConnectionCurrentTrip } from '@/hooks/useFollows';
 import { useChapters } from '@/hooks/useChapters';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +29,8 @@ interface WorldMapProps {
   onCountryClick?: (iso2: string) => void;
   scope?: MapScopeValue;
   heroMode?: boolean;
+  connectionVisitedIsos?: string[];
+  connectionCurrentTrips?: ConnectionCurrentTrip[];
 }
 
 interface CountryFeature {
@@ -57,7 +60,7 @@ interface TooltipState {
   x: number; y: number; title: string; subtitle?: string;
 }
 
-export function WorldMap({ onCountryClick, scope: externalScope, heroMode = false }: WorldMapProps) {
+export function WorldMap({ onCountryClick, scope: externalScope, heroMode = false, connectionVisitedIsos = [], connectionCurrentTrips = [] }: WorldMapProps) {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [mapHoverCard, setMapHoverCard] = useState<{
@@ -376,9 +379,11 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
     if (isHomeBase || isVisited) {
       return flagPatternData[iso2] ? `url(#flag-${iso2})` : (getCountryByIso(iso2)?.flagPrimaryColor || 'hsl(var(--map-visited))');
     }
+    // Countries visited by connections but not by the user
+    if (connectionVisitedIsos.includes(iso2)) return 'hsl(var(--map-connection))';
     if (mapScope === 'chapter') return hoveredCountry === iso2 ? 'hsl(var(--map-land-hover) / 0.5)' : 'hsl(var(--map-land) / 0.4)';
     return hoveredCountry === iso2 ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
-  }, [hoveredCountry, displayedVisitedIsos, visitedIsos, homeBase, mapScope, flagPatternData]);
+  }, [hoveredCountry, displayedVisitedIsos, visitedIsos, homeBase, mapScope, flagPatternData, connectionVisitedIsos]);
 
   const getPolygonStroke = useCallback((iso2: string | null) => {
     if (homeBase?.country_iso2 === iso2) return { stroke: 'hsl(var(--foreground))', strokeWidth: 1.5 };
@@ -477,6 +482,29 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
     }
     return paths;
   }, [geoData, allVisits, displayedVisitedIsos, projection, getIso2FromFeature]);
+
+  // Live markers: one per country, grouped if multiple connections are in the same place
+  const connectionTripMarkers = useMemo(() => {
+    if (!geoData || connectionCurrentTrips.length === 0) return [];
+    const byCountry = new Map<string, ConnectionCurrentTrip[]>();
+    for (const trip of connectionCurrentTrips) {
+      const existing = byCountry.get(trip.country_iso2) ?? [];
+      existing.push(trip);
+      byCountry.set(trip.country_iso2, existing);
+    }
+    const markers: { iso2: string; x: number; y: number; people: ConnectionCurrentTrip[] }[] = [];
+    const seen = new Set<string>();
+    for (const f of geoData) {
+      const iso2 = getIso2FromFeature(f);
+      if (!iso2 || seen.has(iso2) || !byCountry.has(iso2)) continue;
+      seen.add(iso2);
+      const centroid = geoCentroid(f as GeoJSON.Feature);
+      const projected = projection(centroid);
+      if (!projected) continue;
+      markers.push({ iso2, x: projected[0], y: projected[1], people: byCountry.get(iso2)! });
+    }
+    return markers;
+  }, [geoData, connectionCurrentTrips, projection, getIso2FromFeature]);
 
   const handleCountryClick = (iso2: string | null) => {
     if (iso2 && onCountryClick) onCountryClick(iso2);
@@ -716,6 +744,22 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
             />
           ))}
 
+          {/* Connection live location markers */}
+          {connectionTripMarkers.map(marker => (
+            <g key={`conn-${marker.iso2}`} className="pointer-events-none">
+              <circle cx={marker.x} cy={marker.y} r="5" fill="hsl(var(--map-connection))" opacity="0">
+                <animate attributeName="r" from="5" to="13" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.45" to="0" dur="2s" repeatCount="indefinite" />
+              </circle>
+              <circle cx={marker.x} cy={marker.y} r="4.5" fill="hsl(var(--map-connection))" stroke="hsl(var(--background))" strokeWidth="1.5" />
+              {marker.people.length > 1 && (
+                <text x={marker.x} y={marker.y + 1} textAnchor="middle" dominantBaseline="middle" fontSize="4" fontWeight="bold" fill="hsl(var(--background))">
+                  {marker.people.length}
+                </text>
+              )}
+            </g>
+          ))}
+
           {/* Pin markers for visited countries */}
           {pinMarkers.map((marker) => (
             <g
@@ -776,11 +820,23 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-4 text-xs pt-3 font-sans">
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-xs pt-3 font-sans">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-visited))' }} />
           <span className="text-muted-foreground">{mapScope === 'chapter' ? 'Visited (this chapter)' : 'Visited'}</span>
         </div>
+        {connectionVisitedIsos.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-connection))' }} />
+            <span className="text-muted-foreground">Friends' visits</span>
+          </div>
+        )}
+        {connectionTripMarkers.length > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(var(--map-connection))' }} />
+            <span className="text-muted-foreground">Friends here now</span>
+          </div>
+        )}
         {mapScope === 'chapter' && (
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--map-land) / 0.6)' }} />

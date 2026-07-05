@@ -4,6 +4,8 @@ import { useStatsData } from '@/hooks/useStatsData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Globe, MapPin, Building2, CalendarDays, Flame, Trophy, Clock, Navigation } from 'lucide-react';
+import { TravelContextConnected } from '@/components/TravelContext';
+import { PlacesGrid } from '@/components/PlacesGrid';
 
 function StatCard({ value, label, icon: Icon }: { value: string | number; label: string; icon: React.ElementType }) {
   return (
@@ -59,6 +61,8 @@ export default function Stats() {
             Everything you've logged, counted.
           </p>
         </div>
+
+        <TravelContextConnected />
 
         {isLoading && (
           <div className="stats-loading">
@@ -164,6 +168,12 @@ export default function Stats() {
                 </div>
               </div>
             )}
+
+            {/* ── Countries ── */}
+            <div className="journal-section">
+              <h2 className="journal-section-title">Your countries</h2>
+              <PlacesGrid />
+            </div>
           </>
         )}
       </main>

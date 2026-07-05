@@ -1,36 +1,23 @@
 import { Link } from 'react-router-dom';
-import { useVisits } from '@/hooks/useVisits';
-import { useAuth } from '@/contexts/AuthContext';
 import { getCountryByIso } from '@/data/countries';
+import { useAuth } from '@/contexts/AuthContext';
+import { useVisits } from '@/hooks/useVisits';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
 import { Compass, Flag, Home } from 'lucide-react';
 
-export function TravelContext() {
-  const { user } = useAuth();
-  const { data: visits = [], isLoading } = useVisits();
-  const { homeBase } = useCurrentHomeBase();
+interface TravelContextProps {
+  travelingSince?: number | null;
+  firstCountry?: { iso2: string; name: string } | null;
+  homeCountry?: { iso2: string; name: string } | null;
+}
 
-  if (!user || isLoading) return null;
-  if (visits.length === 0) return null;
-
-  // First country visited (earliest arrival_date)
-  const sortedByArrival = [...visits].sort((a, b) => 
-    new Date(a.arrival_date).getTime() - new Date(b.arrival_date).getTime()
-  );
-  const firstVisit = sortedByArrival[0];
-  const firstCountry = firstVisit ? getCountryByIso(firstVisit.country_iso2) : null;
-  const firstYear = firstVisit ? new Date(firstVisit.arrival_date).getFullYear() : null;
-
-  // Home base country
-  const homeCountry = homeBase ? getCountryByIso(homeBase.country_iso2) : null;
-
-  // Build segments for the summary bar
+export function TravelContext({ travelingSince, firstCountry, homeCountry }: TravelContextProps) {
   const segments: { icon: React.ReactNode; content: React.ReactNode }[] = [];
 
-  if (firstYear) {
+  if (travelingSince) {
     segments.push({
       icon: <Compass className="w-3.5 h-3.5" />,
-      content: <span>Traveling since {firstYear}</span>
+      content: <span>Traveling since {travelingSince}</span>,
     });
   }
 
@@ -40,14 +27,11 @@ export function TravelContext() {
       content: (
         <span>
           First stop:{' '}
-          <Link 
-            to={`/country/${firstCountry.iso2}`} 
-            className="font-medium hover:underline underline-offset-2"
-          >
+          <Link to={`/country/${firstCountry.iso2}`} className="font-medium hover:underline underline-offset-2">
             {firstCountry.name}
           </Link>
         </span>
-      )
+      ),
     });
   }
 
@@ -57,14 +41,11 @@ export function TravelContext() {
       content: (
         <span>
           Home base:{' '}
-          <Link 
-            to={`/country/${homeCountry.iso2}`} 
-            className="font-medium hover:underline underline-offset-2"
-          >
+          <Link to={`/country/${homeCountry.iso2}`} className="font-medium hover:underline underline-offset-2">
             {homeCountry.name}
           </Link>
         </span>
-      )
+      ),
     });
   }
 
@@ -81,5 +62,29 @@ export function TravelContext() {
         ))}
       </div>
     </section>
+  );
+}
+
+export function TravelContextConnected() {
+  const { user } = useAuth();
+  const { data: visits = [], isLoading } = useVisits();
+  const { homeBase } = useCurrentHomeBase();
+
+  if (!user || isLoading || visits.length === 0) return null;
+
+  const sorted = [...visits].sort(
+    (a, b) => new Date(a.arrival_date).getTime() - new Date(b.arrival_date).getTime()
+  );
+  const firstVisit = sorted[0];
+  const travelingSince = firstVisit ? new Date(firstVisit.arrival_date).getFullYear() : null;
+  const firstCountry = firstVisit ? getCountryByIso(firstVisit.country_iso2) ?? null : null;
+  const homeCountry = homeBase ? getCountryByIso(homeBase.country_iso2) ?? null : null;
+
+  return (
+    <TravelContext
+      travelingSince={travelingSince}
+      firstCountry={firstCountry}
+      homeCountry={homeCountry}
+    />
   );
 }

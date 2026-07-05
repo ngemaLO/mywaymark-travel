@@ -43,6 +43,26 @@ function generateToken(): string {
   return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
+// IDs of all active trip connection partners across all trips.
+// Use .length for count; used for feed empty-state and "Met in person" badges.
+export function useActiveConnectionPartnerIds() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['active-connection-partners', user?.id],
+    queryFn: async (): Promise<string[]> => {
+      if (!user) return [];
+      const { data } = await supabase
+        .from('trip_connections')
+        .select('user_a_id, user_b_id')
+        .eq('status', 'active')
+        .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`);
+      return (data ?? []).map(c => c.user_a_id === user.id ? c.user_b_id : c.user_a_id);
+    },
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+}
+
 export function useConnectionCode(tripId: string | undefined) {
   const { user } = useAuth();
 
@@ -305,13 +325,20 @@ export function useCreateConnectionRequest() {
     },
     onSuccess: ({ connection, isNewlyActive }) => {
       if (isNewlyActive) {
-        toast.success('Connected! You can now message each other.');
+        toast.success('Connected! You\'re now following each other and will appear in each other\'s feed.');
       } else {
         toast.success('Request sent. Waiting for them to confirm.');
       }
       queryClient.invalidateQueries({ queryKey: ['trip-connections'] });
       queryClient.invalidateQueries({ queryKey: ['pending-connections'] });
       queryClient.invalidateQueries({ queryKey: ['user-connections'] });
+      if (isNewlyActive) {
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+        queryClient.invalidateQueries({ queryKey: ['following'] });
+        queryClient.invalidateQueries({ queryKey: ['following-count'] });
+        queryClient.invalidateQueries({ queryKey: ['follower-count'] });
+        queryClient.invalidateQueries({ queryKey: ['friends-who-visited'] });
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to connect');
@@ -362,13 +389,20 @@ export function useConfirmConnection() {
     },
     onSuccess: ({ isNowActive }) => {
       if (isNowActive) {
-        toast.success('Connected! You can now message each other.');
+        toast.success('Connected! You\'re now following each other and will appear in each other\'s feed.');
       } else {
         toast.success('Confirmed. Waiting for them to confirm too.');
       }
       queryClient.invalidateQueries({ queryKey: ['trip-connections'] });
       queryClient.invalidateQueries({ queryKey: ['pending-connections'] });
       queryClient.invalidateQueries({ queryKey: ['user-connections'] });
+      if (isNowActive) {
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+        queryClient.invalidateQueries({ queryKey: ['following'] });
+        queryClient.invalidateQueries({ queryKey: ['following-count'] });
+        queryClient.invalidateQueries({ queryKey: ['follower-count'] });
+        queryClient.invalidateQueries({ queryKey: ['friends-who-visited'] });
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to confirm connection');

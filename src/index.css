@@ -6,66 +6,75 @@
 
 @layer base {
   :root {
-    /* === WAYMARK — Space / Deep Blue (permanent) === */
-    --background: 222 50% 6%;
-    --foreground: 210 40% 95%;
+    /* === WAYMARK — Warm Atlas === */
+    --background: 38 35% 93%;
+    --foreground: 28 56% 8%;
 
-    --card: 222 44% 9%;
-    --card-foreground: 210 40% 95%;
+    --card: 36 28% 90%;
+    --card-foreground: 28 56% 8%;
 
-    --popover: 222 44% 9%;
-    --popover-foreground: 210 40% 95%;
+    --popover: 36 28% 90%;
+    --popover-foreground: 28 56% 8%;
 
-    --primary: 213 85% 62%;
-    --primary-foreground: 222 47% 5%;
+    --primary: 21 63% 44%;
+    --primary-foreground: 38 35% 96%;
 
-    --secondary: 217 33% 12%;
-    --secondary-foreground: 210 40% 90%;
+    --secondary: 36 22% 84%;
+    --secondary-foreground: 28 56% 8%;
 
-    --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 52%;
+    --muted: 36 22% 84%;
+    --muted-foreground: 30 18% 45%;
 
-    --accent: 213 85% 62%;
-    --accent-foreground: 222 47% 5%;
+    --accent: 21 63% 44%;
+    --accent-foreground: 38 35% 96%;
 
-    --destructive: 0 62% 55%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 15%;
-    --input: 217 33% 15%;
-    --ring: 213 85% 62%;
+    --border: 35 28% 68%;
+    --input: 35 28% 68%;
+    --ring: 21 63% 44%;
 
     --radius: 0.75rem;
 
     /* Custom tokens */
-    --ocean: 213 85% 62%;
-    --ocean-light: 213 75% 72%;
-    --amber: 38 70% 55%;
-    --amber-light: 38 60% 70%;
+    --ocean: 21 63% 44%;
+    --ocean-light: 21 55% 58%;
+    --amber: 35 55% 52%;
+    --amber-light: 35 45% 65%;
 
-    /* Map colors */
-    --map-bg: 222 40% 7%;
-    --map-land: 217 33% 18%;
-    --map-land-hover: 217 33% 24%;
-    --map-visited: 213 85% 58%;
-    --map-visited-hover: 213 85% 65%;
-    --map-grid: 217 33% 20%;
+    /* Derived / semantic tokens */
+    --primary-dark: 21 70% 32%;
+    --success: 145 50% 38%;
+    --success-dark: 145 50% 28%;
+    --bg-glow-end: 35 40% 78%;
+    --letter-reader-bg: 28 40% 10%;
+    --shadow-color: 28 60% 10%;
+
+    /* Map colors — aged atlas */
+    --map-bg: 200 30% 65%;
+    --map-land: 38 22% 74%;
+    --map-land-hover: 38 22% 64%;
+    --map-visited: 21 63% 44%;
+    --map-visited-hover: 21 63% 52%;
+    --map-grid: 200 20% 75%;
+    --map-connection: 35 55% 62%;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
-    --shadow-md: 0 4px 8px -2px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.15);
-    --shadow-lg: 0 12px 24px -4px hsl(0 0% 0% / 0.4), 0 4px 8px -2px hsl(0 0% 0% / 0.2);
-    --shadow-glow: 0 0 24px hsl(213 85% 62% / 0.3);
+    --shadow-sm: 0 1px 2px 0 hsl(var(--shadow-color) / 0.10);
+    --shadow-md: 0 4px 8px -2px hsl(var(--shadow-color) / 0.12), 0 2px 4px -2px hsl(var(--shadow-color) / 0.06);
+    --shadow-lg: 0 12px 24px -4px hsl(var(--shadow-color) / 0.16), 0 4px 8px -2px hsl(var(--shadow-color) / 0.08);
+    --shadow-glow: 0 0 24px hsl(var(--primary) / 0.2);
 
     /* Sidebar */
-    --sidebar-background: 222 47% 5%;
-    --sidebar-foreground: 210 40% 95%;
-    --sidebar-primary: 213 85% 62%;
-    --sidebar-primary-foreground: 222 47% 5%;
-    --sidebar-accent: 217 33% 12%;
-    --sidebar-accent-foreground: 210 40% 90%;
-    --sidebar-border: 217 33% 15%;
-    --sidebar-ring: 213 85% 62%;
+    --sidebar-background: 36 28% 90%;
+    --sidebar-foreground: 28 56% 8%;
+    --sidebar-primary: 21 63% 44%;
+    --sidebar-primary-foreground: 38 35% 96%;
+    --sidebar-accent: 36 22% 84%;
+    --sidebar-accent-foreground: 28 56% 8%;
+    --sidebar-border: 35 28% 68%;
+    --sidebar-ring: 21 63% 44%;
   }
 }
 
@@ -95,8 +104,8 @@
 
   body {
     background-image: radial-gradient(
-      ellipse 120% 50% at 50% 0%,
-      hsl(213 70% 14% / 0.65) 0%,
+      ellipse 140% 40% at 50% 100%,
+      hsl(var(--bg-glow-end) / 0.5) 0%,
       transparent 65%
     );
   }
@@ -113,9 +122,9 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Instrument Sans', system-ui, sans-serif;
+    font-family: 'Crimson Pro', Georgia, serif;
     font-weight: 600;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     line-height: 1.25;
   }
 }
@@ -420,22 +429,22 @@
     border-radius: 1.25rem;
     background: linear-gradient(
       135deg,
-      hsl(213 85% 62% / 0.12) 0%,
-      hsl(250 70% 60% / 0.08) 50%,
-      hsl(213 85% 62% / 0.06) 100%
+      hsl(var(--primary) / 0.08) 0%,
+      hsl(var(--card)) 50%,
+      hsl(var(--primary) / 0.04) 100%
     );
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(213 85% 62% / 0.30);
+    border: 1px solid hsl(var(--primary) / 0.25);
     cursor: pointer;
     overflow: hidden;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
   .letter-notice-card:hover {
-    border-color: hsl(213 85% 62% / 0.55);
-    box-shadow: 0 0 0 1px hsl(213 85% 62% / 0.12),
-                0 8px 40px hsl(213 85% 62% / 0.15);
+    border-color: hsl(var(--primary) / 0.45);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.10),
+                0 8px 40px hsl(var(--primary) / 0.12);
   }
 
   /* Animated shimmer sweep */
@@ -445,7 +454,7 @@
     background: linear-gradient(
       105deg,
       transparent 40%,
-      hsl(213 85% 80% / 0.08) 50%,
+      hsl(var(--primary) / 0.06) 50%,
       transparent 60%
     );
     background-size: 200% 100%;
@@ -1072,8 +1081,8 @@
     margin-left: -1.25rem;
     margin-right: -1.25rem;
     border-radius: 0.875rem;
-    background: hsl(213 85% 62% / 0.06);
-    border: 1px solid hsl(213 85% 62% / 0.18);
+    background: hsl(var(--primary) / 0.06);
+    border: 1px solid hsl(var(--primary) / 0.18);
   }
 
   /* Breathing dot */
@@ -1248,8 +1257,8 @@
 
   .journal-entry--ongoing {
     @apply relative;
-    background: hsl(213 85% 62% / 0.10);
-    border-color: hsl(213 85% 62% / 0.28);
+    background: hsl(var(--primary) / 0.08);
+    border-color: hsl(var(--primary) / 0.25);
   }
 
   /* Pulsing dot */
@@ -1437,12 +1446,12 @@
   }
 
   .badge-declared {
-    background: linear-gradient(145deg, hsl(var(--primary)) 0%, hsl(213 90% 38%) 100%);
+    background: linear-gradient(145deg, hsl(var(--primary)) 0%, hsl(var(--primary-dark)) 100%);
     @apply text-primary-foreground;
   }
 
   .badge-verified {
-    background: linear-gradient(145deg, hsl(145 60% 44%) 0%, hsl(145 60% 34%) 100%);
+    background: linear-gradient(145deg, hsl(var(--success)) 0%, hsl(var(--success-dark)) 100%);
     @apply text-white;
   }
 
@@ -1507,7 +1516,7 @@
      ============================================ */
 
   .letter-reader-bg {
-    background: hsl(222 47% 6%);
+    background: hsl(var(--letter-reader-bg));
     min-height: 100vh;
   }
 

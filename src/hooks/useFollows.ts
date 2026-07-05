@@ -18,6 +18,7 @@ export interface FeedItem {
   display_name: string | null;
   avatar_url: string | null;
   username: string | null;
+  source: 'follow' | 'connection';
 }
 
 // ── Counts ───────────────────────────────────────────────────────────────────
@@ -135,37 +136,52 @@ export function useFeed() {
     queryFn: async (): Promise<FeedItem[]> => {
       if (!user) return [];
 
-      // Get IDs of people this user follows
-      const { data: followData } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', user.id);
+      // Fetch follows and active trip connections in parallel
+      const [followResult, connectionResult] = await Promise.all([
+        supabase.from('follows').select('following_id').eq('follower_id', user.id),
+        supabase
+          .from('trip_connections')
+          .select('user_a_id, user_b_id')
+          .eq('status', 'active')
+          .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`),
+      ]);
 
-      const followingIds = (followData ?? []).map(f => f.following_id);
-      if (followingIds.length === 0) return [];
+      // Build a source map: userId → 'follow' | 'connection'
+      // Follows take precedence over connections when a user appears in both.
+      const sourceMap = new Map<string, FeedItem['source']>();
+      for (const f of followResult.data ?? []) {
+        sourceMap.set(f.following_id, 'follow');
+      }
+      for (const c of connectionResult.data ?? []) {
+        const partnerId = c.user_a_id === user.id ? c.user_b_id : c.user_a_id;
+        if (!sourceMap.has(partnerId)) sourceMap.set(partnerId, 'connection');
+      }
 
-      // Get their recent visits
-      const { data: visits } = await supabase
-        .from('visits')
-        .select('id, country_iso2, arrival_date, user_id')
-        .in('user_id', followingIds)
-        .order('arrival_date', { ascending: false })
-        .limit(50);
+      const allIds = [...sourceMap.keys()];
+      if (allIds.length === 0) return [];
 
-      if (!visits || visits.length === 0) return [];
+      // Get their recent visits + public profiles in parallel
+      const [visitResult, profileResult] = await Promise.all([
+        supabase
+          .from('visits')
+          .select('id, country_iso2, arrival_date, user_id')
+          .in('user_id', allIds)
+          .order('arrival_date', { ascending: false })
+          .limit(50),
+        supabase
+          .from('profiles')
+          .select('user_id, display_name, avatar_url, username')
+          .in('user_id', allIds)
+          .eq('is_public', true),
+      ]);
 
-      // Get profiles for those users
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, avatar_url, username')
-        .in('user_id', followingIds)
-        .eq('is_public', true);
+      if (!visitResult.data || visitResult.data.length === 0) return [];
 
       const profileMap = Object.fromEntries(
-        (profiles ?? []).map(p => [p.user_id, p])
+        (profileResult.data ?? []).map(p => [p.user_id, p])
       );
 
-      return visits
+      return visitResult.data
         .filter(v => profileMap[v.user_id])
         .map(v => ({
           id: v.id,
@@ -175,6 +191,7 @@ export function useFeed() {
           display_name: profileMap[v.user_id]?.display_name ?? null,
           avatar_url: profileMap[v.user_id]?.avatar_url ?? null,
           username: profileMap[v.user_id]?.username ?? null,
+          source: sourceMap.get(v.user_id) ?? 'follow',
         }));
     },
     enabled: !!user,
@@ -261,6 +278,76 @@ export function useFriendsWhoVisited(countryIso2: string) {
       }));
     },
     enabled: !!user && !!countryIso2,
+    staleTime: 60_000,
+  });
+}
+
+// ── Connection social map data ────────────────────────────────────────────────
+
+async function getConnectionIds(userId: string) {
+  const [followResult, connectionResult] = await Promise.all([
+    supabase.from('follows').select('following_id').eq('follower_id', userId),
+    supabase.from('trip_connections').select('user_a_id, user_b_id').eq('status', 'active')
+      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`),
+  ]);
+  const ids = new Set<string>();
+  for (const f of followResult.data ?? []) ids.add(f.following_id);
+  for (const c of connectionResult.data ?? []) {
+    ids.add(c.user_a_id === userId ? c.user_b_id : c.user_a_id);
+  }
+  return [...ids];
+}
+
+// All unique countries visited by any connection (for ambient map tint).
+export function useConnectionVisitedCountries() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['connection-visited-countries', user?.id],
+    queryFn: async (): Promise<string[]> => {
+      if (!user) return [];
+      const ids = await getConnectionIds(user.id);
+      if (ids.length === 0) return [];
+      const { data } = await supabase.from('visits').select('country_iso2').in('user_id', ids);
+      return [...new Set((data ?? []).map(v => v.country_iso2))];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export interface ConnectionCurrentTrip {
+  user_id: string;
+  country_iso2: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  username: string | null;
+}
+
+// Connections who are currently traveling (no departure_date on latest visit).
+export function useConnectionCurrentTrips() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['connection-current-trips', user?.id],
+    queryFn: async (): Promise<ConnectionCurrentTrip[]> => {
+      if (!user) return [];
+      const ids = await getConnectionIds(user.id);
+      if (ids.length === 0) return [];
+      const [visitResult, profileResult] = await Promise.all([
+        supabase.from('visits').select('user_id, country_iso2').in('user_id', ids).is('departure_date', null),
+        supabase.from('profiles').select('user_id, display_name, avatar_url, username').in('user_id', ids).eq('is_public', true),
+      ]);
+      const profileMap = Object.fromEntries((profileResult.data ?? []).map(p => [p.user_id, p]));
+      return (visitResult.data ?? [])
+        .filter(v => profileMap[v.user_id])
+        .map(v => ({
+          user_id: v.user_id,
+          country_iso2: v.country_iso2,
+          display_name: profileMap[v.user_id]?.display_name ?? null,
+          avatar_url: profileMap[v.user_id]?.avatar_url ?? null,
+          username: profileMap[v.user_id]?.username ?? null,
+        }));
+    },
+    enabled: !!user,
     staleTime: 60_000,
   });
 }

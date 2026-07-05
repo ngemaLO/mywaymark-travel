@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DiaryPage } from "@/components/DiaryPage";
 import { SpaceBackground } from "@/components/SpaceBackground";
@@ -10,11 +10,11 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import CountryDetail from "./pages/CountryDetail";
 import Timeline from "./pages/Timeline";
+import Travels from "./pages/Travels";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import SharedView from "./pages/SharedView";
 import ShareLinksManagement from "./pages/ShareLinksManagement";
-import Chapters from "./pages/Chapters";
 import Connect from "./pages/Connect";
 import Letters from "./pages/Letters";
 import LetterReader from "./pages/LetterReader";
@@ -41,11 +41,12 @@ function AppRoutes() {
           <Route path="/auth" element={<Auth />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/country/:iso" element={<CountryDetail />} />
+          <Route path="/travels" element={<Travels />} />
           <Route path="/timeline" element={<Timeline />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/share/:token" element={<SharedView />} />
           <Route path="/share-links" element={<ShareLinksManagement />} />
-          <Route path="/chapters" element={<Chapters />} />
+          <Route path="/chapters" element={<Navigate to="/travels" replace />} />
           <Route path="/connect" element={<Connect />} />
           <Route path="/letters" element={<Letters />} />
           <Route path="/letters/:id" element={<LetterReader />} />

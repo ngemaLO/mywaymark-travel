@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeed, useSearchProfiles, useFollow, useUnfollow, useIsFollowing, useFollowingCount, useFollowing } from '@/hooks/useFollows';
+import { useActiveConnectionPartnerIds } from '@/hooks/useTripConnections';
+import { ScanToConnectModal } from '@/components/connections/ScanToConnectModal';
 import { getCountryByIso } from '@/data/countries';
 import { formatDistanceToNow } from 'date-fns';
-import { Search, Users, Loader2, UserPlus, UserCheck } from 'lucide-react';
+import { Search, Users, Loader2, UserPlus, UserCheck, Handshake, ScanLine } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function isoToFlag(iso2: string): string {
@@ -66,6 +68,8 @@ function SearchSection() {
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const { data: results = [], isFetching } = useSearchProfiles(query);
+  const { data: connectionPartnerIds = [] } = useActiveConnectionPartnerIds();
+  const connectionSet = useMemo(() => new Set(connectionPartnerIds), [connectionPartnerIds]);
 
   return (
     <div className="space-y-3">
@@ -98,7 +102,15 @@ function SearchSection() {
                     <p className="text-sm font-semibold text-foreground truncate">
                       {profile.display_name || `@${profile.username}`}
                     </p>
-                    <p className="text-xs text-muted-foreground">@{profile.username}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="text-xs text-muted-foreground">@{profile.username}</p>
+                      {connectionSet.has(profile.user_id) && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/70 rounded-full px-1.5 py-0.5 shrink-0">
+                          <Handshake className="w-2.5 h-2.5" />
+                          Met in person
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </Link>
                 {user && profile.user_id !== user.id && (
@@ -116,6 +128,8 @@ function SearchSection() {
 function FollowingList() {
   const { user } = useAuth();
   const { data: following = [] } = useFollowing(user?.id);
+  const { data: connectionPartnerIds = [] } = useActiveConnectionPartnerIds();
+  const connectionSet = useMemo(() => new Set(connectionPartnerIds), [connectionPartnerIds]);
 
   if (following.length === 0) return null;
 
@@ -131,7 +145,17 @@ function FollowingList() {
             to={`/u/${profile.username}`}
             className="flex flex-col items-center gap-1.5 shrink-0 w-16"
           >
-            <Avatar avatarUrl={profile.avatar_url} name={profile.display_name || profile.username || '?'} />
+            <div className="relative">
+              <Avatar avatarUrl={profile.avatar_url} name={profile.display_name || profile.username || '?'} />
+              {connectionSet.has(profile.user_id) && (
+                <div
+                  className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary border-2 border-background flex items-center justify-center"
+                  title="Met in person"
+                >
+                  <Handshake className="w-2 h-2 text-primary-foreground" />
+                </div>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground truncate w-full text-center">
               {profile.username}
             </p>
@@ -146,6 +170,9 @@ export default function Feed() {
   const { user } = useAuth();
   const { data: feed = [], isLoading } = useFeed();
   const { data: followingCount = 0 } = useFollowingCount(user?.id);
+  const { data: connectionPartnerIds = [] } = useActiveConnectionPartnerIds();
+  const hasSocialSources = followingCount > 0 || connectionPartnerIds.length > 0;
+  const [scanOpen, setScanOpen] = useState(false);
 
   if (!user) return <Navigate to="/auth" replace />;
 
@@ -154,9 +181,20 @@ export default function Feed() {
       <Header />
 
       <main className="container py-6 max-w-xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Feed</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">See where your friends are going</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-display font-bold text-foreground">Feed</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">See where your friends are going</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 shrink-0 mt-1"
+            onClick={() => setScanOpen(true)}
+          >
+            <ScanLine className="w-3.5 h-3.5" />
+            Scan to connect
+          </Button>
         </div>
 
         {/* Search */}
@@ -170,20 +208,20 @@ export default function Feed() {
           <div className="flex justify-center py-12">
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground/50" />
           </div>
-        ) : followingCount === 0 ? (
+        ) : !hasSocialSources ? (
           <div className="flex flex-col items-center text-center py-12 gap-3">
             <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
               <Users className="w-5 h-5 text-muted-foreground/50" />
             </div>
             <p className="text-sm font-medium text-foreground">No one in your feed yet</p>
             <p className="text-xs text-muted-foreground max-w-xs">
-              Search for travelers above and follow them to see their journeys here.
+              Follow travelers above, or connect with someone you meet on the road to see their journeys here.
             </p>
           </div>
         ) : feed.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-sm text-muted-foreground">
-              None of the people you follow have logged any trips yet.
+              None of the people you follow have logged any public trips yet.
             </p>
           </div>
         ) : (
@@ -218,7 +256,15 @@ export default function Feed() {
                           {isoToFlag(item.country_iso2)} {country?.name ?? item.country_iso2}
                         </span>
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{timeAgo}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                        {item.source === 'connection' && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-full px-1.5 py-0.5">
+                            <Handshake className="w-2.5 h-2.5" />
+                            Met in person
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -228,6 +274,7 @@ export default function Feed() {
         )}
       </main>
 
+      <ScanToConnectModal open={scanOpen} onOpenChange={setScanOpen} />
       <BottomNav />
     </div>
   );

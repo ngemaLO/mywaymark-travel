@@ -15,7 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Instrument Sans', 'system-ui', 'sans-serif'],
-        display: ['Instrument Sans', 'system-ui', 'sans-serif'],
+        display: ['Crimson Pro', 'Georgia', 'serif'],
         serif: ['Crimson Pro', 'Georgia', 'serif'],
       },
       colors: {
