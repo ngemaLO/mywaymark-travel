@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, Clock, BookOpen, Settings, Plus } from 'lucide-react';
+import { MapPin, Clock, Settings, Plus, Compass, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { AddTripModal } from '@/components/AddTripModal';
@@ -8,8 +8,9 @@ const tabs = [
   { label: 'Map', path: '/', icon: MapPin },
   { label: 'Timeline', path: '/timeline', icon: Clock },
   { label: 'Add', path: null, icon: Plus, isAction: true },
-  { label: 'Letters', path: '/letters', icon: BookOpen },
-  { label: 'Settings', path: '/settings', icon: Settings },
+  { label: 'Plan', path: '/plan', icon: Compass },
+  { label: 'Feed', path: '/feed', icon: Users },
+  { label: 'Profile', path: '/settings', icon: Settings },
 ];
 
 export function BottomNav() {
@@ -21,7 +22,9 @@ export function BottomNav() {
     <>
       <nav className="bottom-nav">
         {tabs.map((tab) => {
-          const isActive = tab.path ? location.pathname === tab.path : false;
+          const isActive = tab.path
+            ? (tab.path === '/' ? location.pathname === '/' : location.pathname.startsWith(tab.path))
+            : false;
 
           if (tab.isAction) {
             return (

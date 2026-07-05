@@ -2,14 +2,12 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MapPin, Calendar, Loader2, UserPlus, Clock, Sparkles } from 'lucide-react';
+import { MapPin, Calendar, Loader2, UserPlus, Clock } from 'lucide-react';
 import { useCreateConnectionRequest, CodeLookupResult } from '@/hooks/useTripConnections';
-import { useIsPremium } from '@/hooks/usePremium';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { getCountryByIso } from '@/data/countries';
 import { format } from 'date-fns';
-import { UpgradePrompt } from './UpgradePrompt';
 
 interface ConnectionPreviewProps {
   codeData: CodeLookupResult;
@@ -19,10 +17,8 @@ interface ConnectionPreviewProps {
 
 export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionPreviewProps) {
   const { user } = useAuth();
-  const { isPremium } = useIsPremium();
   const [userProfile, setUserProfile] = useState<{ display_name: string | null } | null>(null);
   const [tripLocation, setTripLocation] = useState<string | null>(null);
-  const [showUpgrade, setShowUpgrade] = useState(false);
   const createConnection = useCreateConnectionRequest();
 
   useEffect(() => {
@@ -56,10 +52,6 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
   }, [codeData]);
 
   const handleConnect = async () => {
-    if (!isPremium) {
-      setShowUpgrade(true);
-      return;
-    }
     await createConnection.mutateAsync({
       tripId: codeData.trip_id,
       otherUserId: codeData.user_id,
@@ -106,10 +98,6 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
     );
   }
 
-  if (showUpgrade) {
-    return <UpgradePrompt feature="Connecting with travelers" onClose={() => setShowUpgrade(false)} />;
-  }
-
   return (
     <Card className="border-border/40">
       <CardContent className="p-6 space-y-6">
@@ -142,8 +130,8 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
 
         {/* Actions */}
         <div className="space-y-2">
-          <Button 
-            onClick={handleConnect} 
+          <Button
+            onClick={handleConnect}
             className="w-full gap-2"
             disabled={createConnection.isPending}
           >
@@ -154,7 +142,6 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
               </>
             ) : (
               <>
-                {!isPremium && <Sparkles className="w-4 h-4" />}
                 <UserPlus className="w-4 h-4" />
                 Connect for this trip
               </>
@@ -166,10 +153,7 @@ export function ConnectionPreview({ codeData, onConfirm, onCancel }: ConnectionP
         </div>
 
         <p className="text-xs text-center text-muted-foreground">
-          {isPremium 
-            ? "Both of you must confirm to start messaging"
-            : "Requires Waymark Plus to connect"
-          }
+          Both of you must confirm to start messaging
         </p>
       </CardContent>
     </Card>

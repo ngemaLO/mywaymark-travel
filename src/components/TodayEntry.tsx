@@ -86,11 +86,11 @@ export function TodayEntry({ onAddTrip }: TodayEntryProps) {
         </p>
         <nav className="journal-actions">
           <button onClick={onAddTrip} className="journal-link">
-            Add an entry
+            Log a visit
           </button>
           <span className="journal-separator">or</span>
           <button onClick={() => navigate('/timeline')} className="journal-link journal-link--secondary">
-            browse your timeline
+            view your visits
           </button>
         </nav>
       </article>

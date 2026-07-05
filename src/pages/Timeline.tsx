@@ -9,7 +9,7 @@ function isoToFlag(iso2: string): string {
 import { ChevronDown, Loader2, BookOpen } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -326,6 +326,8 @@ function generateMemoryMoments(visits: Visit[]): Map<number, string> {
   return moments;
 }
 
+const PAGE_SIZE = 30;
+
 export default function Timeline() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -334,32 +336,34 @@ export default function Timeline() {
   const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null);
   const [endingVisit, setEndingVisit] = useState<Visit | null>(null);
   const [revealedEntryId, setRevealedEntryId] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const endCurrentTrip = useEndCurrentTrip();
   const generateLetter = useGenerateLetter();
   const generateTripSummary = useGenerateTripSummary();
-
-  // Handle tap-to-reveal on mobile
-  const handleEntryTap = (visitId: string, e: React.MouseEvent) => {
-    // Don't toggle if clicking on an action or link
-    const target = e.target as HTMLElement;
-    if (target.closest('.timeline-action') || target.closest('.timeline-place')) {
-      return;
-    }
-    setRevealedEntryId(prev => prev === visitId ? null : visitId);
-  };
 
   // Get chapter filter from URL
   const chapterParam = searchParams.get('chapter');
   const chapterFilter: ChapterFilterValue = chapterParam || 'all';
 
-  const handleChapterChange = (value: ChapterFilterValue) => {
+  // Reset pagination when the chapter filter changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [chapterFilter]);
+
+  const handleEntryTap = useCallback((visitId: string, e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.timeline-action') || target.closest('.timeline-place')) return;
+    setRevealedEntryId(prev => prev === visitId ? null : visitId);
+  }, []);
+
+  const handleChapterChange = useCallback((value: ChapterFilterValue) => {
     if (value === 'all') {
       searchParams.delete('chapter');
     } else {
       searchParams.set('chapter', value);
     }
     setSearchParams(searchParams);
-  };
+  }, [searchParams, setSearchParams]);
 
   // Fetch chapters
   const { data: chapters = [] } = useChapters();
@@ -417,32 +421,42 @@ export default function Timeline() {
     [tripSummaries]
   );
 
-  // Group by year
+  // The ongoing entry is always sourced from unfiltered visits
+  const ongoingVisit = useMemo(() => visits.find(v => !v.departure_date), [visits]);
+
+  // Completed visits to display (chapter filter applied, ongoing excluded)
+  const allCompleted = useMemo(() => {
+    const source = chapterFilter !== 'all' ? filteredVisits : visits;
+    return source.filter(v => v.departure_date);
+  }, [chapterFilter, filteredVisits, visits]);
+
+  // Paginated slice shown in the spine
+  const paginatedCompleted = useMemo(
+    () => allCompleted.slice(0, visibleCount),
+    [allCompleted, visibleCount]
+  );
+  const hasMore = allCompleted.length > visibleCount;
+
+  // Group paginated completed visits by year
   const groupedData = useMemo(() => {
-    const visitsToGroup = chapterFilter !== 'all' ? filteredVisits : visits;
-    
-    const byYear = visitsToGroup.reduce((acc, visit) => {
+    const byYear = paginatedCompleted.reduce((acc, visit) => {
       const year = getYear(new Date(visit.arrival_date));
       if (!acc[year]) acc[year] = [];
       acc[year].push(visit);
       return acc;
     }, {} as Record<number, Visit[]>);
-
     return {
       years: Object.keys(byYear).map(Number).sort((a, b) => b - a),
       byYear,
     };
-  }, [chapterFilter, visits, filteredVisits]);
+  }, [paginatedCompleted]);
 
-  // Generate memory moments for the visible entries
-  const memoryMoments = useMemo(() => {
-    const allVisible = chapterFilter !== 'all' ? filteredVisits : visits;
-    return generateMemoryMoments(allVisible);
-  }, [chapterFilter, visits, filteredVisits]);
+  // Memory moments only for the paginated entries (indices must match)
+  const memoryMoments = useMemo(() => generateMemoryMoments(paginatedCompleted), [paginatedCompleted]);
 
   // Get filter display label
   const getFilterLabel = () => {
-    if (chapterFilter === 'all') return 'Read all';
+    if (chapterFilter === 'all') return 'All visits';
     if (chapterFilter === 'current') {
       return currentChapter ? currentChapter.title : 'This chapter';
     }
@@ -466,6 +480,7 @@ export default function Timeline() {
   }
 
   const totalVisits = chapterFilter !== 'all' ? filteredVisits.length : visits.length;
+  const hasOngoing = !!ongoingVisit;
   const renderedTripSummaryActions = new Set<string>();
 
   return (
@@ -488,7 +503,7 @@ export default function Timeline() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => handleChapterChange('all')}>
-                    Read all
+                    All visits
                   </DropdownMenuItem>
                   
                   {currentChapter && (
@@ -536,7 +551,7 @@ export default function Timeline() {
                   className="timeline-scope-link"
                   onClick={() => handleChapterChange('all')}
                 >
-                  Read all time
+                  All visits
                 </span>
               </p>
             </div>
@@ -553,7 +568,7 @@ export default function Timeline() {
               Your story hasn't started yet.
             </p>
             <Button variant="outline" onClick={() => navigate('/')}>
-              Add your first entry
+              Log your first visit
             </Button>
           </div>
         ) : chapterFilter !== 'all' && filteredVisits.length === 0 ? (
@@ -566,230 +581,162 @@ export default function Timeline() {
               className="timeline-scope-link"
               onClick={() => handleChapterChange('all')}
             >
-              Read all time
+              All visits
             </button>
           </div>
         ) : (
           <>
-          {/* Check for ongoing entry first */}
-            {(() => {
-              const ongoingVisit = visits.find(v => !v.departure_date);
-              const hasOngoing = !!ongoingVisit;
-              
+            {/* NOW DIVIDER — appears when there's an ongoing entry */}
+            {hasOngoing && ongoingVisit && getCountryByIso(ongoingVisit.country_iso2) && (
+              <div className="timeline-now-divider">
+                <div className="timeline-now-divider-line" />
+                <span className="timeline-now-divider-label">Now</span>
+                <div className="timeline-now-divider-line" />
+              </div>
+            )}
+
+            {hasOngoing && <p className="timeline-now-whisper">Still unfolding.</p>}
+
+            {/* Ongoing entry — rendered before the timeline spine */}
+            {hasOngoing && ongoingVisit && (() => {
+              const country = getCountryByIso(ongoingVisit.country_iso2);
+              if (!country) return null;
               return (
-                <>
-                  {/* NOW DIVIDER — appears when there's an ongoing entry */}
-                  {hasOngoing && ongoingVisit && (() => {
-                    const country = getCountryByIso(ongoingVisit.country_iso2);
-                    if (!country) return null;
-                    
-                    return (
-                      <div className="timeline-now-divider">
-                        <div className="timeline-now-divider-line" />
-                        <span className="timeline-now-divider-label">Now</span>
-                        <div className="timeline-now-divider-line" />
-                      </div>
-                    );
-                  })()}
-                  
-                  {/* Whisper text beneath NOW */}
-                  {hasOngoing && (
-                    <p className="timeline-now-whisper">Still unfolding.</p>
-                  )}
-                  
-                  {/* Ongoing entry — rendered separately, before the timeline spine */}
-                  {hasOngoing && ongoingVisit && (() => {
-                    const country = getCountryByIso(ongoingVisit.country_iso2);
-                    if (!country) return null;
-                    
-                    const handleEndTrip = () => {
-                      setEndingVisit(ongoingVisit);
-                    };
-                    
-                    return (
-                      <article className="timeline-entry timeline-entry--ongoing">
-                        <div className="timeline-dot timeline-dot--breathing" />
-                        
-                        {/* Live metadata */}
-                        <p className="timeline-live-meta">{getLiveDayCount(ongoingVisit.arrival_date)}</p>
-                        
-                        <h2 
-                          className="timeline-place timeline-place--ongoing"
-                          onClick={() => navigate(`/country/${ongoingVisit.country_iso2}`)}
-                        >
-                          {isoToFlag(ongoingVisit.country_iso2)} {country.name}
-                        </h2>
-                        
-                        {/* Present-tense copy */}
-                        <p className="timeline-ongoing-copy">
-                          {getOngoingArrivalCopy(ongoingVisit.arrival_date)}
-                        </p>
-                        
-                        {/* Presence whisper */}
-                        <p className="timeline-whisper">Still here.</p>
-                        
-                        {/* Primary action */}
-                        <div className="timeline-ongoing-actions">
-                          <span 
-                            className="timeline-continue"
-                            onClick={() => setEditingVisit(ongoingVisit)}
-                          >
-                            Update entry
-                          </span>
-                        </div>
-                        
-                        {/* Secondary actions - margin notes */}
-                        <div className="timeline-margin-notes">
-                          <span 
-                            className="timeline-margin-note"
-                            onClick={() => navigate(`/country/${ongoingVisit.country_iso2}`)}
-                          >
-                            View place
-                          </span>
-                          <span 
-                            className="timeline-margin-note"
-                            onClick={handleEndTrip}
-                          >
-                            End entry
-                          </span>
-                        </div>
-                      </article>
-                    );
-                  })()}
-                  
-                  {/* TEMPORAL THRESHOLD — appears only when there's an ongoing entry */}
-                  {hasOngoing && (
-                    <div className="timeline-threshold">
-                      <div className="timeline-threshold-space" />
-                      <div className="timeline-threshold-line">
-                        <span className="timeline-threshold-label">Earlier journeys</span>
-                      </div>
-                      <p className="timeline-threshold-whisper">The present settles into memory.</p>
-                    </div>
-                  )}
-                  
-                  {/* The narrative spine — completed entries only */}
-                  <div className={`timeline-spine ${hasOngoing ? 'timeline-spine--past' : ''}`}>
-                    {groupedData.years.map((year, yearIndex) => {
-                      const yearVisits = groupedData.byYear[year];
-                      // Filter out ongoing entries from the spine
-                      const completedVisits = yearVisits.filter(v => v.departure_date);
-                      
-                      if (completedVisits.length === 0) return null;
-                      
+                <article className="timeline-entry timeline-entry--ongoing">
+                  <div className="timeline-dot timeline-dot--breathing" />
+                  <p className="timeline-live-meta">{getLiveDayCount(ongoingVisit.arrival_date)}</p>
+                  <h2
+                    className="timeline-place timeline-place--ongoing"
+                    onClick={() => navigate(`/country/${ongoingVisit.country_iso2}`)}
+                  >
+                    {isoToFlag(ongoingVisit.country_iso2)} {country.name}
+                  </h2>
+                  <p className="timeline-ongoing-copy">{getOngoingArrivalCopy(ongoingVisit.arrival_date)}</p>
+                  <p className="timeline-whisper">Still here.</p>
+                  <div className="timeline-ongoing-actions">
+                    <span className="timeline-continue" onClick={() => setEditingVisit(ongoingVisit)}>
+                      Update entry
+                    </span>
+                  </div>
+                  <div className="timeline-margin-notes">
+                    <span className="timeline-margin-note" onClick={() => navigate(`/country/${ongoingVisit.country_iso2}`)}>
+                      View place
+                    </span>
+                    <span className="timeline-margin-note" onClick={() => setEndingVisit(ongoingVisit)}>
+                      End entry
+                    </span>
+                  </div>
+                </article>
+              );
+            })()}
+
+            {/* TEMPORAL THRESHOLD */}
+            {hasOngoing && (
+              <div className="timeline-threshold">
+                <div className="timeline-threshold-space" />
+                <div className="timeline-threshold-line">
+                  <span className="timeline-threshold-label">Earlier visits</span>
+                </div>
+                <p className="timeline-threshold-whisper">The present settles into memory.</p>
+              </div>
+            )}
+
+            {/* The narrative spine — paginated completed entries */}
+            <div className={`timeline-spine ${hasOngoing ? 'timeline-spine--past' : ''}`}>
+              {groupedData.years.map((year, yearIndex) => {
+                const yearVisits = groupedData.byYear[year];
+                if (yearVisits.length === 0) return null;
+                return (
+                  <div key={year}>
+                    <div className="timeline-year">{year}</div>
+                    {yearVisits.map((visit, entryIndex) => {
+                      const country = getCountryByIso(visit.country_iso2);
+                      if (!country) return null;
+
+                      const globalIndex = groupedData.years
+                        .slice(0, yearIndex)
+                        .reduce((acc, y) => acc + groupedData.byYear[y].length, 0) + entryIndex;
+
+                      const distanceClass =
+                        globalIndex > 15 ? 'timeline-entry--very-distant' :
+                        globalIndex > 8 ? 'timeline-entry--distant' : '';
+
+                      const memoryBefore = memoryMoments.get(globalIndex);
+
                       return (
-                        <div key={year}>
-                          {/* Year marker */}
-                          <div className="timeline-year">{year}</div>
-                          
-                          {completedVisits.map((visit, entryIndex) => {
-                            const country = getCountryByIso(visit.country_iso2);
-                            if (!country) return null;
-                            
-                            // Calculate distance class for fading older entries
-                            const globalIndex = groupedData.years
-                              .slice(0, yearIndex)
-                              .reduce((acc, y) => acc + groupedData.byYear[y].filter(v => v.departure_date).length, 0) + entryIndex;
-                            
-                            const distanceClass = 
-                              globalIndex > 15 ? 'timeline-entry--very-distant' :
-                              globalIndex > 8 ? 'timeline-entry--distant' : '';
-                            
-                            // Check for memory moment
-                            const memoryBefore = memoryMoments.get(globalIndex);
-                            
-                            return (
-                              <div key={visit.id}>
-                                {/* Memory moment */}
-                                {memoryBefore && (
-                                  <div className="timeline-memory">
-                                    <p className="timeline-memory-text">{memoryBefore}</p>
-                                  </div>
-                                )}
-                                
-                                {/* Completed entry — memory state */}
-                                <article 
-                                  className={`timeline-entry timeline-entry--memory ${hasOngoing ? 'timeline-entry--past-threshold' : ''} ${distanceClass} ${revealedEntryId === visit.id ? 'timeline-entry--revealed' : ''}`}
-                                  onClick={(e) => handleEntryTap(visit.id, e)}
-                                >
-                                  <div className={`timeline-dot ${hasOngoing ? 'timeline-dot--small' : ''}`} />
-                                  
-                                  <h2 
-                                    className="timeline-place"
-                                    onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                        <div key={visit.id}>
+                          {memoryBefore && (
+                            <div className="timeline-memory">
+                              <p className="timeline-memory-text">{memoryBefore}</p>
+                            </div>
+                          )}
+                          <article
+                            className={`timeline-entry timeline-entry--memory ${hasOngoing ? 'timeline-entry--past-threshold' : ''} ${distanceClass} ${revealedEntryId === visit.id ? 'timeline-entry--revealed' : ''}`}
+                            onClick={(e) => handleEntryTap(visit.id, e)}
+                          >
+                            <div className={`timeline-dot ${hasOngoing ? 'timeline-dot--small' : ''}`} />
+                            <h2
+                              className="timeline-place"
+                              onClick={() => navigate(`/country/${visit.country_iso2}`)}
+                            >
+                              {isoToFlag(visit.country_iso2)} {country.name}
+                            </h2>
+                            <p className="timeline-date">
+                              {formatDateRange(visit.arrival_date, visit.departure_date)}
+                            </p>
+                            <p className="timeline-season">
+                              {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
+                            </p>
+                            <p className="timeline-tap-hint">Tap for options</p>
+                            <div className="timeline-actions">
+                              {visit.trip_id && !renderedTripSummaryActions.has(visit.trip_id) && (() => {
+                                renderedTripSummaryActions.add(visit.trip_id);
+                                return (
+                                  <span
+                                    className="timeline-action"
+                                    onClick={() => generateTripSummary.mutate({
+                                      tripId: visit.trip_id!,
+                                      regenerate: tripSummaryMap.has(visit.trip_id!),
+                                    })}
                                   >
-                                    {isoToFlag(visit.country_iso2)} {country.name}
-                                  </h2>
-                                  
-                                  {/* Past-tense metadata */}
-                                  <p className="timeline-date">
-                                    {formatDateRange(visit.arrival_date, visit.departure_date)}
-                                  </p>
-                                  
-                                  <p className="timeline-season">
-                                    {getSeasonalContext(visit.arrival_date, visit.country_iso2)}
-                                  </p>
-                                  
-                                  {/* Tap hint on mobile */}
-                                  <p className="timeline-tap-hint">Tap for options</p>
-                                  
-                                  {/* Actions - appear on hover/tap */}
-                                  <div className="timeline-actions">
-                                    {(() => {
-                                      if (!visit.trip_id || renderedTripSummaryActions.has(visit.trip_id)) {
-                                        return null;
-                                      }
-
-                                      renderedTripSummaryActions.add(visit.trip_id);
-
-                                      return (
-                                        <span
-                                          className="timeline-action"
-                                          onClick={() =>
-                                            generateTripSummary.mutate({
-                                              tripId: visit.trip_id!,
-                                              regenerate: tripSummaryMap.has(visit.trip_id!),
-                                            })
-                                          }
-                                        >
-                                          {generateTripSummary.isPending && generateTripSummary.variables?.tripId === visit.trip_id
-                                            ? 'Working...'
-                                            : tripSummaryMap.has(visit.trip_id)
-                                            ? 'Regenerate summary'
-                                            : 'Generate summary'}
-                                        </span>
-                                      );
-                                    })()}
-                                    <span 
-                                      className="timeline-action"
-                                      onClick={() => setEditingVisit(visit)}
-                                    >
-                                      Edit
-                                    </span>
-                                    <span 
-                                      className="timeline-action"
-                                      onClick={() => navigate(`/country/${visit.country_iso2}`)}
-                                    >
-                                      View on map
-                                    </span>
-                                    <span 
-                                      className="timeline-action timeline-action--destructive"
-                                      onClick={() => setDeletingVisit(visit)}
-                                    >
-                                      Remove
-                                    </span>
-                                  </div>
-                                </article>
-                              </div>
-                            );
-                          })}
+                                    {generateTripSummary.isPending && generateTripSummary.variables?.tripId === visit.trip_id
+                                      ? 'Working...'
+                                      : tripSummaryMap.has(visit.trip_id)
+                                      ? 'Regenerate summary'
+                                      : 'Generate summary'}
+                                  </span>
+                                );
+                              })()}
+                              <span className="timeline-action" onClick={() => setEditingVisit(visit)}>
+                                Edit
+                              </span>
+                              <span className="timeline-action" onClick={() => navigate(`/country/${visit.country_iso2}`)}>
+                                View on map
+                              </span>
+                              <span className="timeline-action timeline-action--destructive" onClick={() => setDeletingVisit(visit)}>
+                                Remove
+                              </span>
+                            </div>
+                          </article>
                         </div>
                       );
                     })}
                   </div>
-                </>
-              );
-            })()}
+                );
+              })}
+            </div>
+
+            {/* Load more */}
+            {hasMore && (
+              <div className="flex justify-center py-8">
+                <button
+                  className="timeline-scope-link text-sm"
+                  onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                >
+                  Load {Math.min(PAGE_SIZE, allCompleted.length - visibleCount)} more visits
+                </button>
+              </div>
+            )}
             
             {/* End of timeline */}
             {totalVisits > 0 && (

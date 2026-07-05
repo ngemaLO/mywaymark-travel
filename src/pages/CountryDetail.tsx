@@ -5,7 +5,6 @@ import { getCountryByIso } from '@/data/countries';
 import { getCountryFacts } from '@/data/countryFacts';
 import { useVisitedCountries, useVisitsByCountry } from '@/hooks/useVisits';
 import { useCountryNote, useCountryNotes, useSaveCountryNote, useAddCountryNote, useDeleteCountryNote } from '@/hooks/useCountryNotes';
-import { useIsPremium } from '@/hooks/usePremium';
 import { useCountryImages, useAddCountryImage, useDeleteCountryImage, useUploadCountryImage, getMaxImagesPerCountry } from '@/hooks/useCountryImages';
 import { useCitiesByCountry, useAddCity, useRemoveCity } from '@/hooks/useCities';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
@@ -17,11 +16,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CityCombobox } from '@/components/CityCombobox';
 import { EditVisitModal } from '@/components/EditVisitModal';
 import { DeleteVisitDialog } from '@/components/DeleteVisitDialog';
-import { 
-  ArrowLeft, 
-  Check, 
-  Edit2, 
-  MapPin, 
+import {
+  ArrowLeft,
+  Check,
+  Edit2,
+  MapPin,
   Calendar,
   ImagePlus,
   Save,
@@ -34,20 +33,30 @@ import {
   Home,
   Mic,
   MicOff,
-  Lightbulb
+  Lightbulb,
+  ChevronDown,
+  Images,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState, useRef, useCallback } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { VisitMediaGallery } from '@/components/VisitMediaGallery';
+import { FriendsWhoVisited } from '@/components/FriendsWhoVisited';
 import { useSpeechToText } from '@/hooks/useSpeech';
 import { TTSControls } from '@/components/TTSControls';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Visit } from '@/hooks/useVisits';
 
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE_MB = 5;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 export default function CountryDetail() {
   const { iso } = useParams<{ iso: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [isAddingNewNote, setIsAddingNewNote] = useState(false);
@@ -56,6 +65,7 @@ export default function CountryDetail() {
   const [isAddingCity, setIsAddingCity] = useState(false);
   const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
   const [deletingVisit, setDeletingVisit] = useState<Visit | null>(null);
+  const [expandedVisitId, setExpandedVisitId] = useState<string | null>(null);
   
   const country = iso ? getCountryByIso(iso) : null;
   const { isVisited, isLoading: visitsLoading } = useVisitedCountries();
@@ -68,7 +78,6 @@ export default function CountryDetail() {
   const saveNoteMutation = useSaveCountryNote();
   const addNoteMutation = useAddCountryNote();
   const deleteNoteMutation = useDeleteCountryNote();
-  const { isPremium } = useIsPremium();
   const addImageMutation = useAddCountryImage();
   const uploadImageMutation = useUploadCountryImage();
   const deleteImageMutation = useDeleteCountryImage();
@@ -214,11 +223,29 @@ export default function CountryDetail() {
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !iso) return;
-    await uploadImageMutation.mutateAsync({ countryIso2: iso, file });
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please select a JPEG, PNG, WebP, or GIF image.',
+        variant: 'destructive',
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      toast({
+        title: 'File too large',
+        description: `Images must be under ${MAX_FILE_SIZE_MB}MB.`,
+        variant: 'destructive',
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    await uploadImageMutation.mutateAsync({ countryIso2: iso, file });
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleDeleteImage = async (imageId: string) => {
@@ -304,7 +331,7 @@ export default function CountryDetail() {
                   Personal Notes
                 </h2>
                 <div className="flex gap-1 items-center">
-                  {isPremium && !isAddingNewNote && !isEditingNote && (
+                  {!isAddingNewNote && !isEditingNote && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -315,27 +342,12 @@ export default function CountryDetail() {
                       Add note
                     </Button>
                   )}
-                  {!isPremium && !isEditingNote && (
-                    <>
-                      <TTSControls text={currentNoteText} />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleStartEditNote(note ? { id: note.id, note: note.note } : undefined)}
-                        className="gap-2 text-muted-foreground hover:text-foreground"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Edit
-                      </Button>
-                    </>
-                  )}
                 </div>
               </div>
               
               {(noteLoading || allNotesLoading) ? (
                 <Skeleton className="h-24 w-full" />
-              ) : isPremium ? (
-                /* Premium: multiple notes */
+              ) : (
                 <div className="space-y-3">
                   {/* Add new note form */}
                   {isAddingNewNote && (
@@ -487,67 +499,6 @@ export default function CountryDetail() {
                     </p>
                   )}
                 </div>
-              ) : isEditingNote ? (
-                /* Free tier: single note editing */
-                <div className="space-y-3">
-                  <Textarea
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder="Add your personal notes about this country..."
-                    className="min-h-[120px] resize-none"
-                    maxLength={500}
-                  />
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
-                        {noteText.length}/500 characters
-                      </span>
-                      {stt.isSupported && (
-                        <Button
-                          variant={stt.isListening ? "destructive" : "outline"}
-                          size="sm"
-                          onClick={() => stt.isListening ? stt.stopListening() : stt.startListening()}
-                          disabled={saveNoteMutation.isPending}
-                          className={`gap-1.5 ${stt.isListening ? 'animate-pulse' : ''}`}
-                        >
-                          {stt.isListening ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                          {stt.isListening ? 'Listening…' : 'Dictate'}
-                        </Button>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { stt.stopListening(); setIsEditingNote(false); }}
-                        disabled={saveNoteMutation.isPending}
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Cancel
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        onClick={() => { stt.stopListening(); handleSaveNote(editingNoteId || undefined); }}
-                        disabled={saveNoteMutation.isPending}
-                      >
-                        {saveNoteMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4 mr-1" />
-                        )}
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-foreground leading-relaxed">
-                  {currentNoteText || (
-                    <span className="text-muted-foreground italic">
-                      No notes yet. Click edit to add your thoughts about this country.
-                    </span>
-                  )}
-                </p>
               )}
             </section>
 
@@ -753,56 +704,70 @@ export default function CountryDetail() {
                 <Calendar className="w-5 h-5" />
                 Your Visits
               </h2>
-              
+
               {countryVisits.length > 0 ? (
                 <div className="space-y-3">
-                  {countryVisits.map((visit) => (
-                    <div 
-                      key={visit.id}
-                      className="group flex items-center justify-between p-4 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2 text-sm text-foreground">
-                          <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>
-                            {visit.departure_date 
-                              ? `${format(new Date(visit.arrival_date), 'MMM d, yyyy')} - ${format(new Date(visit.departure_date), 'MMM d, yyyy')}`
-                              : format(new Date(visit.arrival_date), 'MMM d, yyyy')
-                            }
-                          </span>
+                  {countryVisits.map((visit) => {
+                    const isExpanded = expandedVisitId === visit.id;
+                    return (
+                      <div key={visit.id} className="rounded-xl border border-border/50 overflow-hidden">
+                        {/* Visit header row */}
+                        <div
+                          className="group flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => setExpandedVisitId(isExpanded ? null : visit.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
+                            <div>
+                              <div className="flex items-center gap-2 text-sm text-foreground">
+                                <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                                <span>
+                                  {visit.departure_date
+                                    ? `${format(new Date(visit.arrival_date), 'MMM d, yyyy')} – ${format(new Date(visit.departure_date), 'MMM d, yyyy')}`
+                                    : format(new Date(visit.arrival_date), 'MMM d, yyyy')}
+                                </span>
+                              </div>
+                              {visit.source && visit.source !== 'manual' && (
+                                <span className="text-xs text-muted-foreground capitalize">via {visit.source}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setEditingVisit(visit)}
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeletingVisit(visit)}
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
-                        {visit.source && visit.source !== 'manual' && (
-                          <span className="text-xs text-muted-foreground capitalize mt-1">
-                            via {visit.source}
-                          </span>
+
+                        {/* Media gallery — shown when expanded */}
+                        {isExpanded && (
+                          <div className="p-4 border-t border-border/50 space-y-3">
+                            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                              <Images className="w-3.5 h-3.5" /> Photos & Videos
+                            </p>
+                            <VisitMediaGallery visitId={visit.id} />
+                          </div>
                         )}
                       </div>
-                      
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingVisit(visit)}
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setDeletingVisit(visit)}
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground italic">
-                  No visits recorded yet.
-                </p>
+                <p className="text-sm text-muted-foreground italic">No visits recorded yet.</p>
               )}
             </section>
 
@@ -830,6 +795,9 @@ export default function CountryDetail() {
                 </div>
               </div>
             </section>
+
+            {/* Friends who've been here */}
+            {iso && <FriendsWhoVisited iso2={iso} variant="sidebar" />}
 
             {/* Travel Facts */}
             <section className="card-elevated p-6 space-y-4">

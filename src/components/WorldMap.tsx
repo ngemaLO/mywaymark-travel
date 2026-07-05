@@ -295,6 +295,56 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
     return result;
   }, [geoData, getIso2FromFeature, getOverseasInfo]);
 
+  // Flag pattern positions — centroid in SVG coords for each visited country.
+  // Updates per rotation tick (same cadence as computedPaths).
+  const flagPatternData = useMemo(() => {
+    const result: Record<string, { x: number; y: number }> = {};
+    if (!geoData) return result;
+    const seen = new Set<string>();
+    for (const f of geoData) {
+      const iso2 = getIso2FromFeature(f);
+      if (!iso2 || seen.has(iso2) || !displayedVisitedIsos.includes(iso2)) continue;
+      seen.add(iso2);
+      const centroid = geoCentroid(f as GeoJSON.Feature);
+      const projected = projection(centroid);
+      if (projected) result[iso2] = { x: projected[0], y: projected[1] };
+    }
+    // also include home base
+    if (homeBase?.country_iso2) {
+      const iso2 = homeBase.country_iso2;
+      if (!result[iso2]) {
+        const hf = geoData.find(f => getIso2FromFeature(f) === iso2);
+        if (hf) {
+          const projected = projection(geoCentroid(hf as GeoJSON.Feature));
+          if (projected) result[iso2] = { x: projected[0], y: projected[1] };
+        }
+      }
+    }
+    return result;
+  }, [geoData, displayedVisitedIsos, homeBase, projection, getIso2FromFeature]);
+
+  // Pre-compute stable per-polygon metadata (iso2, visited status, clickability).
+  // Only re-runs when data changes — NOT on every rotation tick.
+  const polygonMetadata = useMemo(() =>
+    expandedPolygons.map(polygon => {
+      const iso2 = getIso2FromFeature(polygon.originalFeature);
+      const isClickable = !polygon.isOverseas && !!iso2;
+      const isVisitedAllTime = iso2 ? visitedIsos.includes(iso2) && !polygon.isOverseas : false;
+      const isHomeBasePoly = homeBase?.country_iso2 === iso2 && !polygon.isOverseas;
+      const showHoverCard = (isVisitedAllTime || isHomeBasePoly) && !polygon.isOverseas;
+      return { iso2, isClickable, isVisitedAllTime, isHomeBasePoly, showHoverCard };
+    }),
+    [expandedPolygons, getIso2FromFeature, visitedIsos, homeBase]
+  );
+
+  // Pre-compute path strings. This still re-runs every rotation tick (projection changes),
+  // but batches all D3 calls into a single useMemo instead of scattering them through JSX.
+  // Critically, this avoids recomputing paths when only hover/scope state changes.
+  const computedPaths = useMemo(() =>
+    expandedPolygons.map(polygon => pathGenerator(polygon.geometry)),
+    [expandedPolygons, pathGenerator]
+  );
+
   const getTooltipInfo = useCallback((feature: CountryFeature, hoverLngLat?: [number, number]): { title: string; subtitle?: string } | null => {
     const featureName = feature.properties?.name;
     const iso2 = getIso2FromFeature(feature);
@@ -324,13 +374,11 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
     const isVisited = displayedVisitedIsos.includes(iso2);
     if (mapScope === 'chapter' && !isVisited && visitedIsos.includes(iso2)) return 'hsl(var(--map-land) / 0.6)';
     if (isHomeBase || isVisited) {
-      const country = getCountryByIso(iso2);
-      if (country?.flagPrimaryColor) return country.flagPrimaryColor;
-      return hoveredCountry === iso2 ? 'hsl(var(--map-visited-hover))' : 'hsl(var(--map-visited))';
+      return flagPatternData[iso2] ? `url(#flag-${iso2})` : (getCountryByIso(iso2)?.flagPrimaryColor || 'hsl(var(--map-visited))');
     }
     if (mapScope === 'chapter') return hoveredCountry === iso2 ? 'hsl(var(--map-land-hover) / 0.5)' : 'hsl(var(--map-land) / 0.4)';
     return hoveredCountry === iso2 ? 'hsl(var(--map-land-hover))' : 'hsl(var(--map-land))';
-  }, [hoveredCountry, displayedVisitedIsos, visitedIsos, homeBase, mapScope]);
+  }, [hoveredCountry, displayedVisitedIsos, visitedIsos, homeBase, mapScope, flagPatternData]);
 
   const getPolygonStroke = useCallback((iso2: string | null) => {
     if (homeBase?.country_iso2 === iso2) return { stroke: 'hsl(var(--foreground))', strokeWidth: 1.5 };
@@ -431,7 +479,7 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
   }, [geoData, allVisits, displayedVisitedIsos, projection, getIso2FromFeature]);
 
   const handleCountryClick = (iso2: string | null) => {
-    if (iso2 && visitedIsos.includes(iso2) && onCountryClick) onCountryClick(iso2);
+    if (iso2 && onCountryClick) onCountryClick(iso2);
   };
 
   const handleScopeChange = (scope: MapScope) => {
@@ -496,15 +544,6 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
     const info = getTooltipInfo(polygon.originalFeature, lngLat);
     if (info) setTooltip({ x, y, title: info.title, subtitle: info.subtitle });
   }, [isDragging, projection, getTooltipInfo]);
-
-  if (!user) {
-    return (
-      <div className="globe-container relative flex items-center justify-center" style={{ aspectRatio: '1' }}>
-        <div className="absolute inset-0 bg-gradient-to-b from-muted/50 to-muted rounded-full" />
-        <p className="text-muted-foreground z-10">Sign in to see your travel map</p>
-      </div>
-    );
-  }
 
   if (isLoading || isLoadingMap) {
     return (
@@ -598,6 +637,22 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
           onTouchEnd={handleTouchEnd}
         >
           <defs>
+            {/* Flag image patterns — one per visited country, centred on its projected centroid */}
+            {Object.entries(flagPatternData).map(([iso2, pos]) => {
+              const fw = 110; const fh = 74; // ~3:2 flag ratio, covers most countries
+              const country = getCountryByIso(iso2);
+              return (
+                <pattern key={iso2} id={`flag-${iso2}`} patternUnits="userSpaceOnUse"
+                  x={pos.x - fw / 2} y={pos.y - fh / 2} width={fw} height={fh}>
+                  <rect width={fw} height={fh} fill={country?.flagPrimaryColor || '#555'} />
+                  <image
+                    href={`https://flagcdn.com/w160/${iso2.toLowerCase()}.png`}
+                    x="0" y="0" width={fw} height={fh}
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                </pattern>
+              );
+            })}
             <radialGradient id="globe-shadow" cx="35%" cy="30%" r="60%">
               <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity="0.02" />
               <stop offset="70%" stopColor="hsl(var(--foreground))" stopOpacity="0.06" />
@@ -625,27 +680,24 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
           {/* Graticule */}
           {graticulePath && <path d={graticulePath} fill="none" stroke="hsl(var(--map-bg) / 0.4)" strokeWidth="0.3" />}
 
-          {/* Country paths */}
+          {/* Country paths — use pre-computed metadata and path strings */}
           {expandedPolygons.map((polygon, index) => {
-            const iso2 = getIso2FromFeature(polygon.originalFeature);
-            const isHomeBase = homeBase?.country_iso2 === iso2 && !polygon.isOverseas;
-            const isVisitedAllTime = iso2 ? visitedIsos.includes(iso2) && !polygon.isOverseas : false;
-            const isClickable = (isVisitedAllTime || isHomeBase) && !polygon.isOverseas;
-            const path = pathGenerator(polygon.geometry);
-            const strokeStyle = getPolygonStroke(polygon.isOverseas ? null : iso2);
+            const meta = polygonMetadata[index];
+            const path = computedPaths[index];
             if (!path) return null;
+            const strokeStyle = getPolygonStroke(polygon.isOverseas ? null : meta.iso2);
             return (
               <path
                 key={`${polygon.originalFeature.id || index}-${index}`}
                 d={path}
-                fill={getPolygonFill(iso2, polygon.isOverseas)}
+                fill={getPolygonFill(meta.iso2, polygon.isOverseas)}
                 stroke={strokeStyle.stroke}
                 strokeWidth={strokeStyle.strokeWidth}
-                className={`transition-colors duration-200 ${isClickable && !isDragging ? 'cursor-pointer hover:brightness-110' : ''}`}
-                onMouseEnter={(e) => handleCountryHover(e, polygon, iso2, isClickable)}
-                onMouseMove={(e) => handleCountryHover(e, polygon, iso2, isClickable)}
+                className={`transition-colors duration-200 ${meta.isClickable && !isDragging ? 'cursor-pointer hover:brightness-110' : ''}`}
+                onMouseEnter={(e) => handleCountryHover(e, polygon, meta.iso2, meta.showHoverCard)}
+                onMouseMove={(e) => handleCountryHover(e, polygon, meta.iso2, meta.showHoverCard)}
                 onMouseLeave={() => { setHoveredCountry(null); setTooltip(null); setMapHoverCard(null); }}
-                onClick={() => !isDragging && isClickable && handleCountryClick(iso2)}
+                onClick={() => !isDragging && meta.isClickable && handleCountryClick(meta.iso2)}
               />
             );
           })}

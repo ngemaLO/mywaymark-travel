@@ -75,7 +75,7 @@ export function BadgeGrid() {
               No entries yet
             </h3>
             <p className="text-muted-foreground max-w-sm mx-auto">
-              Start your journal by adding your first entry.
+              Start logging your travels to see them here.
             </p>
           </div>
           <Button onClick={() => setAddTripOpen(true)} className="gap-2">

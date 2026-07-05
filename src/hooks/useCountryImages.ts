@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { logError } from '@/lib/logger';
 
 export interface CountryImage {
   id: string;
@@ -75,8 +76,9 @@ export function useAddCountryImage() {
       toast({ title: 'Image added', description: 'Your photo has been added successfully.' });
     },
     onError: (error) => {
-      toast({ 
-        title: 'Error adding image', 
+      logError('useAddCountryImage', error);
+      toast({
+        title: 'Error adding image',
         description: error.message,
         variant: 'destructive',
       });
@@ -141,6 +143,7 @@ export function useUploadCountryImage() {
       toast({ title: 'Image uploaded', description: 'Your photo has been added successfully.' });
     },
     onError: (error) => {
+      logError('useUploadCountryImage', error);
       toast({
         title: 'Error uploading image',
         description: error.message,
@@ -155,12 +158,29 @@ export function useDeleteCountryImage() {
 
   return useMutation({
     mutationFn: async ({ imageId, countryIso2 }: { imageId: string; countryIso2: string }) => {
+      // Fetch the row first so we can delete the storage object too
+      const { data: row } = await supabase
+        .from('country_images')
+        .select('image_url')
+        .eq('id', imageId)
+        .single();
+
       const { error } = await supabase
         .from('country_images')
         .delete()
         .eq('id', imageId);
-
       if (error) throw error;
+
+      // Best-effort storage cleanup for uploaded files
+      if (row?.image_url) {
+        const url = new URL(row.image_url);
+        // Storage public URLs end with /object/public/<bucket>/<path>
+        const match = url.pathname.match(/\/object\/public\/country-images\/(.+)$/);
+        if (match) {
+          await supabase.storage.from('country-images').remove([decodeURIComponent(match[1])]);
+        }
+      }
+
       return { imageId, countryIso2 };
     },
     onSuccess: (variables) => {
@@ -168,8 +188,9 @@ export function useDeleteCountryImage() {
       toast({ title: 'Image deleted', description: 'Your photo has been removed.' });
     },
     onError: (error) => {
-      toast({ 
-        title: 'Error deleting image', 
+      logError('useDeleteCountryImage', error);
+      toast({
+        title: 'Error deleting image',
         description: error.message,
         variant: 'destructive',
       });

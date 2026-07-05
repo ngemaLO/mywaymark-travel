@@ -1,14 +1,17 @@
 import { useAuth } from '@/contexts/AuthContext';
 
-// Placeholder premium status hook - always returns false for now
-// Will be connected to Stripe subscriptions later
+// Premium status is read from user metadata set by the Stripe webhook.
+// Until Stripe is integrated, all users are on the free tier.
 export function useIsPremium() {
   const { user } = useAuth();
 
+  const isPremium =
+    user?.app_metadata?.is_premium === true ||
+    user?.user_metadata?.is_premium === true;
+
   return {
-    isPremium: true, // Temporarily true for testing ElevenLabs
+    isPremium,
     isLoading: false,
-    // For future use
-    planName: null as string | null,
+    planName: isPremium ? 'Premium' : null,
   };
 }

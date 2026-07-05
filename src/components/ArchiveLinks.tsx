@@ -3,12 +3,10 @@ import { useVisitedCountries } from '@/hooks/useVisits';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useChapters } from '@/hooks/useChapters';
 
 export function ArchiveLinks() {
   const { user } = useAuth();
   const { visitedIsos } = useVisitedCountries();
-  const { data: chapters = [] } = useChapters();
 
   // Get unique cities count
   const { data: citiesCount = 0 } = useQuery({
@@ -26,20 +24,15 @@ export function ArchiveLinks() {
   });
 
   const countriesCount = visitedIsos.length;
-  const chaptersCount = chapters.length;
 
   return (
     <nav className="archive-links">
-      <Link to="/timeline" className="archive-link">
+      <Link to="/stats" className="archive-link">
         {countriesCount} {countriesCount === 1 ? 'country' : 'countries'}
       </Link>
       <span className="archive-separator">·</span>
-      <Link to="/timeline" className="archive-link">
+      <Link to="/stats" className="archive-link">
         {citiesCount} {citiesCount === 1 ? 'city' : 'cities'}
-      </Link>
-      <span className="archive-separator">·</span>
-      <Link to="/chapters" className="archive-link">
-        {chaptersCount} {chaptersCount === 1 ? 'chapter' : 'chapters'}
       </Link>
     </nav>
   );

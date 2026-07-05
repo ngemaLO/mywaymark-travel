@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, MapPin, Clock, Settings, User, LogOut, Link as LinkIcon, Plus, Navigation, BookOpen } from 'lucide-react';
+import { Share2, MapPin, Clock, Settings, User, LogOut, Plus, Navigation, BarChart2, Users } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,7 +17,9 @@ import {
 const navItems = [
   { label: 'Dashboard', path: '/', icon: MapPin },
   { label: 'Timeline', path: '/timeline', icon: Clock },
-  { label: 'Letters', path: '/letters', icon: BookOpen },
+  { label: 'Stats', path: '/stats', icon: BarChart2 },
+  { label: 'Plan', path: '/plan', icon: Navigation },
+  { label: 'Feed', path: '/feed', icon: Users },
   { label: 'Settings', path: '/settings', icon: Settings },
 ];
 
@@ -77,7 +79,7 @@ export function Header() {
                   className="gap-1.5"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Add Entry
+                  Log Visit
                 </Button>
 
                 <DropdownMenu>
@@ -94,10 +96,6 @@ export function Header() {
                     <DropdownMenuItem onClick={() => setShareModalOpen(true)}>
                       <Share2 className="w-4 h-4 mr-2" />
                       Share Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/share-links')}>
-                      <LinkIcon className="w-4 h-4 mr-2" />
-                      Shared Links
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                       <LogOut className="w-4 h-4 mr-2" />
@@ -135,10 +133,6 @@ export function Header() {
                   <DropdownMenuItem onClick={() => setShareModalOpen(true)}>
                     <Share2 className="w-4 h-4 mr-2" />
                     Share
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/share-links')}>
-                    <LinkIcon className="w-4 h-4 mr-2" />
-                    Shared Links
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />

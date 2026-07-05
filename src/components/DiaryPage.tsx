@@ -25,7 +25,7 @@ export function DiaryPage({ children, className = '' }: DiaryPageProps) {
       // Remove old layer after animation completes
       const timer = setTimeout(() => {
         setLayers((prev) => [prev[prev.length - 1]]);
-      }, 500);
+      }, 220);
       return () => clearTimeout(timer);
     } else {
       // Same route, just update content
@@ -35,8 +35,6 @@ export function DiaryPage({ children, className = '' }: DiaryPageProps) {
 
   return (
     <div className="diary-book">
-      <div className="diary-spine" aria-hidden="true" />
-
       <div className="diary-layers">
         {layers.map((layer, i) => {
           const isOld = layers.length > 1 && i === 0;
@@ -52,10 +50,6 @@ export function DiaryPage({ children, className = '' }: DiaryPageProps) {
           );
         })}
       </div>
-
-      <div className="diary-edge" aria-hidden="true" />
-      <div className="diary-corner diary-corner--top-right" aria-hidden="true" />
-      <div className="diary-corner diary-corner--bottom-right" aria-hidden="true" />
     </div>
   );
 }

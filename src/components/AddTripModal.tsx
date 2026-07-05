@@ -7,9 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -18,583 +18,342 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, MapPin, Building2, Calendar, FileText, Image, X, Loader2, Check, Trash2 } from 'lucide-react';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { MapPin, CalendarDays, CalendarRange, Loader2, Check } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { countries } from '@/data/countries';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 
 interface AddTripModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  preselectedCountry?: string;
 }
 
-interface DateEntry {
-  id: string;
-  dateType: 'month' | 'range';
-  month: string;
-  year: string;
-  startDate: string;
-  endDate: string;
-  isOngoing: boolean;
-  isTravel: boolean; // true = trip away from home, false = just being at home
-}
+type WhenMode = 'now' | 'month' | 'dates';
 
-// Generate months for selector
-const months = [
+const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-// Generate years (last 50 years to now - no future years)
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 51 }, (_, i) => currentYear - i);
+const CURRENT_YEAR = new Date().getFullYear();
+const CURRENT_MONTH = MONTHS[new Date().getMonth()];
+const YEARS = Array.from({ length: 51 }, (_, i) => CURRENT_YEAR - i);
+const TODAY = () => new Date().toISOString().split('T')[0];
 
-// Get today's date in YYYY-MM-DD format for max date validation
-const getTodayString = () => {
-  return new Date().toISOString().split('T')[0];
-};
-
-const createEmptyDateEntry = (): DateEntry => ({
-  id: crypto.randomUUID(),
-  dateType: 'month',
-  month: '',
-  year: currentYear.toString(),
-  startDate: '',
-  endDate: '',
-  isOngoing: false,
-  isTravel: true, // Default to travel trip
-});
-
-export function AddTripModal({ open, onOpenChange }: AddTripModalProps) {
+export function AddTripModal({ open, onOpenChange, preselectedCountry }: AddTripModalProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
-  // Form state
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
-  const [includeCity, setIncludeCity] = useState(false);
-  const [cityName, setCityName] = useState('');
-  const [dateEntries, setDateEntries] = useState<DateEntry[]>([createEmptyDateEntry()]);
-  const [note, setNote] = useState('');
-  const [images, setImages] = useState<File[]>([]);
-  
-  // Fetch countries from database
-  const { data: countries = [] } = useQuery({
-    queryKey: ['countries'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('countries')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data;
-    },
-  });
 
-  // Reset form when modal closes
+  // ── Stage 1: log ─────────────────────────────────
+  const [stage, setStage] = useState<'log' | 'enrich'>('log');
+  const [country, setCountry] = useState(preselectedCountry ?? '');
+  const [whenMode, setWhenMode] = useState<WhenMode>('month');
+  const [month, setMonth] = useState(CURRENT_MONTH);
+  const [year, setYear] = useState(CURRENT_YEAR.toString());
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isOngoing, setIsOngoing] = useState(false);
+
+  // ── Cities ────────────────────────────────────────
+  const [cities, setCities] = useState('');
+
+  // ── Stage 2: enrich ───────────────────────────────
+  const [loggedCountryName, setLoggedCountryName] = useState('');
+  const [note, setNote] = useState('');
+
+  // Apply preselected country when modal opens
+  useEffect(() => {
+    if (open && preselectedCountry) setCountry(preselectedCountry);
+  }, [open, preselectedCountry]);
+
+  // Reset everything when modal closes
   useEffect(() => {
     if (!open) {
-      setSelectedCountry('');
-      setIncludeCity(false);
-      setCityName('');
-      setDateEntries([createEmptyDateEntry()]);
+      setStage('log');
+      setCountry(preselectedCountry ?? '');
+      setWhenMode('month');
+      setMonth(CURRENT_MONTH);
+      setYear(CURRENT_YEAR.toString());
+      setStartDate('');
+      setEndDate('');
+      setIsOngoing(false);
+      setCities('');
+      setLoggedCountryName('');
       setNote('');
-      setImages([]);
     }
   }, [open]);
 
-  const updateDateEntry = (id: string, updates: Partial<DateEntry>) => {
-    setDateEntries(prev => prev.map(entry => 
-      entry.id === id ? { ...entry, ...updates } : entry
-    ));
-  };
+  // ── Validation ────────────────────────────────────
+  const isLogValid = (() => {
+    if (!country) return false;
+    if (whenMode === 'now') return true;
+    if (whenMode === 'month') return !!(month && year);
+    if (whenMode === 'dates') return !!startDate;
+    return false;
+  })();
 
-  const addDateEntry = () => {
-    setDateEntries(prev => [...prev, createEmptyDateEntry()]);
-  };
-
-  const removeDateEntry = (id: string) => {
-    if (dateEntries.length > 1) {
-      setDateEntries(prev => prev.filter(entry => entry.id !== id));
-    }
-  };
-
-  const isDateEntryValid = (entry: DateEntry): boolean => {
-    if (entry.dateType === 'month') {
-      return !!(entry.month && entry.year);
-    }
-    return !!entry.startDate;
-  };
-
-  // Create trip mutation
-  const createTripMutation = useMutation({
+  // ── Stage 1 mutation: create visit ───────────────
+  const logMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error('Must be logged in');
-      if (!selectedCountry) throw new Error('Please select a country');
 
-      const validEntries = dateEntries.filter(isDateEntryValid);
-      if (validEntries.length === 0) throw new Error('Please add at least one valid date');
+      let arrivalDate: string;
+      let departureDate: string | null = null;
+      let ongoing = false;
 
-      // Create visits for each date entry - only include entries with proper dates
-      const visits: Array<{
-        user_id: string;
-        country_iso2: string;
-        arrival_date: string;
-        departure_date: string | null;
-        source: string;
-        source_confidence: string;
-        trip_id: string | null;
-      }> = [];
-
-      for (const entry of validEntries) {
-        let arrivalDate: string | null = null;
-        let departureDate: string | null = null;
-
-        if (entry.dateType === 'month' && entry.month && entry.year) {
-          const monthIndex = months.indexOf(entry.month);
-          if (monthIndex >= 0) {
-            arrivalDate = `${entry.year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
-          }
-        } else if (entry.dateType === 'range' && entry.startDate) {
-          arrivalDate = entry.startDate;
-          // If ongoing, departure_date stays null; otherwise use the end date
-          departureDate = entry.isOngoing ? null : (entry.endDate || null);
-        }
-
-        // Only add visit if we have a valid arrival date
-        if (arrivalDate) {
-          // For ongoing trips, create a trip record to track is_travel
-          let tripId: string | null = null;
-          
-          if (entry.isOngoing) {
-            // Create a trip record for ongoing visits
-            const { data: tripData, error: tripError } = await supabase
-              .from('trips')
-              .insert({
-                user_id: user.id,
-                start_date: arrivalDate,
-                end_date: null,
-                source: 'manual',
-                is_travel: entry.isTravel,
-              })
-              .select('id')
-              .single();
-            
-            if (tripError) throw tripError;
-            tripId = tripData.id;
-          }
-
-          visits.push({
-            user_id: user.id,
-            country_iso2: selectedCountry,
-            arrival_date: arrivalDate,
-            departure_date: departureDate,
-            source: 'manual',
-            source_confidence: 'high',
-            trip_id: tripId,
-          });
-        }
+      if (whenMode === 'now') {
+        arrivalDate = TODAY();
+        ongoing = true;
+      } else if (whenMode === 'month') {
+        const monthIndex = MONTHS.indexOf(month);
+        arrivalDate = `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`;
+      } else {
+        arrivalDate = startDate;
+        departureDate = isOngoing ? null : (endDate || null);
+        ongoing = isOngoing;
       }
 
-      if (visits.length === 0) {
-        throw new Error('No valid dates provided');
+      let tripId: string | null = null;
+      if (ongoing) {
+        const { data: tripData, error: tripError } = await supabase
+          .from('trips')
+          .insert({ user_id: user.id, start_date: arrivalDate, end_date: null, source: 'manual', is_travel: true })
+          .select('id')
+          .single();
+        if (tripError) throw tripError;
+        tripId = tripData.id;
       }
 
-      // Insert all visits
-      const { error: visitError } = await supabase
-        .from('visits')
-        .insert(visits);
-
+      const { error: visitError } = await supabase.from('visits').insert({
+        user_id: user.id,
+        country_iso2: country,
+        arrival_date: arrivalDate,
+        departure_date: departureDate,
+        source: 'manual',
+        source_confidence: 'high',
+        trip_id: tripId,
+      });
       if (visitError) throw visitError;
-
-      // If city is included, create a place entry if it doesn't exist
-      if (includeCity && cityName.trim()) {
-        const { data: existingPlace } = await supabase
+    },
+    onSuccess: async () => {
+      queryClient.invalidateQueries({ queryKey: ['visits'] });
+      // Save any cities entered in Stage 1
+      const cityList = cities.split(',').map(c => c.trim()).filter(Boolean);
+      for (const cityName of cityList) {
+        const { data: existing } = await supabase
           .from('places')
           .select('id')
-          .eq('name', cityName.trim())
-          .eq('country_iso2', selectedCountry)
+          .eq('name', cityName)
+          .eq('country_iso2', country)
           .maybeSingle();
-
-        if (!existingPlace) {
-          await supabase.from('places').insert({
-            name: cityName.trim(),
-            country_iso2: selectedCountry,
-            type: 'city',
-          });
+        if (!existing) {
+          await supabase.from('places').insert({ name: cityName, country_iso2: country, type: 'city' });
         }
       }
-
-      // If note provided, save it
-      if (note.trim()) {
-        await supabase.from('country_notes').upsert({
-          user_id: user.id,
-          country_iso2: selectedCountry,
-          note: note.trim(),
-        }, {
-          onConflict: 'user_id,country_iso2',
-        });
-      }
-
-      return visits;
+      const name = countries.find(c => c.iso2 === country)?.name || country;
+      setLoggedCountryName(name);
+      setStage('enrich');
     },
-    onSuccess: () => {
-      const countryName = countries.find(c => c.iso2 === selectedCountry)?.name || selectedCountry;
-      const entryCount = dateEntries.filter(isDateEntryValid).length;
-      toast.success(`Added ${entryCount} entr${entryCount > 1 ? 'ies' : 'y'} to ${countryName}!`);
-      queryClient.invalidateQueries({ queryKey: ['visits'] });
-      queryClient.invalidateQueries({ queryKey: ['country-notes'] });
-      onOpenChange(false);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to add entry');
-    },
+    onError: (err: Error) => toast.error(err.message || 'Failed to log visit'),
   });
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(f => f.type.startsWith('image/'));
-    
-    if (images.length + validFiles.length > 5) {
-      toast.error('Maximum 5 images allowed');
-      return;
-    }
-    
-    setImages(prev => [...prev, ...validFiles].slice(0, 5));
-  };
+  // ── Stage 2 mutation: save enrichment ────────────
+  const enrichMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !note.trim()) return;
+      await supabase.from('country_notes').upsert(
+        { user_id: user.id, country_iso2: country, note: note.trim() },
+        { onConflict: 'user_id,country_iso2' },
+      );
+      queryClient.invalidateQueries({ queryKey: ['country-notes'] });
+    },
+    onSuccess: () => onOpenChange(false),
+    onError: (err: Error) => toast.error(err.message || 'Failed to save details'),
+  });
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-  };
+  const hasEnrichment = note.trim();
 
-  const isValid = selectedCountry && dateEntries.some(isDateEntryValid);
-
+  // ─────────────────────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-primary" />
-            Add an Entry
-          </DialogTitle>
-          <DialogDescription>
-            Record a place you've been. Add multiple dates for repeat entries.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-md">
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-6 py-4">
-            {/* Country Selection */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="country-check" 
-                  checked={!!selectedCountry}
-                  disabled
-                />
-                <Label htmlFor="country-select" className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  Country <span className="text-destructive">*</span>
+        {/* ── STAGE 1: LOG ── */}
+        {stage === 'log' && (
+          <>
+            <DialogHeader>
+              <DialogTitle>Where have you been?</DialogTitle>
+              <DialogDescription>Pick a country and roughly when you were there.</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-5 py-2">
+              {/* Country */}
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5" /> Country
                 </Label>
-              </div>
-              <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                <SelectTrigger id="country-select">
-                  <SelectValue placeholder="Select a country..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <ScrollArea className="h-[200px]">
-                    {countries.map(country => (
-                      <SelectItem key={country.iso2} value={country.iso2}>
-                        {country.name}
-                      </SelectItem>
+                <Select value={country} onValueChange={setCountry}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Search countries..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[200px]">
+                    {countries.map(c => (
+                      <SelectItem key={c.iso2} value={c.iso2}>{c.name}</SelectItem>
                     ))}
-                  </ScrollArea>
-                </SelectContent>
-              </Select>
-            </div>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* City (Optional) */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Checkbox 
-                  id="city-check" 
-                  checked={includeCity}
-                  onCheckedChange={(checked) => setIncludeCity(checked === true)}
-                />
-                <Label htmlFor="city-check" className="flex items-center gap-2 cursor-pointer">
-                  <Building2 className="w-4 h-4 text-muted-foreground" />
-                  City (optional)
+              {/* Cities */}
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Cities / Regions <span className="normal-case">(optional)</span>
                 </Label>
-              </div>
-              {includeCity && (
                 <Input
-                  placeholder="e.g., Paris, Tokyo, Cape Town..."
-                  value={cityName}
-                  onChange={(e) => setCityName(e.target.value)}
-                  className="mt-2"
+                  placeholder="e.g. Paris, Lyon, Nice"
+                  value={cities}
+                  onChange={e => setCities(e.target.value)}
                 />
-              )}
-            </div>
-
-            {/* Date Entries */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  <Label>When did you visit?</Label>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addDateEntry}
-                  className="gap-1"
-                >
-                  <Plus className="w-3 h-3" />
-                  Add Date
-                </Button>
+                <p className="text-xs text-muted-foreground">Separate multiple places with commas</p>
               </div>
-              
-              <div className="space-y-4">
-                {dateEntries.map((entry, index) => (
-                  <div key={entry.id} className="p-3 rounded-lg border bg-muted/30 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">
-                        Entry {index + 1}
-                      </span>
-                      {dateEntries.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDateEntry(entry.id)}
-                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+
+              {/* When */}
+              <div className="space-y-3">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">When</Label>
+
+                {/* Quick-pick tiles */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setWhenMode('now')}
+                    className={`when-tile ${whenMode === 'now' ? 'when-tile--active' : ''}`}
+                  >
+                    <MapPin className="w-4 h-4" />
+                    <span>Right now</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWhenMode('month')}
+                    className={`when-tile ${whenMode === 'month' ? 'when-tile--active' : ''}`}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    <span>Month</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setWhenMode('dates')}
+                    className={`when-tile ${whenMode === 'dates' ? 'when-tile--active' : ''}`}
+                  >
+                    <CalendarRange className="w-4 h-4" />
+                    <span>Exact dates</span>
+                  </button>
+                </div>
+
+                {/* Month/year selectors */}
+                {whenMode === 'month' && (
+                  <div className="flex gap-2">
+                    <Select value={month} onValueChange={setMonth}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Month" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MONTHS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Select value={year} onValueChange={setYear}>
+                      <SelectTrigger className="w-24">
+                        <SelectValue placeholder="Year" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[200px]">
+                        {YEARS.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Date range */}
+                {whenMode === 'dates' && (
+                  <div className="space-y-3">
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">From</Label>
+                        <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} max={TODAY()} />
+                      </div>
+                      {!isOngoing && (
+                        <>
+                          <span className="text-muted-foreground pb-2.5">to</span>
+                          <div className="flex-1 space-y-1">
+                            <Label className="text-xs text-muted-foreground">To (optional)</Label>
+                            <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} min={startDate} max={TODAY()} />
+                          </div>
+                        </>
                       )}
                     </div>
-                    
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={entry.dateType === 'month' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => updateDateEntry(entry.id, { dateType: 'month' })}
-                      >
-                        Month/Year
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={entry.dateType === 'range' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => updateDateEntry(entry.id, { dateType: 'range' })}
-                      >
-                        Date Range
-                      </Button>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="ongoing"
+                        checked={isOngoing}
+                        onCheckedChange={v => { setIsOngoing(v === true); if (v) setEndDate(''); }}
+                      />
+                      <Label htmlFor="ongoing" className="text-sm text-muted-foreground cursor-pointer">
+                        I'm still here
+                      </Label>
                     </div>
-
-                    {entry.dateType === 'month' ? (
-                      <div className="flex gap-2">
-                        <Select 
-                          value={entry.month} 
-                          onValueChange={(value) => updateDateEntry(entry.id, { month: value })}
-                        >
-                          <SelectTrigger className="flex-1">
-                            <SelectValue placeholder="Month" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {months.map(m => (
-                              <SelectItem key={m} value={m}>{m}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Select 
-                          value={entry.year} 
-                          onValueChange={(value) => updateDateEntry(entry.id, { year: value })}
-                        >
-                          <SelectTrigger className="w-24">
-                            <SelectValue placeholder="Year" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <ScrollArea className="h-[200px]">
-                              {years.map(y => (
-                                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                              ))}
-                            </ScrollArea>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="flex gap-2 items-center">
-                          <div className="flex-1 space-y-1">
-                            <Label className="text-xs text-muted-foreground">Start</Label>
-                            <Input
-                              type="date"
-                              value={entry.startDate}
-                              onChange={(e) => updateDateEntry(entry.id, { startDate: e.target.value })}
-                              max={getTodayString()}
-                            />
-                          </div>
-                          {!entry.isOngoing && (
-                            <>
-                              <span className="text-muted-foreground mt-5">to</span>
-                              <div className="flex-1 space-y-1">
-                                <Label className="text-xs text-muted-foreground">End (optional)</Label>
-                                <Input
-                                  type="date"
-                                  value={entry.endDate}
-                                  onChange={(e) => updateDateEntry(entry.id, { endDate: e.target.value })}
-                                  min={entry.startDate}
-                                  max={getTodayString()}
-                                />
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        
-                        {/* Ongoing checkbox */}
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={`ongoing-${entry.id}`}
-                            checked={entry.isOngoing}
-                            onCheckedChange={(checked) => updateDateEntry(entry.id, { 
-                              isOngoing: checked === true,
-                              endDate: checked === true ? '' : entry.endDate 
-                            })}
-                          />
-                          <Label 
-                            htmlFor={`ongoing-${entry.id}`} 
-                            className="text-sm text-muted-foreground cursor-pointer"
-                          >
-                            I'm still here (ongoing)
-                          </Label>
-                        </div>
-                        
-                        {/* Is this travel? - Only show for ongoing trips */}
-                        {entry.isOngoing && (
-                          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 space-y-2">
-                            <p className="text-sm font-medium">Is this a trip away from home?</p>
-                            <div className="flex gap-2">
-                              <Button
-                                type="button"
-                                variant={entry.isTravel ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => updateDateEntry(entry.id, { isTravel: true })}
-                              >
-                                Yes, I'm travelling
-                              </Button>
-                              <Button
-                                type="button"
-                                variant={!entry.isTravel ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => updateDateEntry(entry.id, { isTravel: false })}
-                              >
-                                No, I'm at home
-                              </Button>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {entry.isTravel 
-                                ? "This will show as your Current Trip." 
-                                : "This won't show as a trip - you're just at home."}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Note (Optional) */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                Note (optional)
-              </Label>
-              <Textarea
-                placeholder="A short memory, highlight, or reminder..."
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                rows={2}
-                maxLength={500}
-              />
-              <p className="text-xs text-muted-foreground text-right">
-                {note.length}/500
-              </p>
-            </div>
-
-            {/* Images (Optional) */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Image className="w-4 h-4 text-muted-foreground" />
-                Photos (optional, max 5)
-              </Label>
-              
-              <div className="flex flex-wrap gap-2">
-                {images.map((img, index) => (
-                  <div key={index} className="relative w-16 h-16 rounded-lg overflow-hidden border">
-                    <img
-                      src={URL.createObjectURL(img)}
-                      alt={`Upload ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-0.5 right-0.5 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-                
-                {images.length < 5 && (
-                  <label className={cn(
-                    "w-16 h-16 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer",
-                    "hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
-                  )}>
-                    <Plus className="w-5 h-5" />
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageSelect}
-                      className="hidden"
-                    />
-                  </label>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Image upload coming soon. Photos will be stored privately.
-              </p>
             </div>
-          </div>
-        </ScrollArea>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={() => createTripMutation.mutate()}
-            disabled={!isValid || createTripMutation.isPending}
-            className="gap-2"
-          >
-            {createTripMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Check className="w-4 h-4" />
-            )}
-            Add {dateEntries.filter(isDateEntryValid).length > 1 
-              ? `${dateEntries.filter(isDateEntryValid).length} Visits` 
-              : 'Trip'}
-          </Button>
-        </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button onClick={() => logMutation.mutate()} disabled={!isLogValid || logMutation.isPending} className="gap-2">
+                {logMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Log Visit
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* ── STAGE 2: ENRICH ── */}
+        {stage === 'enrich' && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Check className="w-5 h-5 text-primary" />
+                {loggedCountryName} logged
+              </DialogTitle>
+              <DialogDescription>Add a note about your time there (optional).</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs uppercase tracking-wider text-muted-foreground">Note</Label>
+                <Textarea
+                  placeholder="A memory, highlight, or reminder..."
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                />
+                <p className="text-xs text-muted-foreground text-right">{note.length}/500</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Done</Button>
+              {hasEnrichment && (
+                <Button onClick={() => enrichMutation.mutate()} disabled={enrichMutation.isPending} className="gap-2">
+                  {enrichMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  Save
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+
       </DialogContent>
     </Dialog>
   );

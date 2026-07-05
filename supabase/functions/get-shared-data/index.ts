@@ -75,15 +75,16 @@ Deno.serve(async (req) => {
       trips: [],
     };
 
-    const { data: visits, error: visitsError } = await supabase
-      .from('visits')
-      .select('*')
-      .eq('user_id', userId);
-    
-    if (visitsError) {
-      console.error('Error fetching visits:', visitsError);
-    } else {
-      result.visits = visits || [];
+    if (shareLink.scope_map || shareLink.scope_stats || shareLink.scope_timeline) {
+      const { data: visits, error: visitsError } = await supabase
+        .from('visits')
+        .select('*')
+        .eq('user_id', userId);
+      if (visitsError) {
+        console.error('Error fetching visits:', visitsError);
+      } else {
+        result.visits = visits || [];
+      }
     }
 
     if (shareLink.scope_notes) {

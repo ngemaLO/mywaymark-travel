@@ -1,0 +1,3 @@
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS ai_generations_used INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS ai_generations_reset_at TIMESTAMPTZ NOT NULL DEFAULT now();

@@ -3,35 +3,43 @@ import { BottomNav } from '@/components/BottomNav';
 import { WorldMap } from '@/components/WorldMap';
 import { OnThisDay } from '@/components/OnThisDay';
 import { RecentJourneys } from '@/components/RecentJourneys';
-import { CurrentChapterCard } from '@/components/CurrentChapterCard';
 import { TodayEntry } from '@/components/TodayEntry';
 import { ArchiveLinks } from '@/components/ArchiveLinks';
 import { LetterNotice } from '@/components/letters/LetterNotice';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { CountryPanel } from '@/components/CountryPanel';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useVisitedCountries } from '@/hooks/useVisits';
 import { useEnsureAnnualLetter } from '@/hooks/useLetters';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, MapPin, Compass, BarChart2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AddTripModal } from '@/components/AddTripModal';
-import { ChapterFilter } from '@/components/ChapterFilter';
 import { TripSummaryCard } from '@/components/ai/TripSummaryCard';
+import { MilestoneModal } from '@/components/MilestoneModal';
+import { useMilestones } from '@/hooks/useMilestones';
 
 const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { visitedIsos, isLoading } = useVisitedCountries();
   const [addTripOpen, setAddTripOpen] = useState(false);
-  const [mapScope, setMapScope] = useState<string>('all');
+  const [addTripPreselect, setAddTripPreselect] = useState<string | undefined>();
+  const [panelIso, setPanelIso] = useState<string | null>(null);
   const { checkAndGenerate } = useEnsureAnnualLetter();
+
+  const handleLogVisitForCountry = (iso2: string) => {
+    setAddTripPreselect(iso2);
+    setAddTripOpen(true);
+  };
 
   useEffect(() => {
     if (user) checkAndGenerate();
   }, [user, checkAndGenerate]);
 
   const hasVisits = visitedIsos.length > 0;
+  const { currentMilestone, triggerFlag, dismiss: dismissMilestone } = useMilestones(visitedIsos);
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -39,40 +47,78 @@ const Index = () => {
       
       {/* Empty State for new users */}
       {user && !isLoading && !hasVisits ? (
-        <main className="journal-page">
-          <article className="journal-entry journal-entry--welcome">
-            <p className="journal-date">Welcome</p>
-            <h1 className="journal-title">Your journey begins here</h1>
-            <p className="journal-body">
-              Waymark is your personal travel journal. Nothing is tracked automatically — 
-              you choose what to remember.
-            </p>
-            <div className="journal-action">
-              <Button onClick={() => setAddTripOpen(true)} variant="ghost" className="journal-link">
-                <Plus className="w-4 h-4" />
-                Add your first entry
-              </Button>
+        <>
+          {/* Show the globe even for new users — their unclaimed world */}
+          <section className="globe-hero">
+            <div className="globe-hero-inner">
+              <WorldMap heroMode />
             </div>
-          </article>
-        </main>
+          </section>
+
+          <main className="journal-page">
+            <article className="journal-entry journal-entry--welcome">
+              <p className="journal-date">Welcome to Waymark</p>
+              <h1 className="journal-title">Your world is waiting</h1>
+              <p className="journal-body">
+                Every country on that globe is yours to claim. Start logging your travels
+                and watch your world come to life.
+              </p>
+
+              {/* Feature highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-6 text-left">
+                {[
+                  {
+                    icon: MapPin,
+                    title: 'Track',
+                    desc: 'Pin every country and city you visit on your personal map.',
+                  },
+                  {
+                    icon: Compass,
+                    title: 'Plan',
+                    desc: 'Get AI-powered day-by-day itineraries tailored to your travel style.',
+                  },
+                  {
+                    icon: BarChart2,
+                    title: 'Discover',
+                    desc: 'Explore stats, streaks, and insights from your travel history.',
+                  },
+                ].map(({ icon: Icon, title, desc }) => (
+                  <div
+                    key={title}
+                    className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-4 space-y-2"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Icon className="w-4 h-4 text-primary" />
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">{title}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="journal-action">
+                <Button onClick={() => setAddTripOpen(true)} size="lg" className="gap-2 px-6">
+                  <Plus className="w-4 h-4" />
+                  Log your first visit
+                </Button>
+              </div>
+            </article>
+          </main>
+        </>
       ) : (
         <>
           {/* Hero Globe Section — Full width, immersive */}
           <section className="globe-hero">
             <div className="globe-hero-inner">
-              <WorldMap 
-                onCountryClick={(iso) => navigate(`/country/${iso}`)}
-                scope={mapScope}
+              <WorldMap
+                onCountryClick={(iso) => setPanelIso(iso)}
                 heroMode
               />
             </div>
-            
+
             {/* Archive stats overlaid below globe */}
             <div className="globe-hero-stats">
               <ArchiveLinks />
-              <div className="mt-2">
-                <ChapterFilter value={mapScope} onChange={setMapScope} />
-              </div>
             </div>
           </section>
 
@@ -83,29 +129,24 @@ const Index = () => {
               <TodayEntry onAddTrip={() => setAddTripOpen(true)} />
             </ScrollReveal>
 
-            {/* 2. Recent entries */}
+            {/* 2. Memory */}
             <ScrollReveal delay={50}>
-              <TripSummaryCard />
+              <OnThisDay />
             </ScrollReveal>
 
-            {/* 2. Recent entries */}
+            {/* 3. Recent visits */}
             <ScrollReveal delay={100}>
               <RecentJourneys />
             </ScrollReveal>
 
-            {/* 2.5. Letter Notice */}
+            {/* 4. AI summary */}
+            <ScrollReveal delay={150}>
+              <TripSummaryCard />
+            </ScrollReveal>
+
+            {/* 5. Reflection notice */}
             <ScrollReveal delay={50}>
               <LetterNotice />
-            </ScrollReveal>
-
-            {/* 3. Chapter */}
-            <ScrollReveal delay={100}>
-              <CurrentChapterCard />
-            </ScrollReveal>
-
-            {/* 4. Memory */}
-            <ScrollReveal delay={150}>
-              <OnThisDay />
             </ScrollReveal>
           </main>
         </>
@@ -116,7 +157,17 @@ const Index = () => {
         <p>Waymark</p>
       </footer>
 
-      <AddTripModal open={addTripOpen} onOpenChange={setAddTripOpen} />
+      <AddTripModal
+        open={addTripOpen}
+        onOpenChange={(open) => { setAddTripOpen(open); if (!open) setAddTripPreselect(undefined); }}
+        preselectedCountry={addTripPreselect}
+      />
+      <CountryPanel
+        iso2={panelIso}
+        onClose={() => setPanelIso(null)}
+        onLogVisit={handleLogVisitForCountry}
+      />
+      <MilestoneModal milestone={currentMilestone} triggerFlag={triggerFlag} onClose={dismissMilestone} />
       <BottomNav />
     </div>
   );

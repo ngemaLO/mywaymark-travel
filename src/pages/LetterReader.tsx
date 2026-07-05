@@ -23,6 +23,10 @@ const LetterReader = () => {
     navigate('/letters');
   };
 
+  const handleExportPDF = () => {
+    window.print();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen letter-reader-bg flex items-center justify-center">
@@ -85,7 +89,7 @@ const LetterReader = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled>
+              <DropdownMenuItem onClick={handleExportPDF}>
                 <FileDown className="h-4 w-4 mr-2" />
                 Export PDF
               </DropdownMenuItem>

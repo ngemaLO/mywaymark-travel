@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AiDisclaimer } from '@/components/AiDisclaimer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLatestTripSummary, useGenerateTripSummary } from '@/hooks/useTripSummaries';
 import { useQuery } from '@tanstack/react-query';
@@ -143,6 +144,7 @@ export function TripSummaryCard() {
               browse older trips
             </Link>
           </nav>
+          <AiDisclaimer variant="summary" className="mt-3" />
         </div>
       ) : latestTrip ? (
         <div className="space-y-3">

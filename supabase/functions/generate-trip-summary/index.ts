@@ -77,16 +77,15 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claimsData.claims.sub as string;
+    const userId = user.id;
     const body = (await req.json()) as GenerateTripSummaryRequest;
     const tripId = body.trip_id;
     const regenerate = body.regenerate ?? false;
@@ -208,9 +207,9 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
     const countryNames = countryIsos.map((iso) => countryMap.get(iso) || iso);
@@ -234,30 +233,29 @@ Return valid JSON with this exact shape:
   "highlights": ["short highlight", "short highlight", "short highlight"]
 }`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 512,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }],
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errorText);
+      console.error("Anthropic API error:", aiResponse.status, errorText);
       throw new Error("Failed to generate trip summary");
     }
 
     const aiPayload = await aiResponse.json();
-    const content = aiPayload.choices?.[0]?.message?.content;
+    const content = aiPayload.content?.[0]?.text;
     if (!content) {
       throw new Error("AI response did not contain summary content");
     }
@@ -290,7 +288,7 @@ Return valid JSON with this exact shape:
       source_context: sourceContext,
       status: "ready",
       error_message: null,
-      model: "google/gemini-3-flash-preview",
+      model: "claude-haiku-4-5-20251001",
       version: nextVersion,
       generated_at: new Date().toISOString(),
     };

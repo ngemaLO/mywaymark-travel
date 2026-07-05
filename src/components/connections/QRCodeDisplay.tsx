@@ -1,13 +1,10 @@
-import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useConnectionCode, useGenerateConnectionCode } from '@/hooks/useTripConnections';
-import { useIsPremium } from '@/hooks/usePremium';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Copy, RefreshCw, QrCode, Sparkles } from 'lucide-react';
+import { Copy, RefreshCw, QrCode } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '@/components/ui/skeleton';
-import { UpgradePrompt } from './UpgradePrompt';
 
 interface QRCodeDisplayProps {
   tripId: string;
@@ -16,14 +13,8 @@ interface QRCodeDisplayProps {
 export function QRCodeDisplay({ tripId }: QRCodeDisplayProps) {
   const { data: codeData, isLoading } = useConnectionCode(tripId);
   const generateCode = useGenerateConnectionCode();
-  const { isPremium } = useIsPremium();
-  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const handleGenerate = () => {
-    if (!isPremium) {
-      setShowUpgrade(true);
-      return;
-    }
     generateCode.mutate(tripId);
   };
 
@@ -50,10 +41,6 @@ export function QRCodeDisplay({ tripId }: QRCodeDisplayProps) {
     );
   }
 
-  if (showUpgrade) {
-    return <UpgradePrompt feature="QR code generation" onClose={() => setShowUpgrade(false)} />;
-  }
-
   if (!codeData) {
     return (
       <Card className="border-border/40">
@@ -71,15 +58,9 @@ export function QRCodeDisplay({ tripId }: QRCodeDisplayProps) {
                 Generating...
               </>
             ) : (
-              <>
-                {!isPremium && <Sparkles className="w-4 h-4" />}
-                Generate QR Code
-              </>
+              'Generate QR Code'
             )}
           </Button>
-          {!isPremium && (
-            <p className="text-xs text-muted-foreground">Requires Waymark Plus</p>
-          )}
         </CardContent>
       </Card>
     );

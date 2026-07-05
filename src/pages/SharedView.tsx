@@ -393,7 +393,7 @@ export default function SharedView() {
       {/* Footer */}
       <footer className="border-t border-border/50 py-6 mt-16">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>Shared via Waymark — Your private travel ledger</p>
+          <p>Shared via Waymark — Your all-in-one travel companion</p>
         </div>
       </footer>
 

@@ -1,9 +1,8 @@
 import { useUserConnectionsForTrip, usePendingConnections, useConfirmConnection, useRejectConnection } from '@/hooks/useTripConnections';
-import { useIsPremium } from '@/hooks/usePremium';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Users, Check, X, Clock, Sparkles } from 'lucide-react';
+import { MessageCircle, Users, Check, X, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface PeopleYouMetProps {
@@ -16,7 +15,6 @@ export function PeopleYouMet({ tripId, onOpenChat }: PeopleYouMetProps) {
   const { data: pendingConnections, isLoading: pendingLoading } = usePendingConnections(tripId);
   const confirmConnection = useConfirmConnection();
   const rejectConnection = useRejectConnection();
-  const { isPremium } = useIsPremium();
 
   if (isLoading || pendingLoading) {
     return (
@@ -115,38 +113,24 @@ export function PeopleYouMet({ tripId, onOpenChat }: PeopleYouMetProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {isPremium ? (
-                      <>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                          onClick={() => handleReject(connection.id)}
-                          disabled={rejectConnection.isPending}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="h-8 w-8 text-primary hover:text-primary"
-                          onClick={() => handleConfirm(connection.id)}
-                          disabled={confirmConnection.isPending}
-                        >
-                          <Check className="w-4 h-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="h-8 text-xs gap-1"
-                        disabled
-                      >
-                        <Sparkles className="w-3 h-3" />
-                        Plus
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => handleReject(connection.id)}
+                      disabled={rejectConnection.isPending}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-primary hover:text-primary"
+                      onClick={() => handleConfirm(connection.id)}
+                      disabled={confirmConnection.isPending}
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               );
