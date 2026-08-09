@@ -78,7 +78,7 @@ Supabase Edge Functions also rely on project secrets for server-side integration
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `LOVABLE_API_KEY`
+- `ANTHROPIC_API_KEY`
 - `ELEVENLABS_API_KEY`
 
 Set those in your Supabase project or local Supabase function environment as needed.
