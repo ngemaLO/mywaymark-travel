@@ -296,44 +296,23 @@ export function AssistantHero({ showPitch }: AssistantHeroProps) {
       </div>
 
       {showPitch && (
-        <>
-          <div className="assistant-modalities" aria-label="Input modes">
-            <article className="assistant-stub">
-              <p className="assistant-stub-tag">01 · TYPE</p>
-              <h3>Full sentences, real questions</h3>
-              <p>No forms, no dropdowns — ask the way you'd ask a well-travelled friend.</p>
-            </article>
-            <article className="assistant-stub">
-              <p className="assistant-stub-tag">02 · SPEAK</p>
-              <h3>Hands-free, mid-packing</h3>
-              <p>Talk through the trip while you're doing something else. Waymark listens and plans.</p>
-            </article>
-            <article className="assistant-stub">
-              <p className="assistant-stub-tag">03 · SHOW</p>
-              <h3>A photo is an input</h3>
-              <p>A landmark, a menu, a trail sign — attach it and Waymark folds it into the plan.</p>
-            </article>
-          </div>
-
-          <div className="assistant-example">
-            <p className="assistant-example-label">Example — what a plan looks like</p>
-            <div className="assistant-example-card">
-              <div className="assistant-example-head">
-                <span className="assistant-example-status">SAMPLE OUTPUT</span>
-              </div>
-              <h3 className="assistant-example-day">DAY 2 — KYOTO</h3>
-              <ul className="assistant-example-plan">
-                <li><span className="time">07:40</span><span>Fushimi Inari, before the crowds arrive</span></li>
-                <li><span className="time">11:00</span><span>Coffee, then a 14-minute walk to Gion</span></li>
-                <li><span className="time">18:30</span><span>Kaiseki dinner, booked within your budget note</span></li>
-              </ul>
-              <div className="assistant-example-media">
-                <span className="assistant-route-chip">Fushimi Inari → Gion</span>
-                <span className="assistant-photo-chip">FROM A PHOTO</span>
-              </div>
-            </div>
-          </div>
-        </>
+        <div className="assistant-modalities" aria-label="Input modes">
+          <article className="assistant-stub">
+            <p className="assistant-stub-tag">01 · TYPE</p>
+            <h3>Full sentences, real questions</h3>
+            <p>No forms, no dropdowns — ask the way you'd ask a well-travelled friend.</p>
+          </article>
+          <article className="assistant-stub">
+            <p className="assistant-stub-tag">02 · SPEAK</p>
+            <h3>Hands-free, mid-packing</h3>
+            <p>Talk through the trip while you're doing something else. Waymark listens and plans.</p>
+          </article>
+          <article className="assistant-stub">
+            <p className="assistant-stub-tag">03 · SHOW</p>
+            <h3>A photo is an input</h3>
+            <p>A landmark, a menu, a trail sign — attach it and Waymark folds it into the plan.</p>
+          </article>
+        </div>
       )}
     </section>
   );
