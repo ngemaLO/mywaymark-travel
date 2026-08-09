@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { OnboardingGuard } from "./components/OnboardingGuard";
 
 const Index = lazy(() => import("./pages/Index"));
+const MapView = lazy(() => import("./pages/MapView"));
 const CountryDetail = lazy(() => import("./pages/CountryDetail"));
 const Timeline = lazy(() => import("./pages/Timeline"));
 const Travels = lazy(() => import("./pages/Travels"));
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Suspense fallback={<RouteLoadingFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/map" element={<MapView />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/country/:iso" element={<CountryDetail />} />

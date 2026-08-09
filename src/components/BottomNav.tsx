@@ -1,11 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { MapPin, BookOpen, Settings, Plus, Compass } from 'lucide-react';
+import { MessageCircle, Globe, BookOpen, Settings, Plus, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { AddTripModal } from '@/components/AddTripModal';
 
 const tabs = [
-  { label: 'Map', path: '/', icon: MapPin },
+  { label: 'Home', path: '/', icon: MessageCircle },
+  { label: 'Map', path: '/map', icon: Globe },
   { label: 'Travels', path: '/travels', icon: BookOpen },
   { label: 'Add', path: null, icon: Plus, isAction: true },
   { label: 'Plan', path: '/plan', icon: Compass },

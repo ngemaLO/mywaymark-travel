@@ -2136,25 +2136,6 @@
     @apply relative z-10 flex flex-col items-center gap-2 mt-3;
   }
 
-  /* Demoted placement below the assistant hero — smaller globe, own section label */
-  .globe-hero--secondary {
-    @apply pt-2 pb-6;
-    border-top: 1px solid hsl(var(--border));
-  }
-
-  .globe-hero--secondary::before {
-    content: "Your world so far";
-    display: block;
-    width: 100%;
-    max-width: 720px;
-    margin: 1.5rem auto 0;
-    padding: 0 1rem;
-    font-family: 'Instrument Sans', system-ui, sans-serif;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: hsl(var(--muted-foreground));
-  }
-
   /* ============================================
      SCROLL REVEAL
      ============================================ */

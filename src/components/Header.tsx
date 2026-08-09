@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Share2, MapPin, Clock, Settings, User, LogOut, Plus, Navigation, BarChart2, Users } from 'lucide-react';
+import { Share2, MapPin, Globe, Clock, Settings, User, LogOut, Plus, Navigation, BarChart2, Users } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +16,7 @@ import {
 
 const navItems = [
   { label: 'Dashboard', path: '/', icon: MapPin },
+  { label: 'Map', path: '/map', icon: Globe },
   { label: 'Timeline', path: '/timeline', icon: Clock },
   { label: 'Stats', path: '/stats', icon: BarChart2 },
   { label: 'Plan', path: '/plan', icon: Navigation },
