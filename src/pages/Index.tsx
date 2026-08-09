@@ -15,7 +15,7 @@ import { useVisitedCountries } from '@/hooks/useVisits';
 import { useEnsureAnnualLetter } from '@/hooks/useLetters';
 import { useConnectionVisitedCountries, useConnectionCurrentTrips } from '@/hooks/useFollows';
 import { Button } from '@/components/ui/button';
-import { Plus, MapPin, Compass, BarChart2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { AddTripModal } from '@/components/AddTripModal';
 import { TripSummaryCard } from '@/components/ai/TripSummaryCard';
@@ -49,51 +49,18 @@ const Index = () => {
     <div className="min-h-screen pb-20 md:pb-0">
       <Header />
 
-      <AssistantHero />
+      <AssistantHero showPitch={!hasVisits} />
 
-      {/* Empty State for new users */}
+      {/* Empty State for new users — AssistantHero above already explains the product,
+          so this stays short: just a nudge toward logging a first visit. */}
       {user && !isLoading && !hasVisits ? (
         <main className="journal-page">
           <article className="journal-entry journal-entry--welcome">
             <p className="journal-date">Get started</p>
             <h1 className="journal-title">Your world is waiting</h1>
             <p className="journal-body">
-              Ask Waymark to plan your next trip above, or start logging the places
-              you've already been.
+              Start logging the places you've already been, and your map fills in below.
             </p>
-
-            {/* Feature highlights */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-6 text-left">
-              {[
-                {
-                  icon: MapPin,
-                  title: 'Track',
-                  desc: 'Pin every country and city you visit on your personal map.',
-                },
-                {
-                  icon: Compass,
-                  title: 'Plan',
-                  desc: 'Get AI-powered day-by-day itineraries tailored to your travel style.',
-                },
-                {
-                  icon: BarChart2,
-                  title: 'Discover',
-                  desc: 'Explore stats, streaks, and insights from your travel history.',
-                },
-              ].map(({ icon: Icon, title, desc }) => (
-                <div
-                  key={title}
-                  className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-4 space-y-2"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-sm font-semibold text-foreground">{title}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-                </div>
-              ))}
-            </div>
-
             <div className="journal-action">
               <Button onClick={() => setAddTripOpen(true)} size="lg" className="gap-2 px-6">
                 <Plus className="w-4 h-4" />
