@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import type { Json } from '@/integrations/supabase/types';
+import type { Json, Tables } from '@/integrations/supabase/types';
 
 export interface TripSummary {
   id: string;
@@ -36,7 +36,7 @@ function normalizeRecord(value: Json): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function normalizeTripSummary(data: any): TripSummary {
+function normalizeTripSummary(data: Tables<'trip_summaries'>): TripSummary {
   return {
     ...data,
     highlights: normalizeHighlights(data.highlights),

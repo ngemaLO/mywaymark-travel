@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -56,6 +56,19 @@ export function ChapterEntriesModal({ chapter, open, onOpenChange }: ChapterEntr
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
 
+  // Check if entry overlaps with chapter dates
+  const isOverlapping = useCallback((entry: Entry) => {
+    if (!chapter) return false;
+    const entryStart = entry.arrival_date;
+    const entryEnd = entry.departure_date || entry.arrival_date;
+    const chapterStart = chapter.start_date;
+    const chapterEnd = chapter.end_date;
+
+    const startsBeforeChapterEnds = !chapterEnd || entryStart <= chapterEnd;
+    const endsAfterChapterStarts = entryEnd >= chapterStart;
+    return startsBeforeChapterEnds && endsAfterChapterStarts;
+  }, [chapter]);
+
   // Auto-select entries that overlap with chapter dates when modal opens
   useEffect(() => {
     if (open && allEntries.length > 0 && chapter) {
@@ -64,7 +77,7 @@ export function ChapterEntriesModal({ chapter, open, onOpenChange }: ChapterEntr
         .map(entry => entry.id);
       setSelectedIds(new Set(overlappingIds));
     }
-  }, [open, allEntries, chapter]);
+  }, [open, allEntries, chapter, isOverlapping]);
 
   const toggleEntry = (entryId: string) => {
     setSelectedIds(prev => {
@@ -76,19 +89,6 @@ export function ChapterEntriesModal({ chapter, open, onOpenChange }: ChapterEntr
       }
       return next;
     });
-  };
-
-  // Check if entry overlaps with chapter dates
-  const isOverlapping = (entry: Entry) => {
-    if (!chapter) return false;
-    const entryStart = entry.arrival_date;
-    const entryEnd = entry.departure_date || entry.arrival_date;
-    const chapterStart = chapter.start_date;
-    const chapterEnd = chapter.end_date;
-
-    const startsBeforeChapterEnds = !chapterEnd || entryStart <= chapterEnd;
-    const endsAfterChapterStarts = entryEnd >= chapterStart;
-    return startsBeforeChapterEnds && endsAfterChapterStarts;
   };
 
   // For now, this modal is informational - showing which entries fall within this chapter

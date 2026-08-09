@@ -24,6 +24,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { countries } from '@/data/countries';
 import { toast } from 'sonner';
+import { VISIT_YEARS_SPAN, NOTE_MAX_LENGTH } from '@/lib/constants';
 
 interface AddTripModalProps {
   open: boolean;
@@ -40,7 +41,7 @@ const MONTHS = [
 
 const CURRENT_YEAR = new Date().getFullYear();
 const CURRENT_MONTH = MONTHS[new Date().getMonth()];
-const YEARS = Array.from({ length: 51 }, (_, i) => CURRENT_YEAR - i);
+const YEARS = Array.from({ length: VISIT_YEARS_SPAN }, (_, i) => CURRENT_YEAR - i);
 const TODAY = () => new Date().toISOString().split('T')[0];
 
 export function AddTripModal({ open, onOpenChange, preselectedCountry }: AddTripModalProps) {
@@ -84,7 +85,7 @@ export function AddTripModal({ open, onOpenChange, preselectedCountry }: AddTrip
       setLoggedCountryName('');
       setNote('');
     }
-  }, [open]);
+  }, [open, preselectedCountry]);
 
   // ── Validation ────────────────────────────────────
   const isLogValid = (() => {
@@ -340,9 +341,9 @@ export function AddTripModal({ open, onOpenChange, preselectedCountry }: AddTrip
                   value={note}
                   onChange={e => setNote(e.target.value)}
                   rows={3}
-                  maxLength={500}
+                  maxLength={NOTE_MAX_LENGTH}
                 />
-                <p className="text-xs text-muted-foreground text-right">{note.length}/500</p>
+                <p className="text-xs text-muted-foreground text-right">{note.length}/{NOTE_MAX_LENGTH}</p>
               </div>
             </div>
 

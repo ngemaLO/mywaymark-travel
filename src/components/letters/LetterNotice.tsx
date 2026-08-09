@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 function getPeriodLabel(scope: string, periodStart: string): string {
   const year = new Date(periodStart).getFullYear();
   if (scope === 'year') return `Your ${year} in travel`;
-  if (scope === 'chapter') return `A chapter of your travels`;
-  if (scope === 'trip') return `A trip reflection`;
+  if (scope === 'chapter') return `A recap of this chapter`;
+  if (scope === 'trip') return `A trip recap`;
   return `Your travels, ${year}`;
 }
 
@@ -33,7 +33,7 @@ export function LetterNotice() {
       <div className="letter-notice-inner">
         <div className="letter-notice-badge">
           <Sparkles className="w-3.5 h-3.5" />
-          New reflection
+          New recap
         </div>
 
         <h2 className="letter-notice-title">{letter.title}</h2>

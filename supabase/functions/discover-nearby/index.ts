@@ -6,6 +6,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+interface OverpassElement {
+  tags?: {
+    name?: string;
+    amenity?: string;
+    tourism?: string;
+    historic?: string;
+    leisure?: string;
+    cuisine?: string;
+  };
+  lat?: number;
+  lon?: number;
+  center?: { lat?: number; lon?: number };
+}
+
+interface RawPlace {
+  name: string;
+  amenity?: string;
+  tourism?: string;
+  historic?: string;
+  leisure?: string;
+  cuisine?: string;
+  lat: number | null;
+  lon: number | null;
+  distance_m: number | null;
+}
+
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const φ1 = (lat1 * Math.PI) / 180;
@@ -90,7 +116,7 @@ serve(async (req) => {
 out body center 40;
 `;
 
-    let rawPlaces: any[] = [];
+    let rawPlaces: RawPlace[] = [];
     try {
       const overpassRes = await fetch("https://overpass-api.de/api/interpreter", {
         method: "POST",
@@ -99,25 +125,26 @@ out body center 40;
       });
       if (overpassRes.ok) {
         const overpassData = await overpassRes.json();
-        rawPlaces = (overpassData.elements ?? [])
-          .filter((el: any) => el.tags?.name)
-          .map((el: any) => {
-            const elLat = el.lat ?? el.center?.lat;
-            const elLon = el.lon ?? el.center?.lon;
+        const elements: OverpassElement[] = overpassData.elements ?? [];
+        rawPlaces = elements
+          .filter((el) => el.tags?.name)
+          .map((el): RawPlace => {
+            const elLat = el.lat ?? el.center?.lat ?? null;
+            const elLon = el.lon ?? el.center?.lon ?? null;
             return {
-              name: el.tags.name,
-              amenity: el.tags.amenity,
-              tourism: el.tags.tourism,
-              historic: el.tags.historic,
-              leisure: el.tags.leisure,
-              cuisine: el.tags.cuisine,
+              name: el.tags!.name!,
+              amenity: el.tags?.amenity,
+              tourism: el.tags?.tourism,
+              historic: el.tags?.historic,
+              leisure: el.tags?.leisure,
+              cuisine: el.tags?.cuisine,
               lat: elLat,
               lon: elLon,
               distance_m: elLat && elLon ? haversine(lat, lon, elLat, elLon) : null,
             };
           })
-          .filter((p: any) => p.lat && p.lon && p.distance_m !== null)
-          .sort((a: any, b: any) => a.distance_m - b.distance_m)
+          .filter((p) => p.lat && p.lon && p.distance_m !== null)
+          .sort((a, b) => (a.distance_m ?? 0) - (b.distance_m ?? 0))
           .slice(0, 30);
       }
     } catch {

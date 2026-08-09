@@ -8,6 +8,23 @@ const corsHeaders = {
 
 const ANTHROPIC_MODEL = "claude-sonnet-4-6";
 
+interface ItineraryDayContent {
+  day: number;
+  date?: string;
+  activities?: Array<{ time: string; title: string }>;
+}
+
+interface VisitRow {
+  country_iso2: string;
+  arrival_date: string;
+  departure_date: string | null;
+}
+
+interface ItineraryMessageRow {
+  role: string;
+  content: string;
+}
+
 function timeOrder(a: { time: string }, b: { time: string }) {
   const order = { morning: 0, afternoon: 1, evening: 2 };
   return (order[a.time as keyof typeof order] ?? 0) - (order[b.time as keyof typeof order] ?? 0);
@@ -192,7 +209,7 @@ Rules:
         });
       }
 
-      const dayData = itinerary.content?.find((d: any) => d.day === slot.day);
+      const dayData = (itinerary.content as ItineraryDayContent[] | null)?.find((d) => d.day === slot.day);
       const anchor = dayData?.activities?.[0];
       const date = dayData?.date ?? "";
 
@@ -247,7 +264,7 @@ Return ONLY valid JSON, no markdown:
         .order("arrival_date", { ascending: false })
         .limit(50);
 
-      const visitedCountries = [...new Set(visits.map((v: any) => v.country_iso2))];
+      const visitedCountries = [...new Set((visits as VisitRow[]).map((v) => v.country_iso2))];
       const hasBeenBefore = itinerary.destination_iso2 && visitedCountries.includes(itinerary.destination_iso2);
 
       const systemPrompt = `You are an expert travel planner creating personalised, practical itineraries. You have deep knowledge of global destinations, neighbourhoods, local culture, transport, hotels, and seasonal weather.
@@ -363,11 +380,11 @@ Use this exact JSON structure:
       .order("arrival_date", { ascending: false })
       .limit(50);
 
-    const visitedCountries = [...new Set(visits.map((v: any) => v.country_iso2))];
+    const visitedCountries = [...new Set((visits as VisitRow[]).map((v) => v.country_iso2))];
     const tripCount = visits.length;
-    const durations = visits
-      .filter((v: any) => v.departure_date)
-      .map((v: any) => Math.ceil(
+    const durations = (visits as VisitRow[])
+      .filter((v): v is VisitRow & { departure_date: string } => v.departure_date !== null)
+      .map((v) => Math.ceil(
         (new Date(v.departure_date).getTime() - new Date(v.arrival_date).getTime()) / 86400000
       ));
     const avgDuration = durations.length
@@ -448,7 +465,7 @@ Rules for metadata:
 - Weather should reflect the actual dates and destination — be specific about season and conditions`;
 
     const conversationMessages = [
-      ...messages.map((m: any) => ({ role: m.role, content: m.content })),
+      ...(messages as ItineraryMessageRow[]).map((m) => ({ role: m.role, content: m.content })),
       { role: "user", content: user_message },
     ];
 

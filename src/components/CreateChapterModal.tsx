@@ -23,7 +23,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookOpen, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useCreateChapter, useChapters, FREE_CHAPTER_LIMIT } from '@/hooks/useChapters';
+import { useCreateChapter, useChapters } from '@/hooks/useChapters';
+import { FREE_CHAPTER_LIMIT, CHAPTER_NAME_MAX_LENGTH, CHAPTER_DESCRIPTION_MAX_LENGTH } from '@/lib/constants';
 
 interface CreateChapterModalProps {
   open: boolean;
@@ -121,7 +122,7 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
                   placeholder="e.g., College Years, European Adventure..."
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  maxLength={100}
+                  maxLength={CHAPTER_NAME_MAX_LENGTH}
                 />
               </div>
 
@@ -192,10 +193,10 @@ export function CreateChapterModal({ open, onOpenChange }: CreateChapterModalPro
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
-                  maxLength={240}
+                  maxLength={CHAPTER_DESCRIPTION_MAX_LENGTH}
                 />
                 <p className="text-xs text-muted-foreground text-right">
-                  {description.length}/240
+                  {description.length}/{CHAPTER_DESCRIPTION_MAX_LENGTH}
                 </p>
               </div>
             </div>

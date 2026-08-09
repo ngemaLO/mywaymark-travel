@@ -5,6 +5,7 @@ import { useCountryImages } from '@/hooks/useCountryImages';
 import { useVisitsByCountry } from '@/hooks/useVisits';
 import { MapPin, StickyNote, Image, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CITIES_DISPLAY_LIMIT, IMAGES_DISPLAY_LIMIT } from '@/lib/constants';
 
 interface CountryHoverCardProps {
   countryIso2: string;
@@ -69,17 +70,17 @@ export function CountryHoverCard({
                     Cities
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    {cities.slice(0, 6).map(city => (
-                      <span 
+                    {cities.slice(0, CITIES_DISPLAY_LIMIT).map(city => (
+                      <span
                         key={city.id}
                         className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary"
                       >
                         {city.name}
                       </span>
                     ))}
-                    {cities.length > 6 && (
+                    {cities.length > CITIES_DISPLAY_LIMIT && (
                       <span className="px-2 py-0.5 text-xs rounded-full bg-muted text-muted-foreground">
-                        +{cities.length - 6} more
+                        +{cities.length - CITIES_DISPLAY_LIMIT} more
                       </span>
                     )}
                   </div>
@@ -107,8 +108,8 @@ export function CountryHoverCard({
                     Photos ({images.length})
                   </div>
                   <div className="flex gap-1.5">
-                    {images.slice(0, 3).map(image => (
-                      <div 
+                    {images.slice(0, IMAGES_DISPLAY_LIMIT).map(image => (
+                      <div
                         key={image.id}
                         className="w-16 h-16 rounded-md overflow-hidden"
                       >
@@ -121,9 +122,9 @@ export function CountryHoverCard({
                         />
                       </div>
                     ))}
-                    {images.length > 3 && (
+                    {images.length > IMAGES_DISPLAY_LIMIT && (
                       <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">+{images.length - 3}</span>
+                        <span className="text-xs text-muted-foreground">+{images.length - IMAGES_DISPLAY_LIMIT}</span>
                       </div>
                     )}
                   </div>

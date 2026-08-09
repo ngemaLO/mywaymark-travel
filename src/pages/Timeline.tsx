@@ -326,7 +326,7 @@ function generateMemoryMoments(visits: Visit[]): Map<number, string> {
   return moments;
 }
 
-const PAGE_SIZE = 30;
+import { PAGE_SIZE } from '@/lib/constants';
 
 export default function Timeline() {
   const navigate = useNavigate();

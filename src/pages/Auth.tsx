@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { MapPin, Loader2, Mail, ArrowLeft, KeyRound, Globe, Compass, BarChart2 } from 'lucide-react';
 import { z } from 'zod';
-import { PasswordStrengthIndicator, isPasswordStrong } from '@/components/PasswordStrengthIndicator';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
+import { isPasswordStrong } from '@/lib/password';
 import { Separator } from '@/components/ui/separator';
 
 const emailSchema = z.object({
@@ -51,7 +52,7 @@ function BrandPanel() {
         {[
           { icon: Globe, title: 'Track your world', desc: 'Pin every country you visit and watch your personal map come to life.' },
           { icon: Compass, title: 'Plan with AI', desc: 'Get day-by-day itineraries tailored to your travel style and history.' },
-          { icon: BarChart2, title: 'Discover insights', desc: 'Explore stats, streaks, and reflections from your journey so far.' },
+          { icon: BarChart2, title: 'Discover insights', desc: 'Explore stats, streaks, and AI-generated recaps of your trips.' },
         ].map(({ icon: Icon, title, desc }) => (
           <div key={title} className="flex items-start gap-4">
             <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
@@ -185,8 +186,8 @@ export default function Auth() {
         toast({ title: 'Password updated!', description: 'Your password has been reset.' });
         navigate('/');
       }
-    } catch (error: any) {
-      let message = error.message;
+    } catch (error) {
+      let message = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
       if (message.includes('User already registered')) {
         message = 'An account with this email already exists. Please sign in instead.';
       } else if (message.includes('Invalid login credentials')) {

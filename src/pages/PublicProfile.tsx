@@ -6,6 +6,7 @@ import { getCountryByIso } from '@/data/countries';
 import { Globe, MapPin, Copy, Check, UserPlus, UserCheck, Loader2, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useMemo } from 'react';
+import { COPY_FEEDBACK_MS } from '@/lib/constants';
 import { TravelContext } from '@/components/TravelContext';
 import { PlacesGrid } from '@/components/PlacesGrid';
 import type { VisitDataEntry } from '@/components/PlacesGrid';
@@ -29,7 +30,7 @@ export default function PublicProfile() {
   const handleFollow = () => {
     if (!user) { navigate('/auth'); return; }
     if (!profile) return;
-    isFollowing ? unfollow.mutate(profile.user_id) : follow.mutate(profile.user_id);
+    if (isFollowing) unfollow.mutate(profile.user_id); else follow.mutate(profile.user_id);
   };
 
   const visitedIsos = [...new Set(visits.map(v => v.country_iso2))].filter(Boolean) as string[];
@@ -69,7 +70,7 @@ export default function PublicProfile() {
   const handleCopy = async () => {
     await navigator.clipboard.writeText(profileUrl);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
   };
 
   const initials = profile?.display_name

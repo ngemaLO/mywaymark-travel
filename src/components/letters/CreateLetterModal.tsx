@@ -43,12 +43,12 @@ export function CreateLetterModal({ open, onOpenChange }: CreateLetterModalProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-serif text-xl">Write a Waymark Letter</DialogTitle>
+          <DialogTitle className="text-xl">Generate a trip recap</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
           <p className="text-sm text-muted-foreground">
-            Choose a time period to reflect upon. We'll craft a letter from your entries.
+            Choose a time period and Waymark will summarize your trips from it into a recap.
           </p>
 
           <div className="grid gap-4">
@@ -115,10 +115,10 @@ export function CreateLetterModal({ open, onOpenChange }: CreateLetterModalProps
             {generateLetter.isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Writing your letter...
+                Generating your recap...
               </>
             ) : (
-              'Write Letter'
+              'Generate recap'
             )}
           </Button>
         </div>

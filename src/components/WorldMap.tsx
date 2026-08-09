@@ -4,7 +4,7 @@ import { getCountryByIso } from '@/data/countries';
 import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MapHoverCard } from '@/components/MapHoverCard';
-import { geoOrthographic, geoPath, geoCentroid, geoGraticule, geoInterpolate } from 'd3-geo';
+import { geoOrthographic, geoPath, geoCentroid, geoGraticule, geoInterpolate, type GeoSphere } from 'd3-geo';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { useCurrentHomeBase } from '@/hooks/useHomeBase';
@@ -50,11 +50,9 @@ interface ExpandedPolygon {
 
 type MapScope = 'all' | 'chapter';
 
-const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+import { GLOBE_SIZE, GLOBE_SCALE, WORLD_TOPO_URL, FLAG_CDN_BASE_URL, GLOBE_FLAG_FALLBACK_COLOR } from '@/lib/constants';
 
-const GLOBE_SIZE = 500;
 const GLOBE_CENTER: [number, number] = [GLOBE_SIZE / 2, GLOBE_SIZE / 2];
-const GLOBE_SCALE = 240;
 
 interface TooltipState {
   x: number; y: number; title: string; subtitle?: string;
@@ -251,7 +249,7 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
   const pathGenerator = useMemo(() => geoPath(projection), [projection]);
   const graticule = useMemo(() => geoGraticule().step([20, 20])(), []);
   const graticulePath = useMemo(() => pathGenerator(graticule), [pathGenerator, graticule]);
-  const outlinePath = useMemo(() => pathGenerator({ type: 'Sphere' } as any), [pathGenerator]);
+  const outlinePath = useMemo(() => pathGenerator({ type: 'Sphere' } as GeoSphere), [pathGenerator]);
 
   const getIso2FromFeature = useCallback((feature: CountryFeature): string | null => {
     const numericId = feature.id?.toString().padStart(3, '0');
@@ -554,7 +552,7 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
 
   const handleCountryHover = useCallback((e: React.MouseEvent, polygon: ExpandedPolygon, iso2: string | null, isClickable: boolean) => {
     if (isDragging) return;
-    iso2 && setHoveredCountry(iso2);
+    if (iso2) setHoveredCountry(iso2);
     const svg = svgRef.current;
     const rect = svg?.getBoundingClientRect();
     if (!rect || !svg) return;
@@ -672,9 +670,9 @@ export function WorldMap({ onCountryClick, scope: externalScope, heroMode = fals
               return (
                 <pattern key={iso2} id={`flag-${iso2}`} patternUnits="userSpaceOnUse"
                   x={pos.x - fw / 2} y={pos.y - fh / 2} width={fw} height={fh}>
-                  <rect width={fw} height={fh} fill={country?.flagPrimaryColor || '#555'} />
+                  <rect width={fw} height={fh} fill={country?.flagPrimaryColor || GLOBE_FLAG_FALLBACK_COLOR} />
                   <image
-                    href={`https://flagcdn.com/w160/${iso2.toLowerCase()}.png`}
+                    href={`${FLAG_CDN_BASE_URL}${iso2.toLowerCase()}.png`}
                     x="0" y="0" width={fw} height={fh}
                     preserveAspectRatio="xMidYMid slice"
                   />

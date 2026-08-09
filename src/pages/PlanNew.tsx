@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
 import { Button } from '@/components/ui/button';
@@ -69,9 +69,11 @@ function ChipGroup({
 export default function PlanNew() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const createItinerary = useCreateItinerary();
+  const prefillPrompt = (location.state as { prompt?: string } | null)?.prompt;
 
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(prefillPrompt ?? '');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [styles, setStyles] = useState<string[]>([]);
@@ -115,6 +117,11 @@ export default function PlanNew() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-6">
+          {prefillPrompt && (
+            <p className="text-xs text-muted-foreground rounded-lg bg-muted/40 px-3 py-2">
+              Carried over from your question — trim it down to just the destination, then fill in your dates below.
+            </p>
+          )}
           <div className="space-y-2">
             <Label htmlFor="destination">Destination</Label>
             <Input

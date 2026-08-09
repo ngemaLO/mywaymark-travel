@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QRScanner } from './QRScanner';
-import { ConnectionPreview } from './ConnectionPreview';
-import type { CodeLookupResult } from '@/hooks/useTripConnections';
+import { QRCodeDisplay } from './QRCodeDisplay';
+import { QrCode, Camera } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -10,36 +12,46 @@ interface Props {
 }
 
 export function ScanToConnectModal({ open, onOpenChange }: Props) {
-  const [codeData, setCodeData] = useState<CodeLookupResult | null>(null);
+  const [tab, setTab] = useState<'mine' | 'scan'>('mine');
+  const navigate = useNavigate();
 
-  const handleClose = () => {
-    setCodeData(null);
-    onOpenChange(false);
-  };
+  const handleClose = () => onOpenChange(false);
 
-  const handleConfirm = () => {
+  const handleProfileScanned = (username: string) => {
     handleClose();
+    navigate(`/u/${username}`);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{codeData ? 'Connect' : 'Scan to Connect'}</DialogTitle>
+          <DialogTitle>Connect in Person</DialogTitle>
         </DialogHeader>
 
-        {codeData ? (
-          <ConnectionPreview
-            codeData={codeData}
-            onConfirm={handleConfirm}
-            onCancel={() => setCodeData(null)}
-          />
-        ) : (
-          <QRScanner
-            onCodeScanned={setCodeData}
-            onCancel={handleClose}
-          />
-        )}
+        <Tabs value={tab} onValueChange={(v) => setTab(v as 'mine' | 'scan')}>
+          <TabsList className="w-full">
+            <TabsTrigger value="mine" className="flex-1 gap-2">
+              <QrCode className="w-4 h-4" />
+              My code
+            </TabsTrigger>
+            <TabsTrigger value="scan" className="flex-1 gap-2">
+              <Camera className="w-4 h-4" />
+              Scan
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="mine" className="mt-4">
+            <QRCodeDisplay />
+          </TabsContent>
+
+          <TabsContent value="scan" className="mt-4">
+            <QRScanner
+              onProfileScanned={handleProfileScanned}
+              onCancel={handleClose}
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

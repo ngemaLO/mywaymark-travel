@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { GEO_API_URL } from '@/lib/constants';
 
 export interface LocationResult {
   latitude: number;
@@ -14,9 +15,6 @@ export interface GeolocationState {
   error: string | null;
   location: LocationResult | null;
 }
-
-// Free reverse geocoding API (no API key required for basic usage)
-const REVERSE_GEOCODE_URL = 'https://api.bigdatacloud.net/data/reverse-geocode-client';
 
 export function useGeolocation() {
   const [state, setState] = useState<GeolocationState>({
@@ -52,7 +50,7 @@ export function useGeolocation() {
 
       // Reverse geocode to get country
       const response = await fetch(
-        `${REVERSE_GEOCODE_URL}?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+        `${GEO_API_URL}?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
       );
 
       if (!response.ok) {

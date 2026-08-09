@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { FEED_ITEM_LIMIT, SEARCH_RESULTS_LIMIT } from '@/lib/constants';
 
 export interface PublicUser {
   user_id: string;
@@ -18,7 +19,7 @@ export interface FeedItem {
   display_name: string | null;
   avatar_url: string | null;
   username: string | null;
-  source: 'follow' | 'connection';
+  source: 'follow';
 }
 
 // ── Counts ───────────────────────────────────────────────────────────────────
@@ -136,42 +137,25 @@ export function useFeed() {
     queryFn: async (): Promise<FeedItem[]> => {
       if (!user) return [];
 
-      // Fetch follows and active trip connections in parallel
-      const [followResult, connectionResult] = await Promise.all([
-        supabase.from('follows').select('following_id').eq('follower_id', user.id),
-        supabase
-          .from('trip_connections')
-          .select('user_a_id, user_b_id')
-          .eq('status', 'active')
-          .or(`user_a_id.eq.${user.id},user_b_id.eq.${user.id}`),
-      ]);
+      const { data: followData } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
 
-      // Build a source map: userId → 'follow' | 'connection'
-      // Follows take precedence over connections when a user appears in both.
-      const sourceMap = new Map<string, FeedItem['source']>();
-      for (const f of followResult.data ?? []) {
-        sourceMap.set(f.following_id, 'follow');
-      }
-      for (const c of connectionResult.data ?? []) {
-        const partnerId = c.user_a_id === user.id ? c.user_b_id : c.user_a_id;
-        if (!sourceMap.has(partnerId)) sourceMap.set(partnerId, 'connection');
-      }
+      const followingIds = (followData ?? []).map(f => f.following_id);
+      if (followingIds.length === 0) return [];
 
-      const allIds = [...sourceMap.keys()];
-      if (allIds.length === 0) return [];
-
-      // Get their recent visits + public profiles in parallel
       const [visitResult, profileResult] = await Promise.all([
         supabase
           .from('visits')
           .select('id, country_iso2, arrival_date, user_id')
-          .in('user_id', allIds)
+          .in('user_id', followingIds)
           .order('arrival_date', { ascending: false })
-          .limit(50),
+          .limit(FEED_ITEM_LIMIT),
         supabase
           .from('profiles')
           .select('user_id, display_name, avatar_url, username')
-          .in('user_id', allIds)
+          .in('user_id', followingIds)
           .eq('is_public', true),
       ]);
 
@@ -191,7 +175,7 @@ export function useFeed() {
           display_name: profileMap[v.user_id]?.display_name ?? null,
           avatar_url: profileMap[v.user_id]?.avatar_url ?? null,
           username: profileMap[v.user_id]?.username ?? null,
-          source: sourceMap.get(v.user_id) ?? 'follow',
+          source: 'follow' as const,
         }));
     },
     enabled: !!user,
@@ -211,7 +195,7 @@ export function useSearchProfiles(query: string) {
         .select('user_id, display_name, avatar_url, username')
         .eq('is_public', true)
         .ilike('username', `%${query.trim()}%`)
-        .limit(10);
+        .limit(SEARCH_RESULTS_LIMIT);
       return (data ?? []) as PublicUser[];
     },
     enabled: query.trim().length >= 2,
@@ -284,28 +268,19 @@ export function useFriendsWhoVisited(countryIso2: string) {
 
 // ── Connection social map data ────────────────────────────────────────────────
 
-async function getConnectionIds(userId: string) {
-  const [followResult, connectionResult] = await Promise.all([
-    supabase.from('follows').select('following_id').eq('follower_id', userId),
-    supabase.from('trip_connections').select('user_a_id, user_b_id').eq('status', 'active')
-      .or(`user_a_id.eq.${userId},user_b_id.eq.${userId}`),
-  ]);
-  const ids = new Set<string>();
-  for (const f of followResult.data ?? []) ids.add(f.following_id);
-  for (const c of connectionResult.data ?? []) {
-    ids.add(c.user_a_id === userId ? c.user_b_id : c.user_a_id);
-  }
-  return [...ids];
+async function getFollowingIds(userId: string) {
+  const { data } = await supabase.from('follows').select('following_id').eq('follower_id', userId);
+  return (data ?? []).map(f => f.following_id);
 }
 
-// All unique countries visited by any connection (for ambient map tint).
+// All unique countries visited by anyone the user follows (for ambient map tint).
 export function useConnectionVisitedCountries() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['connection-visited-countries', user?.id],
     queryFn: async (): Promise<string[]> => {
       if (!user) return [];
-      const ids = await getConnectionIds(user.id);
+      const ids = await getFollowingIds(user.id);
       if (ids.length === 0) return [];
       const { data } = await supabase.from('visits').select('country_iso2').in('user_id', ids);
       return [...new Set((data ?? []).map(v => v.country_iso2))];
@@ -323,14 +298,14 @@ export interface ConnectionCurrentTrip {
   username: string | null;
 }
 
-// Connections who are currently traveling (no departure_date on latest visit).
+// People the user follows who are currently traveling (no departure_date on latest visit).
 export function useConnectionCurrentTrips() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['connection-current-trips', user?.id],
     queryFn: async (): Promise<ConnectionCurrentTrip[]> => {
       if (!user) return [];
-      const ids = await getConnectionIds(user.id);
+      const ids = await getFollowingIds(user.id);
       if (ids.length === 0) return [];
       const [visitResult, profileResult] = await Promise.all([
         supabase.from('visits').select('user_id, country_iso2').in('user_id', ids).is('departure_date', null),

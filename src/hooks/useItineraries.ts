@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -6,6 +7,14 @@ import { logError } from '@/lib/logger';
 import { useIsPremium } from '@/hooks/usePremium';
 
 export const AI_FREE_LIMIT = 2;
+
+async function extractFunctionErrorMessage(error: unknown): Promise<string> {
+  if (error instanceof FunctionsHttpError) {
+    const body = await (error.context as Response).json().catch(() => null);
+    if (typeof body?.error === 'string') return body.error;
+  }
+  return error instanceof Error ? error.message : 'Unknown error';
+}
 
 export function useAIUsage() {
   const { user } = useAuth();
@@ -161,6 +170,29 @@ export function useItineraries() {
   });
 }
 
+export function useUpcomingTrip() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ['upcoming-trip', user?.id],
+    queryFn: async (): Promise<Itinerary | null> => {
+      if (!user) return null;
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
+        .from('itineraries')
+        .select('*')
+        .eq('user_id', user.id)
+        .neq('status', 'failed')
+        .gte('start_date', today)
+        .order('start_date', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data as Itinerary | null;
+    },
+    enabled: !!user,
+  });
+}
+
 export function useItinerary(id: string | undefined) {
   const { user } = useAuth();
   return useQuery({
@@ -301,8 +333,7 @@ export function useSendItineraryMessage() {
         body: { itinerary_id: itineraryId, user_message: message },
       });
       if (error) {
-        const body = await (error as any).context?.json?.().catch(() => null);
-        throw new Error(body?.error ?? error.message);
+        throw new Error(await extractFunctionErrorMessage(error));
       }
       if (data?.error) throw new Error(data.error);
       return data as { message: string; itinerary: ItineraryDay[]; metadata: ItineraryMetadata };
@@ -315,7 +346,7 @@ export function useSendItineraryMessage() {
       logError('useSendItineraryMessage', error);
       toast({
         title: 'Failed to get response',
-        description: error instanceof Error ? error.message : 'Please try again.',
+        description: 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     },
@@ -333,8 +364,7 @@ export function useGenerateSkeleton() {
         body: { itinerary_id: itineraryId, mode: 'skeleton' },
       });
       if (error) {
-        const body = await (error as any).context?.json?.().catch(() => null);
-        throw new Error(body?.error ?? error.message);
+        throw new Error(await extractFunctionErrorMessage(error));
       }
       if (data?.error) throw new Error(data.error);
       return data as { itinerary: ItineraryDay[] };
@@ -352,7 +382,11 @@ export function useGenerateSkeleton() {
           variant: 'destructive',
         });
       } else {
-        toast({ title: 'Failed to generate plan', variant: 'destructive' });
+        toast({
+          title: 'Failed to generate plan',
+          description: 'Something went wrong. Please try again.',
+          variant: 'destructive',
+        });
       }
     },
   });
@@ -373,8 +407,7 @@ export function useGetSlotOptions() {
         body: { itinerary_id: itineraryId, mode: 'slot_options', slot },
       });
       if (error) {
-        const body = await (error as any).context?.json?.().catch(() => null);
-        throw new Error(body?.error ?? error.message);
+        throw new Error(await extractFunctionErrorMessage(error));
       }
       if (data?.error) throw new Error(data.error);
       return data as { options: SlotOption[] };
@@ -402,8 +435,7 @@ export function useCompleteItinerary() {
         body: { itinerary_id: itineraryId, mode: 'complete', current_content: currentContent },
       });
       if (error) {
-        const body = await (error as any).context?.json?.().catch(() => null);
-        throw new Error(body?.error ?? error.message);
+        throw new Error(await extractFunctionErrorMessage(error));
       }
       if (data?.error) throw new Error(data.error);
       return data as { itinerary: ItineraryDay[]; metadata: ItineraryMetadata };

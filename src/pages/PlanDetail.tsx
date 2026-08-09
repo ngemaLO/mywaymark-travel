@@ -316,13 +316,13 @@ export default function PlanDetail() {
   const sendMessage = useSendItineraryMessage();
   const resetItinerary = useResetItinerary();
 
-  if (!user) return <Navigate to="/auth" replace />;
-
-  const isGenerating = itinerary?.status === 'generating' || sendMessage.isPending;
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  if (!user) return <Navigate to="/auth" replace />;
+
+  const isGenerating = itinerary?.status === 'generating' || sendMessage.isPending;
 
   const handleSend = () => {
     const text = input.trim();

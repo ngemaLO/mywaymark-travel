@@ -1,5 +1,6 @@
 import { Header } from '@/components/Header';
 import { BottomNav } from '@/components/BottomNav';
+import { AssistantHero } from '@/components/AssistantHero';
 import { WorldMap } from '@/components/WorldMap';
 import { OnThisDay } from '@/components/OnThisDay';
 import { RecentJourneys } from '@/components/RecentJourneys';
@@ -47,87 +48,70 @@ const Index = () => {
   return (
     <div className="min-h-screen pb-20 md:pb-0">
       <Header />
-      
+
+      <AssistantHero />
+
       {/* Empty State for new users */}
       {user && !isLoading && !hasVisits ? (
-        <>
+        <main className="journal-page">
+          <article className="journal-entry journal-entry--welcome">
+            <p className="journal-date">Get started</p>
+            <h1 className="journal-title">Your world is waiting</h1>
+            <p className="journal-body">
+              Ask Waymark to plan your next trip above, or start logging the places
+              you've already been.
+            </p>
+
+            {/* Feature highlights */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-6 text-left">
+              {[
+                {
+                  icon: MapPin,
+                  title: 'Track',
+                  desc: 'Pin every country and city you visit on your personal map.',
+                },
+                {
+                  icon: Compass,
+                  title: 'Plan',
+                  desc: 'Get AI-powered day-by-day itineraries tailored to your travel style.',
+                },
+                {
+                  icon: BarChart2,
+                  title: 'Discover',
+                  desc: 'Explore stats, streaks, and insights from your travel history.',
+                },
+              ].map(({ icon: Icon, title, desc }) => (
+                <div
+                  key={title}
+                  className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-4 space-y-2"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-primary" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">{title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="journal-action">
+              <Button onClick={() => setAddTripOpen(true)} size="lg" className="gap-2 px-6">
+                <Plus className="w-4 h-4" />
+                Log your first visit
+              </Button>
+            </div>
+          </article>
+
           {/* Show the globe even for new users — their unclaimed world */}
           <section className="globe-hero">
             <div className="globe-hero-inner">
               <WorldMap heroMode connectionVisitedIsos={connectionVisitedIsos} connectionCurrentTrips={connectionCurrentTrips} />
             </div>
           </section>
-
-          <main className="journal-page">
-            <article className="journal-entry journal-entry--welcome">
-              <p className="journal-date">Welcome to Waymark</p>
-              <h1 className="journal-title">Your world is waiting</h1>
-              <p className="journal-body">
-                Every country on that globe is yours to claim. Start logging your travels
-                and watch your world come to life.
-              </p>
-
-              {/* Feature highlights */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-6 text-left">
-                {[
-                  {
-                    icon: MapPin,
-                    title: 'Track',
-                    desc: 'Pin every country and city you visit on your personal map.',
-                  },
-                  {
-                    icon: Compass,
-                    title: 'Plan',
-                    desc: 'Get AI-powered day-by-day itineraries tailored to your travel style.',
-                  },
-                  {
-                    icon: BarChart2,
-                    title: 'Discover',
-                    desc: 'Explore stats, streaks, and insights from your travel history.',
-                  },
-                ].map(({ icon: Icon, title, desc }) => (
-                  <div
-                    key={title}
-                    className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-4 space-y-2"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Icon className="w-4 h-4 text-primary" />
-                    </div>
-                    <p className="text-sm font-semibold text-foreground">{title}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{desc}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="journal-action">
-                <Button onClick={() => setAddTripOpen(true)} size="lg" className="gap-2 px-6">
-                  <Plus className="w-4 h-4" />
-                  Log your first visit
-                </Button>
-              </div>
-            </article>
-          </main>
-        </>
+        </main>
       ) : (
         <>
-          {/* Hero Globe Section — Full width, immersive */}
-          <section className="globe-hero">
-            <div className="globe-hero-inner">
-              <WorldMap
-                onCountryClick={(iso) => setPanelIso(iso)}
-                heroMode
-                connectionVisitedIsos={connectionVisitedIsos}
-                connectionCurrentTrips={connectionCurrentTrips}
-              />
-            </div>
-
-            {/* Archive stats overlaid below globe */}
-            <div className="globe-hero-stats">
-              <ArchiveLinks />
-            </div>
-          </section>
-
-          {/* Content sections below the globe */}
+          {/* Content sections — your travel history, secondary to the assistant above */}
           <main className="journal-page">
             {/* 1. Today — Present moment */}
             <ScrollReveal>
@@ -154,6 +138,20 @@ const Index = () => {
               <LetterNotice />
             </ScrollReveal>
           </main>
+
+          {/* Globe — a smaller, secondary view of your travel history */}
+          <section className="globe-hero globe-hero--secondary">
+            <div className="globe-hero-inner">
+              <WorldMap
+                onCountryClick={(iso) => setPanelIso(iso)}
+                connectionVisitedIsos={connectionVisitedIsos}
+                connectionCurrentTrips={connectionCurrentTrips}
+              />
+            </div>
+            <div className="globe-hero-stats">
+              <ArchiveLinks />
+            </div>
+          </section>
         </>
       )}
 

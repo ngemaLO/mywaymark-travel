@@ -53,6 +53,7 @@ import { useVisitedCountries } from '@/hooks/useVisits';
 import { useProfile } from '@/hooks/useProfile';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { COPY_FEEDBACK_MS } from '@/lib/constants';
 import {
   Select,
   SelectContent,
@@ -180,7 +181,7 @@ export default function Settings() {
   const handleTogglePublic = async (checked: boolean) => {
     setIsPublic(checked);
     try {
-      await updateProfile.mutateAsync({ is_public: checked } as any);
+      await updateProfile.mutateAsync({ is_public: checked });
       toast({ title: checked ? 'Profile is now public' : 'Profile set to private' });
     } catch {
       setIsPublic(!checked);
@@ -193,7 +194,7 @@ export default function Settings() {
     const url = `${window.location.origin}/u/${profile.username}`;
     await navigator.clipboard.writeText(url);
     setCopiedProfile(true);
-    setTimeout(() => setCopiedProfile(false), 2000);
+    setTimeout(() => setCopiedProfile(false), COPY_FEEDBACK_MS);
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -803,7 +804,7 @@ export default function Settings() {
                 <FolderOpen className="w-4 h-4 text-muted-foreground" />
                 <div>
                   <p className="font-medium text-foreground">Chapters</p>
-                  <p className="text-sm text-muted-foreground">Organise your travels into named life periods</p>
+                  <p className="text-sm text-muted-foreground">Group your trips into named collections</p>
                 </div>
               </div>
             </button>
@@ -815,8 +816,8 @@ export default function Settings() {
               <div className="flex items-center gap-3">
                 <BookOpen className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="font-medium text-foreground">Reflections</p>
-                  <p className="text-sm text-muted-foreground">Your AI-written travel reflections</p>
+                  <p className="font-medium text-foreground">Recaps</p>
+                  <p className="text-sm text-muted-foreground">AI-generated recaps of your trips</p>
                 </div>
               </div>
             </button>

@@ -1,7 +1,7 @@
 project_id = "ujomaaiszjaybxaerqhq"
 
 [functions.generate-itinerary]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-shared-data]
 verify_jwt = false

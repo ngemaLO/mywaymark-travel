@@ -17,8 +17,8 @@ export interface WaymarkLetter {
   subtitle: string | null;
   theme: string;
   body: string;
-  supporting_signals: any[];
-  stats_snapshot: Record<string, any>;
+  supporting_signals: unknown[];
+  stats_snapshot: Record<string, unknown>;
   status: 'ready' | 'failed';
   error_message: string | null;
   version: number;
@@ -93,10 +93,10 @@ export function useDeleteLetter() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['letters'] });
-      toast({ description: 'Letter removed from your journal.' });
+      toast({ description: 'Recap removed.' });
     },
     onError: () => {
-      toast({ variant: 'destructive', description: 'Failed to remove letter.' });
+      toast({ variant: 'destructive', description: 'Failed to remove recap.' });
     },
   });
 }
@@ -201,14 +201,14 @@ export function useGenerateLetter() {
     onSuccess: (letter) => {
       queryClient.invalidateQueries({ queryKey: ['letters'] });
       toast({
-        title: '✉️ Letter ready',
-        description: `${letter.title} — tap to read`,
+        title: 'Recap ready',
+        description: `${letter.title} — tap to view`,
       });
     },
     onError: (error) => {
-      toast({ 
-        variant: 'destructive', 
-        description: error instanceof Error ? error.message : 'Failed to generate letter.' 
+      toast({
+        variant: 'destructive',
+        description: error instanceof Error ? error.message : 'Failed to generate recap.'
       });
     },
   });

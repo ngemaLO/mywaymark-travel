@@ -49,6 +49,9 @@ export function useMilestones(visitedIsos: string[]) {
         setSeen(merged);
         setLoaded(true);
       });
+    // Depend on the id, not the user object — Supabase issues a new user
+    // object on every token refresh, and we only want to refetch on login.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   // Check for newly hit milestones once seen list is loaded

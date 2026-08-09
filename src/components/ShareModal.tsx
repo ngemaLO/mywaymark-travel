@@ -21,6 +21,7 @@ import {
   Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { COPY_FEEDBACK_MS } from '@/lib/constants';
 
 interface ShareModalProps {
   open: boolean;
@@ -117,7 +118,7 @@ export function ShareModal({ open, onOpenChange }: ShareModalProps) {
     if (!generatedLink) return;
     await navigator.clipboard.writeText(generatedLink);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), COPY_FEEDBACK_MS);
   };
 
   const atLeastOneScopeEnabled = Object.values(scopes).some(Boolean);

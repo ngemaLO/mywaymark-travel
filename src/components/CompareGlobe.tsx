@@ -4,15 +4,12 @@ import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { RotateCcw } from 'lucide-react';
 
-const WORLD_TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
-const GLOBE_SIZE = 500;
-const GLOBE_CENTER: [number, number] = [GLOBE_SIZE / 2, GLOBE_SIZE / 2];
-const GLOBE_SCALE = 240;
+import { GLOBE_SIZE, GLOBE_SCALE, WORLD_TOPO_URL, COMPARE_COLOR_BOTH, COMPARE_COLOR_MINE, COMPARE_COLOR_THEIRS } from '@/lib/constants';
 
-// Colors for 3-way comparison
-const COLOR_BOTH    = '#10B981'; // emerald — visited together
-const COLOR_MINE    = '#F97316'; // amber  — only you
-const COLOR_THEIRS  = '#818CF8'; // indigo — only them
+const GLOBE_CENTER: [number, number] = [GLOBE_SIZE / 2, GLOBE_SIZE / 2];
+const COLOR_BOTH   = COMPARE_COLOR_BOTH;
+const COLOR_MINE   = COMPARE_COLOR_MINE;
+const COLOR_THEIRS = COMPARE_COLOR_THEIRS;
 
 const NUMERIC_TO_ISO2: Record<string, string> = {
   '004':'AF','008':'AL','012':'DZ','020':'AD','024':'AO','028':'AG','032':'AR','036':'AU',

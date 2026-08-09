@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { FREE_CHAPTER_LIMIT } from '@/lib/constants';
+export { FREE_CHAPTER_LIMIT } from '@/lib/constants';
 
 export interface Chapter {
   id: string;
@@ -24,9 +26,6 @@ export interface CreateChapterData {
   home_base_country_iso2?: string | null;
   description?: string | null;
 }
-
-// Maximum chapters for free users
-export const FREE_CHAPTER_LIMIT = 2;
 
 export function useChapters() {
   const { user } = useAuth();

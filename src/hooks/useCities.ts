@@ -68,7 +68,7 @@ export function useAddCity() {
       if (!user) throw new Error('Not authenticated');
 
       // First, check if this city already exists as a place
-      let { data: existingPlace } = await supabase
+      const { data: existingPlace } = await supabase
         .from('places')
         .select('id')
         .eq('country_iso2', countryIso2)

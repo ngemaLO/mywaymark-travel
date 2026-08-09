@@ -39,13 +39,13 @@ const LetterReader = () => {
     return (
       <div className="min-h-screen letter-reader-bg flex items-center justify-center">
         <div className="text-center">
-          <p className="journal-body--muted">Letter not found.</p>
-          <Button 
-            variant="ghost" 
+          <p className="journal-body--muted">Recap not found.</p>
+          <Button
+            variant="ghost"
             className="mt-4 journal-link"
             onClick={() => navigate('/letters')}
           >
-            Return to Letters
+            Return to recaps
           </Button>
         </div>
       </div>
@@ -128,7 +128,7 @@ const LetterReader = () => {
 
           {/* Closing */}
           <footer className="letter-footer">
-            <p>Saved in your journal.</p>
+            <p>Generated from your travel history.</p>
           </footer>
         </article>
       </main>

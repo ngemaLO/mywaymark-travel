@@ -34,7 +34,7 @@ export function MapHoverCard({ countryIso2, countryName, x, y }: MapHoverCardPro
   const cardHeight = 280; // approximate max height
 
   let adjustedX = x + 12;
-  let adjustedY = y;
+  const adjustedY = y;
   let transformStyle = "translateY(-100%)";
 
   // If card would go off the right edge, position to the left of cursor

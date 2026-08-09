@@ -28,10 +28,10 @@ const Letters = () => {
         <Header />
         <main className="journal-page">
           <article className="journal-entry journal-entry--welcome">
-            <p className="journal-date">Letters</p>
-            <h1 className="journal-title">Your Waymark Letters</h1>
+            <p className="journal-date">Recaps</p>
+            <h1 className="journal-title">Your trip recaps</h1>
             <p className="journal-body">
-              Sign in to view your letters.
+              Sign in to view your recaps.
             </p>
           </article>
         </main>
@@ -56,15 +56,15 @@ const Letters = () => {
         <section className="journal-section">
           <header className="journal-section-header">
             <div>
-              <h1 className="journal-section-title">Your Letters</h1>
-              <p className="journal-section-subtitle">Reflections from your travels</p>
+              <h1 className="journal-section-title">Your recaps</h1>
+              <p className="journal-section-subtitle">AI-generated summaries of your travels</p>
             </div>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="journal-link"
               onClick={() => setCreateOpen(true)}
             >
-              Write a Letter
+              Generate a recap
             </Button>
           </header>
 
@@ -75,7 +75,7 @@ const Letters = () => {
           ) : letters.length === 0 ? (
             <div className="py-16 text-center">
               <p className="journal-body journal-body--muted">
-                Your first Waymark Letter will appear once you've logged a few entries.
+                Your first recap will appear once you've logged a few trips.
               </p>
             </div>
           ) : (

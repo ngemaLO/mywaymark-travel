@@ -29,6 +29,7 @@ import {
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { ShareModal } from '@/components/ShareModal';
+import { COPY_FEEDBACK_MS } from '@/lib/constants';
 
 export default function ShareLinksManagement() {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function ShareLinksManagement() {
     const url = `${window.location.origin}/share/${token}`;
     await navigator.clipboard.writeText(url);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), COPY_FEEDBACK_MS);
   };
 
   const handleToggle = (id: string, currentActive: boolean) => {

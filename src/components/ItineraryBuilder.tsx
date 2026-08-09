@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { Lock, LockOpen, RefreshCw, Loader2, Sunrise, Sun, Moon, Sparkles, Wand2 } from 'lucide-react';
+import { Lock, LockOpen, RefreshCw, Loader2, Sunrise, Sun, Moon, Sparkles, Wand2, AlertCircle } from 'lucide-react';
 import type { Itinerary, ItineraryDay, ItineraryActivity, SlotOption } from '@/hooks/useItineraries';
 import { useGenerateSkeleton, useGetSlotOptions, useCompleteItinerary, useAIUsage, AI_FREE_LIMIT } from '@/hooks/useItineraries';
 import { AiDisclaimer } from '@/components/AiDisclaimer';
@@ -257,6 +257,23 @@ export function ItineraryBuilder({ itinerary }: ItineraryBuilderProps) {
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
         <Loader2 className="w-6 h-6 animate-spin" />
         <p className="text-sm">Building your day outline…</p>
+      </div>
+    );
+  }
+
+  if (itinerary.status === 'failed' && localContent.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-4 text-center">
+        <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+          <AlertCircle className="w-5 h-5 text-destructive/70" />
+        </div>
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium text-foreground">Failed to generate outline</p>
+          <p className="text-xs text-muted-foreground">Something went wrong. Check your connection and try again.</p>
+        </div>
+        <Button size="sm" onClick={() => generateSkeleton.mutate(itinerary.id)} disabled={generateSkeleton.isPending}>
+          {generateSkeleton.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Trying…</> : 'Try again'}
+        </Button>
       </div>
     );
   }

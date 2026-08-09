@@ -4,23 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Camera, Keyboard, Loader2, AlertCircle } from 'lucide-react';
-import { useLookupCode } from '@/hooks/useTripConnections';
+import { Camera, Keyboard, AlertCircle } from 'lucide-react';
 
 interface QRScannerProps {
-  onCodeScanned: (codeData: any) => void;
+  onProfileScanned: (username: string) => void;
   onCancel: () => void;
 }
 
-export function QRScanner({ onCodeScanned, onCancel }: QRScannerProps) {
+export function QRScanner({ onProfileScanned, onCancel }: QRScannerProps) {
   const [activeTab, setActiveTab] = useState<'scan' | 'manual'>('scan');
-  const [manualCode, setManualCode] = useState('');
+  const [manualUsername, setManualUsername] = useState('');
   const [scannerError, setScannerError] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const lookupCode = useLookupCode();
 
   useEffect(() => {
     if (activeTab === 'scan') {
@@ -28,43 +25,34 @@ export function QRScanner({ onCodeScanned, onCancel }: QRScannerProps) {
     } else {
       stopScanner();
     }
-
-    return () => {
-      stopScanner();
-    };
+    return () => { stopScanner(); };
+    // startScanner/stopScanner/handleScanned form a circular closure chain
+    // (start -> handleScanned -> retry via start); this effect intentionally
+    // only reacts to tab switches, not to those functions being redefined.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const startScanner = async () => {
     if (!containerRef.current) return;
-
     setScannerError(null);
     setIsScanning(true);
-
     try {
       const scanner = new Html5Qrcode('qr-reader');
       scannerRef.current = scanner;
-
       await scanner.start(
         { facingMode: 'environment' },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        (decodedText) => {
-          handleQRCode(decodedText);
-        },
-        () => {
-          // QR not detected - do nothing
-        }
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => { handleScanned(decodedText); },
+        () => {}
       );
-    } catch (err: any) {
-      console.error('Scanner error:', err);
-      if (err.toString().includes('NotAllowedError') || err.toString().includes('Permission')) {
-        setScannerError('Camera access denied. Please enable camera permissions or use manual entry.');
-      } else if (err.toString().includes('NotFoundError')) {
-        setScannerError('No camera found. Please use manual entry.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('NotAllowedError') || message.includes('Permission')) {
+        setScannerError('Camera access denied. Use manual entry instead.');
+      } else if (message.includes('NotFoundError')) {
+        setScannerError('No camera found. Use manual entry instead.');
       } else {
-        setScannerError('Unable to start camera. Please use manual entry.');
+        setScannerError('Unable to start camera. Use manual entry instead.');
       }
       setIsScanning(false);
     }
@@ -75,50 +63,39 @@ export function QRScanner({ onCodeScanned, onCancel }: QRScannerProps) {
       try {
         await scannerRef.current.stop();
         scannerRef.current.clear();
-      } catch (err) {
-        // Ignore cleanup errors
+      } catch {
+        // Ignore cleanup errors — scanner may already be stopped
       }
       scannerRef.current = null;
     }
     setIsScanning(false);
   };
 
-  const handleQRCode = async (decodedText: string) => {
-    // Extract token from URL or use as-is
-    let token = decodedText;
+  const handleScanned = (decodedText: string) => {
+    let username: string | null = null;
     try {
       const url = new URL(decodedText);
-      const urlToken = url.searchParams.get('token');
-      if (urlToken) {
-        token = urlToken;
-      }
+      const match = url.pathname.match(/^\/u\/([^/]+)$/);
+      if (match) username = match[1];
     } catch {
-      // Not a URL, use as-is
+      // Not a URL — fall through and treat as an invalid code
     }
 
     stopScanner();
-    
-    try {
-      const result = await lookupCode.mutateAsync(token);
-      onCodeScanned(result);
-    } catch (err) {
-      setScannerError('Invalid or expired code');
-      if (activeTab === 'scan') {
-        setTimeout(() => startScanner(), 2000);
-      }
+
+    if (username) {
+      onProfileScanned(username);
+    } else {
+      setScannerError('Not a valid Waymark QR code. Ask them to show their profile code.');
+      setTimeout(() => startScanner(), 2500);
     }
   };
 
-  const handleManualSubmit = async (e: React.FormEvent) => {
+  const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualCode.trim()) return;
-
-    try {
-      const result = await lookupCode.mutateAsync(manualCode.trim());
-      onCodeScanned(result);
-    } catch (err) {
-      // Error handled by hook
-    }
+    const cleaned = manualUsername.trim().replace(/^@/, '');
+    if (!cleaned) return;
+    onProfileScanned(cleaned);
   };
 
   return (
@@ -132,7 +109,7 @@ export function QRScanner({ onCodeScanned, onCancel }: QRScannerProps) {
             </TabsTrigger>
             <TabsTrigger value="manual" className="flex-1 gap-2">
               <Keyboard className="w-4 h-4" />
-              Enter Code
+              Enter username
             </TabsTrigger>
           </TabsList>
 
@@ -142,17 +119,15 @@ export function QRScanner({ onCodeScanned, onCancel }: QRScannerProps) {
                 <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
                   <AlertCircle className="w-8 h-8 text-destructive" />
                 </div>
-                <p className="text-sm text-center text-muted-foreground">
-                  {scannerError}
-                </p>
+                <p className="text-sm text-center text-muted-foreground">{scannerError}</p>
                 <Button variant="outline" onClick={() => setActiveTab('manual')}>
-                  Enter Code Manually
+                  Enter Username Instead
                 </Button>
               </div>
             ) : (
               <div className="relative">
-                <div 
-                  id="qr-reader" 
+                <div
+                  id="qr-reader"
                   ref={containerRef}
                   className="w-full aspect-square max-w-[300px] mx-auto rounded-lg overflow-hidden bg-black"
                 />
@@ -164,45 +139,31 @@ export function QRScanner({ onCodeScanned, onCancel }: QRScannerProps) {
               </div>
             )}
             <p className="text-xs text-center text-muted-foreground">
-              Point your camera at a Waymark QR code
+              Point your camera at a Waymark profile QR code
             </p>
           </TabsContent>
 
           <TabsContent value="manual" className="space-y-4">
             <form onSubmit={handleManualSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Connection Code</label>
+                <label className="text-sm font-medium">Username</label>
                 <Input
-                  value={manualCode}
-                  onChange={(e) => setManualCode(e.target.value.toUpperCase())}
-                  placeholder="Enter 6-character code"
-                  maxLength={8}
-                  className="text-center text-lg font-mono tracking-widest"
+                  value={manualUsername}
+                  onChange={(e) => setManualUsername(e.target.value)}
+                  placeholder="@username"
+                  className="text-center"
                   autoFocus
                 />
               </div>
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={!manualCode.trim() || lookupCode.isPending}
-              >
-                {lookupCode.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Looking up...
-                  </>
-                ) : (
-                  'Connect'
-                )}
+              <Button type="submit" className="w-full" disabled={!manualUsername.trim()}>
+                Go to profile
               </Button>
             </form>
           </TabsContent>
         </Tabs>
 
         <div className="mt-4 pt-4 border-t border-border/40">
-          <Button variant="ghost" onClick={onCancel} className="w-full">
-            Cancel
-          </Button>
+          <Button variant="ghost" onClick={onCancel} className="w-full">Cancel</Button>
         </div>
       </CardContent>
     </Card>

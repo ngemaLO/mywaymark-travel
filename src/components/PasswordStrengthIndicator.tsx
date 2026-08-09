@@ -1,27 +1,10 @@
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface PasswordRequirement {
-  label: string;
-  met: boolean;
-}
+import { STRENGTH_VERY_WEAK, STRENGTH_WEAK, STRENGTH_FAIR, STRENGTH_GOOD } from '@/lib/constants';
+import { getPasswordRequirements } from '@/lib/password';
 
 interface PasswordStrengthIndicatorProps {
   password: string;
-}
-
-export function getPasswordRequirements(password: string): PasswordRequirement[] {
-  return [
-    { label: 'At least 8 characters', met: password.length >= 8 },
-    { label: 'One uppercase letter', met: /[A-Z]/.test(password) },
-    { label: 'One lowercase letter', met: /[a-z]/.test(password) },
-    { label: 'One number', met: /[0-9]/.test(password) },
-    { label: 'One special character (!@#$%^&*)', met: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
-  ];
-}
-
-export function isPasswordStrong(password: string): boolean {
-  return getPasswordRequirements(password).every((req) => req.met);
 }
 
 export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicatorProps) {
@@ -30,18 +13,18 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
   const strength = metCount / requirements.length;
 
   const getStrengthColor = () => {
-    if (strength <= 0.2) return 'bg-destructive';
-    if (strength <= 0.4) return 'bg-orange-500';
-    if (strength <= 0.6) return 'bg-yellow-500';
-    if (strength <= 0.8) return 'bg-lime-500';
+    if (strength <= STRENGTH_VERY_WEAK) return 'bg-destructive';
+    if (strength <= STRENGTH_WEAK)      return 'bg-orange-500';
+    if (strength <= STRENGTH_FAIR)      return 'bg-yellow-500';
+    if (strength <= STRENGTH_GOOD)      return 'bg-lime-500';
     return 'bg-green-500';
   };
 
   const getStrengthLabel = () => {
-    if (strength <= 0.2) return 'Very weak';
-    if (strength <= 0.4) return 'Weak';
-    if (strength <= 0.6) return 'Fair';
-    if (strength <= 0.8) return 'Good';
+    if (strength <= STRENGTH_VERY_WEAK) return 'Very weak';
+    if (strength <= STRENGTH_WEAK)      return 'Weak';
+    if (strength <= STRENGTH_FAIR)      return 'Fair';
+    if (strength <= STRENGTH_GOOD)      return 'Good';
     return 'Strong';
   };
 

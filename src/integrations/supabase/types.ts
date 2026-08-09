@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -254,6 +279,27 @@ export type Database = {
           },
         ]
       }
+      follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       home_bases: {
         Row: {
           country_iso2: string
@@ -283,6 +329,89 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      itineraries: {
+        Row: {
+          content: Json
+          created_at: string
+          destination: string
+          destination_iso2: string | null
+          end_date: string
+          id: string
+          metadata: Json
+          preferences: Json
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          destination: string
+          destination_iso2?: string | null
+          end_date: string
+          id?: string
+          metadata?: Json
+          preferences?: Json
+          start_date: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          destination?: string
+          destination_iso2?: string | null
+          end_date?: string
+          id?: string
+          metadata?: Json
+          preferences?: Json
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      itinerary_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          itinerary_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          itinerary_id: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          itinerary_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "itinerary_messages_itinerary_id_fkey"
+            columns: ["itinerary_id"]
+            isOneToOne: false
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       places: {
         Row: {
@@ -330,34 +459,55 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_generations_reset_at: string
+          ai_generations_used: number
+          avatar_url: string | null
           created_at: string | null
           display_name: string | null
           email: string | null
           id: string
+          is_public: boolean
+          onboarding_complete: boolean
           privacy_no_background_tracking: boolean | null
+          seen_milestones: number[] | null
           theme: string | null
           updated_at: string | null
           user_id: string
+          username: string | null
         }
         Insert: {
+          ai_generations_reset_at?: string
+          ai_generations_used?: number
+          avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
+          is_public?: boolean
+          onboarding_complete?: boolean
           privacy_no_background_tracking?: boolean | null
+          seen_milestones?: number[] | null
           theme?: string | null
           updated_at?: string | null
           user_id: string
+          username?: string | null
         }
         Update: {
+          ai_generations_reset_at?: string
+          ai_generations_used?: number
+          avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
+          is_public?: boolean
+          onboarding_complete?: boolean
           privacy_no_background_tracking?: boolean | null
+          seen_milestones?: number[] | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -408,133 +558,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      trip_connection_codes: {
-        Row: {
-          code: string
-          created_at: string
-          expires_at: string | null
-          id: string
-          token: string
-          trip_id: string
-          user_id: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          token: string
-          trip_id: string
-          user_id: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          token?: string
-          trip_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trip_connection_codes_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      trip_connections: {
-        Row: {
-          created_at: string
-          id: string
-          initiated_by: string
-          status: string
-          trip_id: string
-          updated_at: string
-          user_a_confirmed: boolean
-          user_a_id: string
-          user_b_confirmed: boolean
-          user_b_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          initiated_by: string
-          status?: string
-          trip_id: string
-          updated_at?: string
-          user_a_confirmed?: boolean
-          user_a_id: string
-          user_b_confirmed?: boolean
-          user_b_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          initiated_by?: string
-          status?: string
-          trip_id?: string
-          updated_at?: string
-          user_a_confirmed?: boolean
-          user_a_id?: string
-          user_b_confirmed?: boolean
-          user_b_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trip_connections_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      trip_messages: {
-        Row: {
-          connection_id: string
-          content: string
-          created_at: string
-          id: string
-          sender_user_id: string
-          trip_id: string
-        }
-        Insert: {
-          connection_id: string
-          content: string
-          created_at?: string
-          id?: string
-          sender_user_id: string
-          trip_id: string
-        }
-        Update: {
-          connection_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          sender_user_id?: string
-          trip_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "trip_messages_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "trip_connections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trip_messages_trip_id_fkey"
-            columns: ["trip_id"]
-            isOneToOne: false
-            referencedRelation: "trips"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       trip_summaries: {
         Row: {
@@ -668,6 +691,47 @@ export type Database = {
             columns: ["place_id"]
             isOneToOne: false
             referencedRelation: "places"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      visit_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          media_type: string
+          storage_path: string | null
+          url: string
+          user_id: string
+          visit_id: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          media_type?: string
+          storage_path?: string | null
+          url: string
+          user_id: string
+          visit_id: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          media_type?: string
+          storage_path?: string | null
+          url?: string
+          user_id?: string
+          visit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "visit_media_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "visits"
             referencedColumns: ["id"]
           },
         ]
@@ -943,6 +1007,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       chapter_trip_method: ["auto", "manual"],
